@@ -1,0 +1,215 @@
+/* ============================================================
+   Landing Page Styles
+   ============================================================ */
+
+.landing-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--bg-base);
+}
+
+/* ---- Hero Section ---- */
+.landing-hero {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px 32px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-glow {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 600px;
+  background: #3b82f6;
+  opacity: 0.15;
+  filter: blur(150px);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ---- Badge ---- */
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  color: #60a5fa;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Headline ---- */
+.landing-headline {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 28px;
+  max-width: 800px;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-headline-accent {
+  background: linear-gradient(90deg, #60a5fa 0%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---- Subheading ---- */
+.landing-subheading {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  max-width: 600px;
+  line-height: 1.7;
+  margin-bottom: 48px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- CTA Buttons ---- */
+.landing-ctas {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 36px;
+  background: #fff;
+  color: #0a0a0a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: all 0.2s;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.2);
+  border: none;
+  cursor: pointer;
+}
+
+.landing-btn-primary:hover {
+  background: #f0f0f0;
+  transform: scale(1.03);
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.3);
+}
+
+.landing-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 36px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e2e8f0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 14px;
+  text-decoration: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.landing-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ---- Feature Cards ---- */
+.landing-features {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 100px;
+  padding-bottom: 100px;
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .landing-features {
+    grid-template-columns: 1fr;
+  }
+}
+
+.landing-feature-card {
+  padding: 36px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  transition: border-color 0.3s;
+}
+
+.landing-feature-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.landing-feature-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.landing-feature-icon.green {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.landing-feature-icon.blue {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.landing-feature-icon.purple {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+}
+
+.landing-feature-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.landing-feature-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}

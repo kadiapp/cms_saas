@@ -1,0 +1,50 @@
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #080a0f;
+  color: #fff;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(15, 23, 42, 0.8);
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.login-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .login-wrapper {
+    padding: 16px;
+  }
+  .login-card {
+    padding: 24px 16px;
+  }
+  .login-input {
+    padding: 12px;
+  }
+}
+
+/* Fix Chrome Autofill white background */
+.login-input:-webkit-autofill,
+.login-input:-webkit-autofill:hover, 
+.login-input:-webkit-autofill:focus, 
+.login-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px rgba(15, 23, 42, 1) inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
