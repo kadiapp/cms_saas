@@ -411,7 +411,9 @@ export default function App() {
       
       next.insurerId = p.insurance_id || '';
       next.insuranceType = p.insurance_type || '';
-      next.patientSex = p.sex || '';
+      if (p.sex === 'Male') next.patientSex = 'M';
+      else if (p.sex === 'Female') next.patientSex = 'F';
+      else next.patientSex = p.sex || '';
       
       // Parse Address (e.g. "123 Main St, Springfield, IL 62701")
       const parts = (p.address || '').split(',');
