@@ -232,3 +232,62 @@ export async function getNcciConflictsForCode(code: string): Promise<any[]> {
   
   return [...(data1 || []), ...(data2 || [])];
 }
+export interface ProviderRecord {
+  id?: string;
+  name: string;
+  npi: string;
+  tax_id: string;
+  taxonomy_code: string;
+  address: string;
+}
+
+export interface PatientRecord {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  dob: string;
+  insurance_id: string;
+  address: string;
+}
+
+export async function getProviders(): Promise<ProviderRecord[]> {
+  const { data, error } = await supabase.from('providers').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function saveProvider(provider: ProviderRecord): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in");
+  
+  if (provider.id) {
+    await supabase.from('providers').update(provider).eq('id', provider.id).eq('user_id', user.id);
+  } else {
+    await supabase.from('providers').insert([{ ...provider, user_id: user.id }]);
+  }
+}
+
+export async function deleteProvider(id: string): Promise<void> {
+  await supabase.from('providers').delete().eq('id', id);
+}
+
+export async function getPatients(): Promise<PatientRecord[]> {
+  const { data, error } = await supabase.from('patients').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+export async function savePatient(patient: PatientRecord): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not logged in");
+  
+  if (patient.id) {
+    await supabase.from('patients').update(patient).eq('id', patient.id).eq('user_id', user.id);
+  } else {
+    await supabase.from('patients').insert([{ ...patient, user_id: user.id }]);
+  }
+}
+
+export async function deletePatient(id: string): Promise<void> {
+  await supabase.from('patients').delete().eq('id', id);
+}
