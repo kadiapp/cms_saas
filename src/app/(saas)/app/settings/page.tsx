@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as Icon from 'react-feather';
+import RuleBuilder from '../rules/page';
 import { 
   getProviders, saveProvider, deleteProvider, ProviderRecord,
   getPatients, savePatient, deletePatient, PatientRecord 
@@ -9,7 +10,7 @@ import {
 import './Settings.css';
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'providers' | 'patients'>('providers');
+  const [activeTab, setActiveTab] = useState<'providers' | 'patients' | 'rules'>('providers');
   
   // Providers State
   const [providers, setProviders] = useState<ProviderRecord[]>([]);
@@ -88,6 +89,12 @@ export default function SettingsPage() {
           onClick={() => setActiveTab('patients')}
         >
           <Icon.Users size={18} /> My Patients
+        </button>
+        <button 
+          className={`settings-tab ${activeTab === 'rules' ? 'active' : ''}`}
+          onClick={() => setActiveTab('rules')}
+        >
+          <Icon.Shield size={18} /> Custom Payer Rules
         </button>
       </div>
 
@@ -253,6 +260,12 @@ export default function SettingsPage() {
         </div>
       )}
 
+
+      {activeTab === 'rules' && (
+        <div className="settings-content" style={{ marginTop: '-32px' }}>
+          <RuleBuilder />
+        </div>
+      )}
     </div>
   );
 }

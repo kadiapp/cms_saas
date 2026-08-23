@@ -63,10 +63,7 @@ export default function TopNav() {
             <Icon.FileText size={16} />
             <span>Guides</span>
           </Link>
-          <Link href="/app/rules" className={`topnav-link ${pathname === '/app/rules' ? 'active' : ''}`} onClick={closeMenu}>
-            <Icon.BookOpen size={16} />
-            <span>Payer Rules</span>
-          </Link>
+          
           <Link href="/app/settings" className={`topnav-link ${pathname === '/app/settings' ? 'active' : ''}`} onClick={closeMenu}>
             <Icon.Settings size={16} />
             <span>Settings</span>
