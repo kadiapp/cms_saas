@@ -253,10 +253,9 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="settings-form-group">
-                  <label>Date of Birth (MM/DD/YYYY)</label>
+                  <label>Date of Birth</label>
                   <input 
-                    type="text" 
-                    placeholder="e.g. 05/20/1980"
+                    type="date" 
                     value={editingPatient?.dob || ''} 
                     onChange={e => setEditingPatient({...editingPatient, dob: e.target.value})} 
                   />
