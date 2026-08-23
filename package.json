@@ -17,7 +17,8 @@
     "pdfjs-dist": "^6.2.108",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-feather": "^2.0.10"
+    "react-feather": "^2.0.10",
+    "react-select": "^5.10.2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
