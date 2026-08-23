@@ -261,9 +261,11 @@ export async function saveProvider(provider: ProviderRecord): Promise<void> {
   if (!user) throw new Error("Not logged in");
   
   if (provider.id) {
-    await supabase.from('providers').update(provider).eq('id', provider.id).eq('user_id', user.id);
+    const { error } = await supabase.from('providers').update(provider).eq('id', provider.id).eq('user_id', user.id);
+    if (error) throw error;
   } else {
-    await supabase.from('providers').insert([{ ...provider, user_id: user.id }]);
+    const { error } = await supabase.from('providers').insert([{ ...provider, user_id: user.id }]);
+    if (error) throw error;
   }
 }
 
@@ -282,9 +284,11 @@ export async function savePatient(patient: PatientRecord): Promise<void> {
   if (!user) throw new Error("Not logged in");
   
   if (patient.id) {
-    await supabase.from('patients').update(patient).eq('id', patient.id).eq('user_id', user.id);
+    const { error } = await supabase.from('patients').update(patient).eq('id', patient.id).eq('user_id', user.id);
+    if (error) throw error;
   } else {
-    await supabase.from('patients').insert([{ ...patient, user_id: user.id }]);
+    const { error } = await supabase.from('patients').insert([{ ...patient, user_id: user.id }]);
+    if (error) throw error;
   }
 }
 

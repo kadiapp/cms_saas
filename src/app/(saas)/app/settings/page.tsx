@@ -34,7 +34,8 @@ export default function SettingsPage() {
         const data = await getPatients();
         setPatients(data);
       }
-    } catch (err) {
+    } catch (err: any) {
+      alert(err.message || "Failed to save provider");
       console.error(err);
     }
   };
@@ -47,7 +48,8 @@ export default function SettingsPage() {
       await saveProvider(editingProvider as ProviderRecord);
       setEditingProvider(null);
       await loadData();
-    } catch (err) {
+    } catch (err: any) {
+      alert(err.message || "Failed to save patient");
       console.error(err);
     }
     setIsLoading(false);
