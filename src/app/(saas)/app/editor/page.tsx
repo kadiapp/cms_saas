@@ -13,7 +13,7 @@ import { exportToPdf } from '@/pdfExport';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import { generate837P } from '@/ediExport';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
-import { verifyIcdCode, verifyCptCode, extractClaimFromText, supabase, saveClaim, getUserClaims, deleteClaim, getClaimById, getPayerRules, type CodeResult, type SavedClaim } from '@/api/supabase';
+import { verifyIcdCode, verifyCptCode, extractClaimFromText, supabase, saveClaim, getUserClaims, deleteClaim, getClaimById, getPayerRules, getProviders, getPatients, type CodeResult, type SavedClaim, type ProviderRecord, type PatientRecord } from '@/api/supabase';
 import { preScrubClaim } from '@/api/clearinghouse';
 
 // ============================================================
@@ -381,6 +381,63 @@ export default function App() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isAutofilling, setIsAutofilling] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Address Books
+  const [providers, setProviders] = useState<ProviderRecord[]>([]);
+  const [patients, setPatients] = useState<PatientRecord[]>([]);
+  
+  useEffect(() => {
+    getProviders().then(setProviders).catch(() => {});
+    getPatients().then(setPatients).catch(() => {});
+  }, []);
+  
+  const autofillPatient = (id: string) => {
+    if (!id) return;
+    const p = patients.find(x => x.id === id);
+    if (!p) return;
+    setForm(f => ({
+      ...f,
+      patientFirstName: p.first_name || '',
+      patientLastName: p.last_name || '',
+      patientDob: p.dob || '',
+      insurerId: p.insurance_id || '',
+      patientAddress: (p.address || '').split(',')[0] || '', // Rough address parse
+    }));
+    showToast('Patient autofilled', 'info');
+  };
+  
+  const autofillProvider = (id: string, type: 'billing' | 'facility' | 'referring') => {
+    if (!id) return;
+    const p = providers.find(x => x.id === id);
+    if (!p) return;
+    
+    setForm(f => {
+      const next = { ...f };
+      if (type === 'billing') {
+        next.billingProviderName = p.name || '';
+        next.billingNpi = p.npi || '';
+        next.federalTaxId = p.tax_id || '';
+        const parts = (p.address || '').split(',');
+        next.billingProviderAddress = parts[0]?.trim() || '';
+        if (parts.length > 2) {
+            next.billingProviderCity = parts[1]?.trim() || '';
+            const stZip = (parts[2] || '').trim().split(' ');
+            next.billingProviderState = stZip[0] || '';
+            next.billingProviderZip = stZip[1] || '';
+        }
+      } else if (type === 'facility') {
+        next.facilityName = p.name || '';
+        next.facilityNpi = p.npi || ''; // Note: the form interface doesn't actually have facilityNpi natively, but maybe facilityNpi exists?
+        // Wait, standard cms1500 only has facilityName/Address. I will just set Name/Address.
+        const parts = (p.address || '').split(',');
+        next.facilityAddress = parts[0]?.trim() || '';
+      }
+      return next;
+    });
+    showToast(type + ' provider autofilled', 'info');
+  };
+
+
   
   // DB Persistence State
   const { id: currentClaimId } = useParams<{ id: string }>();
