@@ -248,6 +248,8 @@ export interface PatientRecord {
   dob: string;
   insurance_id: string;
   address: string;
+  sex?: string;
+  insurance_type?: string;
 }
 
 export async function getProviders(): Promise<ProviderRecord[]> {

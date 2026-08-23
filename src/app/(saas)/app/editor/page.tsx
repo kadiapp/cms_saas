@@ -410,6 +410,8 @@ export default function App() {
       }
       
       next.insurerId = p.insurance_id || '';
+      next.insuranceType = p.insurance_type || '';
+      next.patientSex = p.sex || '';
       
       // Parse Address (e.g. "123 Main St, Springfield, IL 62701")
       const parts = (p.address || '').split(',');
@@ -428,6 +430,7 @@ export default function App() {
       next.insuredFirstName = p.first_name || '';
       next.insuredLastName = p.last_name || '';
       next.insuredDob = next.patientDob;
+      next.insuredSex = next.patientSex;
       next.insuredAddress = next.patientAddress;
       next.insuredCity = next.patientCity;
       next.insuredState = next.patientState;

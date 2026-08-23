@@ -261,12 +261,38 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="settings-form-group">
+                  <label>Sex</label>
+                  <select 
+                    value={editingPatient?.sex || ''} 
+                    onChange={e => setEditingPatient({...editingPatient, sex: e.target.value})}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+                <div className="settings-form-group">
                   <label>Insurance ID</label>
                   <input 
                     type="text" 
                     value={editingPatient?.insurance_id || ''} 
                     onChange={e => setEditingPatient({...editingPatient, insurance_id: e.target.value})} 
                   />
+                </div>
+                <div className="settings-form-group">
+                  <label>Insurance Type</label>
+                  <select 
+                    value={editingPatient?.insurance_type || ''} 
+                    onChange={e => setEditingPatient({...editingPatient, insurance_type: e.target.value})}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Medicare">Medicare</option>
+                    <option value="Medicaid">Medicaid</option>
+                    <option value="Tricare">Tricare</option>
+                    <option value="FECA">FECA</option>
+                    <option value="Group">Group</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
                 <div className="settings-form-group full">
                   <label>Street Address</label>
