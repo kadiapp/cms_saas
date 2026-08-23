@@ -33,7 +33,7 @@ export default function CodingAssistant() {
     try {
       // 1. Verify CPT Code
       const cptResult = await verifyCptCode(code);
-      if (!cptResult.valid) {
+      if (!cptResult) {
         setErrorMsg(`CPT code ${code} not found in the CMS database.`);
         setIsLoading(false);
         return;
@@ -58,8 +58,8 @@ export default function CodingAssistant() {
       setClinicalRules(applicableRules);
 
       setHasSearched(true);
-    } catch (err) {
-      setErrorMsg('An error occurred while querying the coding engine.');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'An error occurred while querying the coding engine.');
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +103,7 @@ export default function CodingAssistant() {
               </div>
               <div className="ca-card-body">
                 <div className="ca-huge-code">{cptInfo.code}</div>
-                <p className="ca-desc">{cptInfo.description}</p>
+                <p className="ca-desc">{cptInfo.long_description || cptInfo.short_description}</p>
               </div>
             </div>
 
