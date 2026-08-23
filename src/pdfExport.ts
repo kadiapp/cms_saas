@@ -149,6 +149,14 @@ export async function exportToPdf(claim: ClaimForm, templateBuffer: ArrayBuffer)
   setField('ins_zip', claim.insuredZip);
   setPhone('ins_phone area', 'ins_phone', claim.insuredPhone);
 
+  // Box 8 - Reserved for NUCC Use
+  setField('NUCC USE', claim.reservedNucc);
+
+  // Box 9 - Other Insured's Name & Policy
+  setField('other_ins_name', claim.otherInsuredName);
+  setField('other_ins_policy', claim.otherInsuredPolicy);
+  setField('other_ins_plan_name', claim.otherInsurancePlan);
+
   // Box 10a/b/c - Condition Related To
   if (claim.conditionEmployment === 'Yes') setCheckAdvanced('employment', 'Yes');
   else if (claim.conditionEmployment === 'No') setCheckAdvanced('employment', 'No');
@@ -186,18 +194,24 @@ export async function exportToPdf(claim: ClaimForm, templateBuffer: ArrayBuffer)
 
   // Box 17 - Referring Provider
   setField('ref_physician', claim.referringProviderName);
+  setFieldExact('physician number 17a1', claim.referringProviderOtherIdQual);
+  setFieldExact('physician number 17a', claim.referringProviderOtherId);
+  setField('85', claim.referringProviderNpi);  // Box 17b NPI
   setField('id_physician', claim.referringProviderOtherId);
 
   // Box 18 - Hospitalization Dates
   setDateBox('hosp_mm_from', 'hosp_dd_from', 'hosp_yy_from', claim.hospitalizationFrom);
   setDateBox('hosp_mm_end', 'hosp_dd_end', 'hosp_yy_end', claim.hospitalizationTo);
 
+  // Box 19 - Additional Claim Info / Discharge Status
+  setField('96', claim.additionalClaimInfo);
+
   // Box 20 - Outside Lab
   if (claim.outsideLab === 'Yes') setCheckAdvanced('lab', 'Yes');
   else if (claim.outsideLab === 'No') setCheckAdvanced('lab', 'No');
   setField('charge', claim.outsideLabCharges);
 
-  // Box 21 - Diagnosis Codes (ICD indicator + up to 12 codes)
+  // Box 21 - ICD Indicator + Diagnosis Codes (up to 12)
   setField('99icd', claim.icdIndicator === 'ICD-9' ? '9' : '0');
   (claim.diagnosisCodes || []).forEach((code, idx) => {
     if (code) setField(`diagnosis${idx + 1}`, code);
