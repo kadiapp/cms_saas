@@ -1741,7 +1741,26 @@ export default function App() {
               </div>
 
               {/* Box 32 — Facility */}
-              <Field label="Service Facility Location" boxNum="32">
+              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <label style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Autofill Facility from Address Book</label>
+                  <Select 
+                    placeholder="Type to search saved facilities..."
+                    isClearable
+                    options={providers.map(p => ({
+                      value: p.id,
+                      label: `${p.name} (NPI: ${p.npi})`
+                    }))}
+                    onChange={(selected: any) => autofillProvider(selected?.value || '', 'facility')}
+                    styles={{ 
+                      control: (base) => ({ ...base, background: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }), 
+                      menu: (base) => ({ ...base, zIndex: 999, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }), 
+                      option: (base, state) => ({...base, background: state.isFocused ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }),
+                      singleValue: (base) => ({...base, color: 'var(--text-primary)'}),
+                      input: (base) => ({...base, color: 'var(--text-primary)'})
+                    }}
+                  />
+                </div>
+                <Field label="Service Facility Location" boxNum="32">
                 <input id="field-facility-name" className="form-input" placeholder="Facility Name"
                   value={form.facilityName} onChange={e => set('facilityName', e.target.value)} />
                 <div style={{ marginTop: 6 }}>
@@ -1771,7 +1790,26 @@ export default function App() {
               </Field>
 
               {/* Box 33 — Billing */}
-              <Field label="Billing Provider Info & Ph #" required boxNum="33">
+              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                  <label style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Autofill Billing Provider from Address Book</label>
+                  <Select 
+                    placeholder="Type to search saved providers..."
+                    isClearable
+                    options={providers.map(p => ({
+                      value: p.id,
+                      label: `${p.name} (NPI: ${p.npi})`
+                    }))}
+                    onChange={(selected: any) => autofillProvider(selected?.value || '', 'billing')}
+                    styles={{ 
+                      control: (base) => ({ ...base, background: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }), 
+                      menu: (base) => ({ ...base, zIndex: 999, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }), 
+                      option: (base, state) => ({...base, background: state.isFocused ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }),
+                      singleValue: (base) => ({...base, color: 'var(--text-primary)'}),
+                      input: (base) => ({...base, color: 'var(--text-primary)'})
+                    }}
+                  />
+                </div>
+                <Field label="Billing Provider Info & Ph #" required boxNum="33">
                 <div className="grid-2" style={{ gap: 8 }}>
                   <input id="field-billing-name" className={inputClass('billingProviderName')} placeholder="Provider Name"
                     value={form.billingProviderName} onChange={e => set('billingProviderName', e.target.value)} />
