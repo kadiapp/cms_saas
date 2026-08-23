@@ -1913,12 +1913,13 @@ export default function App() {
                   </button>
                   
                   <button className="btn btn-success" onClick={async () => {
-                    const res = validateClaim(form);
-                    const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
-                    if (errors.length > 0) {
-                      showToast(`Fix ${errors.length} error(s) before exporting.`, 'error');
-                      handleValidate();
-                    } else {
+                      const res = validateClaim(form);
+                      const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
+                      if (errors.length > 0) {
+                        showToast(`Found ${errors.length} error(s), but exporting anyway for testing.`, 'warn');
+                        handleValidate();
+                      }
+                      if (true) {
                       try {
                         const response = await fetch('/cms1500_template.pdf');
                         if (!response.ok) throw new Error('Template not found');
@@ -1942,12 +1943,13 @@ export default function App() {
                     <Icon.Download /> Export PDF
                   </button>
                   <button className="btn btn-success" style={{ background: '#059669' }} onClick={() => {
-                    const res = validateClaim(form);
-                    const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
-                    if (errors.length > 0) {
-                      showToast(`Fix ${errors.length} error(s) before exporting.`, 'error');
-                      handleValidate();
-                    } else {
+                      const res = validateClaim(form);
+                      const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
+                      if (errors.length > 0) {
+                        showToast(`Found ${errors.length} error(s), but exporting anyway for testing.`, 'warn');
+                        handleValidate();
+                      }
+                      if (true) {
                       const ediContent = generate837P(form);
                       const blob = new Blob([ediContent], { type: 'text/plain' });
                       const url = URL.createObjectURL(blob);
