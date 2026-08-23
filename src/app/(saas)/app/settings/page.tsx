@@ -196,6 +196,15 @@ export default function SettingsPage() {
                     />
                   </div>
                 </div>
+                <div className="settings-form-group">
+                  <label>Phone Number</label>
+                  <input 
+                    type="text" 
+                    placeholder="(555) 555-5555"
+                    value={editingProvider?.phone || ''} 
+                    onChange={e => setEditingProvider({...editingProvider, phone: e.target.value})} 
+                  />
+                </div>
               </div>
               <div className="settings-form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setEditingProvider(null)}>Clear</button>
@@ -350,6 +359,15 @@ export default function SettingsPage() {
                       }} 
                     />
                   </div>
+                </div>
+                <div className="settings-form-group">
+                  <label>Phone Number</label>
+                  <input 
+                    type="text" 
+                    placeholder="(555) 555-5555"
+                    value={editingPatient?.phone || ''} 
+                    onChange={e => setEditingPatient({...editingPatient, phone: e.target.value})} 
+                  />
                 </div>
               </div>
               <div className="settings-form-actions">

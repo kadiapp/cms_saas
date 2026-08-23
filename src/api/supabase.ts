@@ -239,6 +239,7 @@ export interface ProviderRecord {
   tax_id: string;
   taxonomy_code: string;
   address: string;
+  phone?: string;
 }
 
 export interface PatientRecord {
@@ -250,6 +251,7 @@ export interface PatientRecord {
   address: string;
   sex?: string;
   insurance_type?: string;
+  phone?: string;
 }
 
 export async function getProviders(): Promise<ProviderRecord[]> {

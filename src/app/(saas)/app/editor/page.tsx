@@ -434,6 +434,8 @@ export default function App() {
       next.insuredLastName = p.last_name || '';
       next.insuredDob = next.patientDob;
       next.insuredSex = next.patientSex;
+      next.patientPhone = p.phone || '';
+      next.insuredPhone = p.phone || '';
       next.insuredAddress = next.patientAddress;
       next.insuredCity = next.patientCity;
       next.insuredState = next.patientState;
@@ -462,7 +464,8 @@ export default function App() {
             const stZip = (parts[2] || '').trim().split(' ');
             next.billingProviderState = stZip[0] || '';
             next.billingProviderZip = stZip[1] || '';
-        }
+          }
+          next.billingProviderPhone = p.phone || '';
       } else if (type === 'facility') {
         next.facilityName = p.name || '';
         next.facilityNpi = p.npi || '';
