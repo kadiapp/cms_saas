@@ -140,12 +140,61 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="settings-form-group full">
-                  <label>Full Address (Street, City, State ZIP)</label>
+                  <label>Street Address</label>
                   <input 
                     type="text" 
-                    value={editingProvider?.address || ''} 
-                    onChange={e => setEditingProvider({...editingProvider, address: e.target.value})} 
+                    value={(editingProvider?.address || '').split(',')[0] || ''} 
+                    onChange={e => {
+                      const parts = (editingProvider?.address || ',,').split(',');
+                      parts[0] = e.target.value;
+                      setEditingProvider({...editingProvider, address: parts.join(',')});
+                    }} 
                   />
+                </div>
+                <div className="settings-form-group">
+                  <label>City</label>
+                  <input 
+                    type="text" 
+                    value={(editingProvider?.address || ',').split(',')[1]?.trim() || ''} 
+                    onChange={e => {
+                      const parts = (editingProvider?.address || ',,').split(',');
+                      parts[1] = ' ' + e.target.value;
+                      setEditingProvider({...editingProvider, address: parts.join(',')});
+                    }} 
+                  />
+                </div>
+                <div className="settings-form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label>State</label>
+                    <input 
+                      type="text" 
+                      maxLength={2}
+                      style={{ width: '100%' }}
+                      value={((editingProvider?.address || ',,').split(',')[2] || '').trim().split(' ')[0] || ''} 
+                      onChange={e => {
+                        const parts = (editingProvider?.address || ',,').split(',');
+                        const stZip = (parts[2] || ' ').trim().split(' ');
+                        stZip[0] = e.target.value;
+                        parts[2] = ' ' + stZip.join(' ');
+                        setEditingProvider({...editingProvider, address: parts.join(',')});
+                      }} 
+                    />
+                  </div>
+                  <div>
+                    <label>ZIP</label>
+                    <input 
+                      type="text"
+                      style={{ width: '100%' }}
+                      value={((editingProvider?.address || ',,').split(',')[2] || '').trim().split(' ')[1] || ''} 
+                      onChange={e => {
+                        const parts = (editingProvider?.address || ',,').split(',');
+                        const stZip = (parts[2] || ' ').trim().split(' ');
+                        stZip[1] = e.target.value;
+                        parts[2] = ' ' + stZip.join(' ');
+                        setEditingProvider({...editingProvider, address: parts.join(',')});
+                      }} 
+                    />
+                  </div>
                 </div>
               </div>
               <div className="settings-form-actions">
@@ -221,12 +270,61 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="settings-form-group full">
-                  <label>Full Address</label>
+                  <label>Street Address</label>
                   <input 
                     type="text" 
-                    value={editingPatient?.address || ''} 
-                    onChange={e => setEditingPatient({...editingPatient, address: e.target.value})} 
+                    value={(editingPatient?.address || '').split(',')[0] || ''} 
+                    onChange={e => {
+                      const parts = (editingPatient?.address || ',,').split(',');
+                      parts[0] = e.target.value;
+                      setEditingPatient({...editingPatient, address: parts.join(',')});
+                    }} 
                   />
+                </div>
+                <div className="settings-form-group">
+                  <label>City</label>
+                  <input 
+                    type="text" 
+                    value={(editingPatient?.address || ',').split(',')[1]?.trim() || ''} 
+                    onChange={e => {
+                      const parts = (editingPatient?.address || ',,').split(',');
+                      parts[1] = ' ' + e.target.value;
+                      setEditingPatient({...editingPatient, address: parts.join(',')});
+                    }} 
+                  />
+                </div>
+                <div className="settings-form-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div>
+                    <label>State</label>
+                    <input 
+                      type="text" 
+                      maxLength={2}
+                      style={{ width: '100%' }}
+                      value={((editingPatient?.address || ',,').split(',')[2] || '').trim().split(' ')[0] || ''} 
+                      onChange={e => {
+                        const parts = (editingPatient?.address || ',,').split(',');
+                        const stZip = (parts[2] || ' ').trim().split(' ');
+                        stZip[0] = e.target.value;
+                        parts[2] = ' ' + stZip.join(' ');
+                        setEditingPatient({...editingPatient, address: parts.join(',')});
+                      }} 
+                    />
+                  </div>
+                  <div>
+                    <label>ZIP Code</label>
+                    <input 
+                      type="text"
+                      style={{ width: '100%' }}
+                      value={((editingPatient?.address || ',,').split(',')[2] || '').trim().split(' ')[1] || ''} 
+                      onChange={e => {
+                        const parts = (editingPatient?.address || ',,').split(',');
+                        const stZip = (parts[2] || ' ').trim().split(' ');
+                        stZip[1] = e.target.value;
+                        parts[2] = ' ' + stZip.join(' ');
+                        setEditingPatient({...editingPatient, address: parts.join(',')});
+                      }} 
+                    />
+                  </div>
                 </div>
               </div>
               <div className="settings-form-actions">
