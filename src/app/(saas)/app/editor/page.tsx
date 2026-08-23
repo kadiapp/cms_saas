@@ -1100,7 +1100,13 @@ export default function App() {
                     label: `${p.last_name}, ${p.first_name} (DOB: ${p.dob || 'N/A'})`
                   }))}
                   onChange={(selected: any) => autofillPatient(selected?.value || '')}
-                  styles={{ control: (base) => ({ ...base, background: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }), menu: (base) => ({ ...base, zIndex: 999 }), singleValue: (base) => ({...base, color: 'var(--text-primary)'}) }}
+                  styles={{ 
+                    control: (base) => ({ ...base, background: 'var(--bg-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }), 
+                    menu: (base) => ({ ...base, zIndex: 999, background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }), 
+                    option: (base, state) => ({...base, background: state.isFocused ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer' }),
+                    singleValue: (base) => ({...base, color: 'var(--text-primary)'}),
+                    input: (base) => ({...base, color: 'var(--text-primary)'})
+                  }}
                 />
               </div>
               
