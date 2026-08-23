@@ -206,3 +206,23 @@ export async function getFeeSchedule(codes: string[]): Promise<any[]> {
   return data || [];
 }
 
+
+export async function getNcciConflictsForCode(code: string): Promise<any[]> {
+  // Queries NCCI edits where the given code is either code_1 or code_2
+  const { data: data1, error: error1 } = await supabase
+    .from('cms_ncci_edits')
+    .select('code_1, code_2, modifier_indicator')
+    .eq('code_1', code);
+    
+  const { data: data2, error: error2 } = await supabase
+    .from('cms_ncci_edits')
+    .select('code_1, code_2, modifier_indicator')
+    .eq('code_2', code);
+
+  if (error1 || error2) {
+    console.warn('Failed to fetch NCCI conflicts', error1 || error2);
+    return [];
+  }
+  
+  return [...(data1 || []), ...(data2 || [])];
+}
