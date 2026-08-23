@@ -395,15 +395,47 @@ export default function App() {
     if (!id) return;
     const p = patients.find(x => x.id === id);
     if (!p) return;
-    setForm(f => ({
-      ...f,
-      patientFirstName: p.first_name || '',
-      patientLastName: p.last_name || '',
-      patientDob: p.dob || '',
-      insurerId: p.insurance_id || '',
-      patientAddress: (p.address || '').split(',')[0] || '', // Rough address parse
-    }));
-    showToast('Patient autofilled', 'info');
+    
+    setForm(f => {
+      const next = { ...f };
+      next.patientFirstName = p.first_name || '';
+      next.patientLastName = p.last_name || '';
+      
+      // Convert YYYY-MM-DD to MM/DD/YYYY
+      if (p.dob && p.dob.includes('-')) {
+        const [y, m, d] = p.dob.split('-');
+        next.patientDob = `${m}/${d}/${y}`;
+      } else {
+        next.patientDob = p.dob || '';
+      }
+      
+      next.insurerId = p.insurance_id || '';
+      
+      // Parse Address (e.g. "123 Main St, Springfield, IL 62701")
+      const parts = (p.address || '').split(',');
+      next.patientAddress = parts[0]?.trim() || '';
+      if (parts.length > 1) {
+          next.patientCity = parts[1]?.trim() || '';
+      }
+      if (parts.length > 2) {
+          const stZip = parts[2].trim().split(' ');
+          next.patientState = stZip[0] || '';
+          next.patientZip = stZip[1] || '';
+      }
+      
+      // Automatically assume the Patient is the Primary Insured to save time!
+      next.patientRelationship = 'Self';
+      next.insuredFirstName = p.first_name || '';
+      next.insuredLastName = p.last_name || '';
+      next.insuredDob = next.patientDob;
+      next.insuredAddress = next.patientAddress;
+      next.insuredCity = next.patientCity;
+      next.insuredState = next.patientState;
+      next.insuredZip = next.patientZip;
+      
+      return next;
+    });
+    showToast('Patient autofilled perfectly!', 'info');
   };
   
   const autofillProvider = (id: string, type: 'billing' | 'facility' | 'referring') => {
