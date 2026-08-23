@@ -529,6 +529,7 @@ export default function App() {
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const [isValidating, setIsValidating] = useState(false);
+    const [exportWarning, setExportWarning] = useState<{show: boolean, type: 'PDF' | 'EDI', errorCount: number}>({show: false, type: 'PDF', errorCount: 0});
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const readiness = computeReadiness(validationResults);
@@ -753,7 +754,55 @@ export default function App() {
     showToast('Validation complete', 'success');
   }, [form, verifiedNpis, npiErrors, verifiedIcds, icdErrors, verifiedCpts, cptErrors, showToast]);
 
-  const loadSample = useCallback(() => {
+  
+    const doExportPdf = async () => {
+      try {
+        const response = await fetch('/cms1500_template.pdf');
+        if (!response.ok) throw new Error('Template not found');
+        const arrayBuffer = await response.arrayBuffer();
+        const pdfBytes = await exportToPdf(form, arrayBuffer);
+        const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `claim_${Date.now()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('PDF exported!', 'success');
+      } catch (e) {
+        showToast('Error exporting PDF', 'error');
+      }
+    };
+
+    const doExportEdi = () => {
+      const ediContent = generate837P(form);
+      const blob = new Blob([ediContent], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `claim_${Date.now()}.edi`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('EDI 837P exported!', 'success');
+    };
+
+    const handleExportClick = (type: 'PDF' | 'EDI') => {
+      const res = validateClaim(form);
+      const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
+      if (errors.length > 0) {
+        setExportWarning({ show: true, type, errorCount: errors.length });
+        handleValidate();
+      } else {
+        if (type === 'PDF') doExportPdf();
+        else doExportEdi();
+      }
+    };
+  
+    const loadSample = useCallback(() => {
     setForm(SAMPLE_CLAIM);
     setValidationResults([]);
     setHasValidated(false);
@@ -1912,57 +1961,10 @@ export default function App() {
                     <Icon.Check /> {isSaving ? 'Saving...' : 'Save'}
                   </button>
                   
-                  <button className="btn btn-success" onClick={async () => {
-                      const res = validateClaim(form);
-                      const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
-                      if (errors.length > 0) {
-                        showToast(`Found ${errors.length} error(s), but exporting anyway for testing.`, 'warn');
-                        handleValidate();
-                      }
-                      if (true) {
-                      try {
-                        const response = await fetch('/cms1500_template.pdf');
-                        if (!response.ok) throw new Error('Template not found');
-                        const arrayBuffer = await response.arrayBuffer();
-                        const pdfBytes = await exportToPdf(form, arrayBuffer);
-                        const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `claim_${Date.now()}.pdf`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                        showToast('PDF exported!', 'success');
-                      } catch (e) {
-                        showToast('Error exporting PDF', 'error');
-                      }
-                    }
-                  }}>
+                  <button className="btn btn-success" onClick={() => handleExportClick('PDF')}>
                     <Icon.Download /> Export PDF
                   </button>
-                  <button className="btn btn-success" style={{ background: '#059669' }} onClick={() => {
-                      const res = validateClaim(form);
-                      const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
-                      if (errors.length > 0) {
-                        showToast(`Found ${errors.length} error(s), but exporting anyway for testing.`, 'warn');
-                        handleValidate();
-                      }
-                      if (true) {
-                      const ediContent = generate837P(form);
-                      const blob = new Blob([ediContent], { type: 'text/plain' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `claim_${Date.now()}.edi`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                      showToast('EDI 837P exported!', 'success');
-                    }
-                  }}>
+                  <button className="btn btn-success" style={{ background: '#059669' }} onClick={() => handleExportClick('EDI')}>
                     <Icon.Download /> Export EDI
                   </button>
                 </div>
@@ -2072,6 +2074,37 @@ export default function App() {
 
       {/* ===== Validation Modal Removed ===== */}
 
+      
+      {/* ===== Export Warning Modal ===== */}
+      {exportWarning.show && (
+        <div className="modal-overlay" onClick={() => setExportWarning({show: false, type: 'PDF', errorCount: 0})}>
+          <div className="glass-card modal-panel" style={{ maxWidth: '500px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <div style={{ marginBottom: '1rem', color: '#ff4d4f' }}>
+              <Icon.Warn />
+            </div>
+            <h2 style={{ marginBottom: '1rem' }}>Validation Warnings</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+              This claim has {exportWarning.errorCount} missing or invalid fields. Exporting it now may result in an incomplete or rejected claim.
+            </p>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+              Are you sure you want to download the {exportWarning.type} anyway?
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="btn btn-secondary" onClick={() => setExportWarning({show: false, type: 'PDF', errorCount: 0})} style={{ flex: 1 }}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={() => {
+                setExportWarning({show: false, type: 'PDF', errorCount: 0});
+                if (exportWarning.type === 'PDF') doExportPdf();
+                else doExportEdi();
+              }} style={{ flex: 1, background: '#ef4444', borderColor: '#ef4444' }}>
+                Proceed Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+  
       {/* ===== Invalid Template Modal ===== */}
       {showInvalidTemplateModal && (
         <div className="modal-overlay" onClick={() => setShowInvalidTemplateModal(false)}>
