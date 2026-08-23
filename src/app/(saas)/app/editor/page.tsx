@@ -1052,6 +1052,20 @@ export default function App() {
                 </div>
               </Field>
 
+              <div style={{ marginBottom: 16, padding: 12, background: 'rgba(59, 130, 246, 0.1)', borderRadius: 8, border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <label style={{ fontSize: '0.85rem', color: '#94a3b8', display: 'block', marginBottom: 4 }}>Autofill from Address Book</label>
+                <select 
+                  className="form-input" 
+                  onChange={e => autofillPatient(e.target.value)}
+                  defaultValue=""
+                >
+                  <option value="">Select a saved patient...</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.last_name}, {p.first_name} (DOB: {p.dob || 'N/A'})</option>
+                  ))}
+                </select>
+              </div>
+              
               {/* Box 1a */}
               <Field label="Insured's ID Number" required boxNum="1a">
                 <input id="field-insured-id" className={inputClass('insurerId')} placeholder="Policy / Medicare / Medicaid ID"
