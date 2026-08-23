@@ -8,6 +8,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const rulesSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_RULES_URL || '';
+const rulesSupabaseKey = process.env.NEXT_PUBLIC_SUPABASE_RULES_ANON_KEY || '';
+export const supabaseCoding = (rulesSupabaseUrl && rulesSupabaseKey) 
+  ? createClient(rulesSupabaseUrl, rulesSupabaseKey)
+  : supabase;
+
 
 export interface CodeResult {
   code: string;
@@ -166,7 +172,7 @@ export async function checkNcciEdits(codes: string[]): Promise<any[]> {
   
   // We need to check if any pair of codes in the claim are mutually exclusive
   // We query where code_1 in (codes) and code_2 in (codes)
-  const { data, error } = await supabase
+  const { data, error } = await supabaseCoding
     .from('cms_ncci_edits')
     .select('code_1, code_2, modifier_indicator')
     .in('code_1', codes)
@@ -194,7 +200,7 @@ export async function getClinicalRules(): Promise<any[]> {
 export async function getFeeSchedule(codes: string[]): Promise<any[]> {
   if (codes.length === 0) return [];
   
-  const { data, error } = await supabase
+  const { data, error } = await supabaseCoding
     .from('cms_fee_schedule')
     .select('cpt_code, non_facility_fee')
     .in('cpt_code', codes);
@@ -209,12 +215,12 @@ export async function getFeeSchedule(codes: string[]): Promise<any[]> {
 
 export async function getNcciConflictsForCode(code: string): Promise<any[]> {
   // Queries NCCI edits where the given code is either code_1 or code_2
-  const { data: data1, error: error1 } = await supabase
+  const { data: data1, error: error1 } = await supabaseCoding
     .from('cms_ncci_edits')
     .select('code_1, code_2, modifier_indicator')
     .eq('code_1', code);
     
-  const { data: data2, error: error2 } = await supabase
+  const { data: data2, error: error2 } = await supabaseCoding
     .from('cms_ncci_edits')
     .select('code_1, code_2, modifier_indicator')
     .eq('code_2', code);
