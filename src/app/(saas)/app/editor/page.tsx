@@ -465,10 +465,17 @@ export default function App() {
         }
       } else if (type === 'facility') {
         next.facilityName = p.name || '';
-        next.facilityNpi = p.npi || ''; // Note: the form interface doesn't actually have facilityNpi natively, but maybe facilityNpi exists?
-        // Wait, standard cms1500 only has facilityName/Address. I will just set Name/Address.
+        next.facilityNpi = p.npi || '';
         const parts = (p.address || '').split(',');
         next.facilityAddress = parts[0]?.trim() || '';
+        if (parts.length > 1) {
+            next.facilityCity = parts[1]?.trim() || '';
+        }
+        if (parts.length > 2) {
+            const stZip = (parts[2] || '').trim().split(' ');
+            next.facilityState = stZip[0] || '';
+            next.facilityZip = stZip[1] || '';
+        }
       }
       return next;
     });
