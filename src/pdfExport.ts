@@ -175,7 +175,7 @@ export async function exportToPdf(claim: ClaimForm, templateBuffer: ArrayBuffer)
   setField('ins_signature', claim.insuredSignature);
 
   // Box 14 - Date of Current Illness
-  setDateBox('cur_ill_mm', 'cur_ill_dd', 'cur_ill_yy', claim.dateOfCurrentIllness);
+  setDateBox('cur_ill_mm', 'cur_ill_dd', 'cur_ill_yy', claim.dateCurrentIllnessFrom);
 
   // Box 15 - Other Date
   setDateBox('sim_ill_mm', 'sim_ill_dd', 'sim_ill_yy', claim.otherDate);
