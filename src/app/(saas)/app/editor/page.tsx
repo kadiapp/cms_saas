@@ -375,7 +375,9 @@ export default function App() {
     } catch (e) {}
     return EMPTY_FORM;
   });
-  const [validationResults, setValidationResults] = useState<ValidationResult[]>([]);
+  const [localValidationResults, setLocalValidationResults] = useState<ValidationResult[]>([]);
+  const [deepValidationResults, setDeepValidationResults] = useState<ValidationResult[]>([]);
+  const validationResults = [...localValidationResults, ...deepValidationResults];
   const [hasValidated, setHasValidated] = useState(false);
   const [showInvalidTemplateModal, setShowInvalidTemplateModal] = useState(false);
   const [showAiModal, setShowAiModal] = useState(false);
@@ -498,14 +500,15 @@ export default function App() {
         try {
           const fullClaim = await getClaimById(currentClaimId);
           setForm({ ...EMPTY_FORM, ...(fullClaim.form_data || {}) });
-          setValidationResults([]);
+          setLocalValidationResults([]);
+          setDeepValidationResults([]);
         } catch (e: any) {
           console.error(e);
         }
       } else {
         // Clear form when navigating to /app/editor or /app/editor/new
         setForm(EMPTY_FORM);
-        setValidationResults([]);
+        setLocalValidationResults([]); setDeepValidationResults([]);
       }
     }
     loadClaim();
@@ -537,7 +540,7 @@ export default function App() {
   // Auto-validate as user types (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
-      setValidationResults(validateClaim(form, verifiedNpis, npiErrors, verifiedIcds, icdErrors, verifiedCpts, cptErrors));
+      setLocalValidationResults(validateClaim(form, verifiedNpis, npiErrors, verifiedIcds, icdErrors, verifiedCpts, cptErrors));
       // Auto-save
       localStorage.setItem('cms1500_autosave', JSON.stringify(form));
     }, 400);
@@ -746,8 +749,8 @@ export default function App() {
     showToast('Running Advanced Clinical Rules...', 'info');
     const advancedResults = await runAdvancedClinicalValidation(form);
 
-    const mergedResults = [...localResults, ...chResults, ...advancedResults];
-    setValidationResults(mergedResults);
+    setLocalValidationResults(localResults);
+    setDeepValidationResults([...chResults, ...advancedResults]);
 
     setIsValidating(false);
     setHasValidated(true);
@@ -804,7 +807,8 @@ export default function App() {
   
     const loadSample = useCallback(() => {
     setForm(SAMPLE_CLAIM);
-    setValidationResults([]);
+    setLocalValidationResults([]);
+    setDeepValidationResults([]);
     setHasValidated(false);
   }, []);
 
@@ -892,7 +896,7 @@ export default function App() {
         merged.serviceLines = serviceLines;
         return merged;
       });
-      setValidationResults([]);
+      setLocalValidationResults([]); setDeepValidationResults([]);
       setShowAiModal(false);
       showToast('AI extracted data successfully! Review the filled fields.', 'success');
     } catch (err) {
@@ -908,7 +912,7 @@ export default function App() {
       // Attempt standard CMS-1500 fillable form import
       const importedForm = await importFromPdf(file);
       setForm(importedForm);
-      setValidationResults([]);
+      setLocalValidationResults([]); setDeepValidationResults([]);
       showToast('Form imported successfully', 'success');
     } catch (err) {
             // If it fails (e.g. flat PDF, scanned note), fallback to AI vision extraction
@@ -963,7 +967,8 @@ export default function App() {
 
   const handleClear = useCallback(() => {
     setForm(EMPTY_FORM);
-    setValidationResults([]);
+    setLocalValidationResults([]);
+    setDeepValidationResults([]);
     router.push('/app/editor');
     localStorage.removeItem('cms1500_autosave');
     showToast('Form cleared', 'info');
@@ -1108,7 +1113,7 @@ export default function App() {
                   </div>
                   <div className="welcome-step-num">Step 3</div>
                   <div className="welcome-step-title">Validate & Export</div>
-                  <div className="welcome-step-desc">Get a 100% Claim Score, then export EDI 837P</div>
+                  <div className="welcome-step-desc">Get a 100% Readiness Score, then export EDI 837P</div>
                 </div>
               </div>
 
@@ -1975,7 +1980,7 @@ export default function App() {
                     </div>
                   </div>
                   <div>
-                    <div className="sticky-score-label">Claim Score</div>
+                    <div className="sticky-score-label">{hasValidated ? 'Readiness Score' : 'Completion Score'}</div>
                     <div className="sticky-score-sub">{readiness < 50 ? 'Needs attention' : readiness < 80 ? 'Getting there' : readiness < 100 ? 'Almost ready' : '✓ Ready!'}</div>
                   </div>
                 </div>
@@ -2005,7 +2010,7 @@ export default function App() {
               <>
             {/* Score card */}
             <div className="glass-card sidebar-card">
-              <h3><Icon.Shield /> Claim Score</h3>
+              <h3><Icon.Shield /> {hasValidated ? 'Readiness Score' : 'Completion Score'}</h3>
               <div style={{ textAlign: 'center', padding: '12px 0 16px' }}>
                 <div style={{
                   fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.04em',
