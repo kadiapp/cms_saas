@@ -794,16 +794,14 @@ export default function App() {
     };
 
     const handleExportClick = (type: 'PDF' | 'EDI') => {
-      const res = validateClaim(form);
-      const errors = res.filter(r => r.status === 'error' || r.status === 'critical');
-      if (errors.length > 0) {
-        setExportWarning({ show: true, type, errorCount: errors.length });
-        handleValidate();
-      } else {
-        if (type === 'PDF') doExportPdf();
-        else doExportEdi();
-      }
-    };
+    const errors = validationResults.filter(r => r.status === 'error' || r.status === 'critical');
+    if (errors.length > 0) {
+      setExportWarning({ show: true, type, errorCount: errors.length });
+    } else {
+      if (type === 'PDF') doExportPdf();
+      else doExportEdi();
+    }
+  };
   
     const loadSample = useCallback(() => {
     setForm(SAMPLE_CLAIM);
