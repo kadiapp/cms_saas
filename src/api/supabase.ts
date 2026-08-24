@@ -50,16 +50,17 @@ export async function verifyCptCode(code: string): Promise<CodeResult> {
 }
 
 export async function extractClaimFromText(text: string): Promise<Record<string, unknown>> {
-  const { data, error } = await supabase.functions.invoke('extract-claim', {
-    body: { text },
+  // Call our native Next.js API route (replaces missing Supabase Edge Function)
+  const response = await fetch('/api/extract', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
   });
 
-  if (error) {
-    throw new Error(error.message || 'Failed to call AI extraction service.');
-  }
+  const data = await response.json();
 
-  if (data?.error) {
-    throw new Error(data.error);
+  if (!response.ok || data?.error) {
+    throw new Error(data?.error || 'Failed to call AI extraction service.');
   }
 
   if (!data?.data) {
@@ -69,9 +70,6 @@ export async function extractClaimFromText(text: string): Promise<Record<string,
   return data.data;
 }
 
-// ============================================================
-// Database Persistence for Claims
-// ============================================================
 
 export interface SavedClaim {
   id: string;
