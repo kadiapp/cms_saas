@@ -1995,10 +1995,22 @@ export default function App() {
                     <Icon.Check /> {isSaving ? 'Saving...' : 'Save'}
                   </button>
                   
-                  <button className="btn btn-success" onClick={() => handleExportClick('PDF')}>
+                  <button 
+                    className="btn btn-success" 
+                    onClick={() => handleExportClick('PDF')}
+                    disabled={!hasValidated}
+                    title={!hasValidated ? "Please run Validate Claim first" : "Export as PDF"}
+                    style={{ opacity: !hasValidated ? 0.5 : 1, cursor: !hasValidated ? 'not-allowed' : 'pointer' }}
+                  >
                     <Icon.Download /> Export PDF
                   </button>
-                  <button className="btn btn-success" style={{ background: '#059669' }} onClick={() => handleExportClick('EDI')}>
+                  <button 
+                    className="btn btn-success" 
+                    onClick={() => handleExportClick('EDI')}
+                    disabled={!hasValidated}
+                    title={!hasValidated ? "Please run Validate Claim first" : "Export as EDI 837P"}
+                    style={{ background: '#059669', opacity: !hasValidated ? 0.5 : 1, cursor: !hasValidated ? 'not-allowed' : 'pointer' }}
+                  >
                     <Icon.Download /> Export EDI
                   </button>
                 </div>
