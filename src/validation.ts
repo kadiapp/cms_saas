@@ -5,6 +5,7 @@ export interface ValidationResult {
   label: string;
   status: 'ok' | 'info' | 'warn' | 'error' | 'critical';
   message: string;
+  weight?: number;
 }
 
 const NPI_RE = /^\d{10}$/;
@@ -22,10 +23,11 @@ function check(
   failSeverity: 'warn' | 'error' | 'critical' | 'info' = 'error',
   successMessage?: string
 ): ValidationResult {
+  const weight = failSeverity === 'critical' ? 10 : (failSeverity === 'error' ? 5 : (failSeverity === 'warn' ? 2 : 1));
   if (condition) {
-    return { field, label, status: successMessage ? 'info' : 'ok', message: successMessage || `${label} looks good` };
+    return { field, label, status: successMessage ? 'info' : 'ok', message: successMessage || `${label} looks good`, weight };
   }
-  return { field, label, status: failSeverity, message: failMessage };
+  return { field, label, status: failSeverity, message: failMessage, weight };
 }
 
 export function validateClaim(
@@ -205,15 +207,19 @@ export function validateClaim(
 export function computeReadiness(results: ValidationResult[]): number {
   if (results.length === 0) return 0;
   
-  let score = 100;
+  let totalWeight = 0;
+  let earnedWeight = 0;
   
   for (const r of results) {
-    if (r.status === 'critical') score -= 25;
-    else if (r.status === 'error') score -= 10;
-    else if (r.status === 'warn') score -= 2;
+    const w = r.weight || 5;
+    totalWeight += w;
+    if (r.status === 'ok' || r.status === 'info') {
+      earnedWeight += w;
+    }
   }
   
-  return Math.max(0, Math.min(100, score));
+  if (totalWeight === 0) return 100;
+  return Math.round((earnedWeight / totalWeight) * 100);
 }
 
 import { checkNcciEdits, getClinicalRules, getFeeSchedule } from './api/supabase';
