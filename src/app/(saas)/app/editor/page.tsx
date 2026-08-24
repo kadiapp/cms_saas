@@ -1010,6 +1010,9 @@ export default function App() {
     return `form-input ${r.status === 'ok' ? 'valid' : r.status === 'error' ? 'invalid' : ''}`;
   };
 
+  const completedSections = sidebarChecks.filter(item => getCheckStatus(item.fields) === 'done').length;
+  const completionPct = Math.round((completedSections / sidebarChecks.length) * 100);
+
   // If they have loaded a saved claim OR started a 'new' claim, we always want to show the form, even if it happens to be empty.
   const isFormEmpty = !currentClaimId && !form.patientLastName && !form.billingProviderName && 
     !(form.diagnosisCodes || []).some(c => c) && (!(form.serviceLines || [])[0] || !form.serviceLines[0].cptCode);
@@ -1976,12 +1979,12 @@ export default function App() {
                     background: `conic-gradient(${readiness < 50 ? '#ef4444' : readiness < 80 ? '#f59e0b' : '#10b981'} ${readiness * 3.6}deg, rgba(255,255,255,0.06) 0deg)`
                   }}>
                     <div className="sticky-score-ring-inner">
-                      <span>{readiness}%</span>
+                      <span>{!hasValidated ? '?' : `${readiness}%`}</span>
                     </div>
                   </div>
                   <div>
-                    <div className="sticky-score-label">{hasValidated ? 'Readiness Score' : 'Completion Score'}</div>
-                    <div className="sticky-score-sub">{readiness < 50 ? 'Needs attention' : readiness < 80 ? 'Getting there' : readiness < 100 ? 'Almost ready' : '✓ Ready!'}</div>
+                    <div className="sticky-score-label">Readiness Score</div>
+                    <div className="sticky-score-sub">{!hasValidated ? 'Pending validation' : (readiness < 50 ? 'Needs attention' : readiness < 80 ? 'Getting there' : readiness < 100 ? 'Almost ready' : '✨ Ready!')}</div>
                   </div>
                 </div>
                 <div className="sticky-actions">
@@ -2010,21 +2013,21 @@ export default function App() {
               <>
             {/* Score card */}
             <div className="glass-card sidebar-card">
-              <h3><Icon.Shield /> {hasValidated ? 'Readiness Score' : 'Completion Score'}</h3>
+              <h3><Icon.Shield /> Readiness Score</h3>
               <div style={{ textAlign: 'center', padding: '12px 0 16px' }}>
                 <div style={{
                   fontSize: '3rem', fontWeight: 800, letterSpacing: '-0.04em',
-                  backgroundImage: `linear-gradient(135deg, ${readiness < 50 ? '#ef4444' : readiness < 80 ? '#f59e0b' : '#10b981'}, #06b6d4)`,
+                  backgroundImage: `linear-gradient(135deg, ${!hasValidated ? '#64748b' : (readiness < 50 ? '#ef4444' : readiness < 80 ? '#f59e0b' : '#10b981')}, #06b6d4)`,
                   WebkitBackgroundClip: 'text',
                   backgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   color: 'transparent',
                   display: 'inline-block'
                 }}>
-                  {readiness}%
+                  {!hasValidated ? '?' : `${readiness}%`}
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: 2 }}>
-                  {readiness < 50 ? 'Needs attention' : readiness < 80 ? 'Getting there' : readiness < 100 ? 'Almost ready' : '✓ Ready to submit'}
+                  {!hasValidated ? 'Click Validate to score' : (readiness < 50 ? 'Needs attention' : readiness < 80 ? 'Getting there' : readiness < 100 ? 'Almost ready' : '✨ Ready!')}
                 </div>
               </div>
               <div className="progress-track" style={{ marginBottom: 16 }}>
@@ -2046,8 +2049,19 @@ export default function App() {
               <SidebarValidationReport results={validationResults} />
             ) : (
               <div className="glass-card sidebar-card">
-                <h3><Icon.Check /> Section Checklist</h3>
-                <div className="checklist">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3><Icon.Check /> Section Checklist</h3>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{completionPct}% Filled</span>
+                  </div>
+                  <div style={{ width: '100%', height: '6px', background: '#2d3348', borderRadius: '4px', overflow: 'hidden', margin: '12px 0 16px' }}>
+                    <div style={{ 
+                      height: '100%', 
+                      width: `${completionPct}%`,
+                      background: completionPct < 50 ? 'var(--danger)' : completionPct < 100 ? 'var(--warning)' : 'var(--success)',
+                      transition: 'all 0.3s ease'
+                    }} />
+                  </div>
+                  <div className="checklist">
                   {sidebarChecks.map((item, i) => {
                   const status = getCheckStatus(item.fields);
                   return (
