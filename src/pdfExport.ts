@@ -286,8 +286,9 @@ export async function exportToPdf(claim: ClaimForm, templateBuffer: ArrayBuffer)
   const box33b = (claim.billingProviderOtherIdQual || '') + (claim.billingProviderOtherIdQual === 'ZZ' ? claim.taxonomyCode : (claim.billingProviderOtherId || ''));
   setField('grp1', box33b);
 
-  // Flatten the form to make it a static, non-editable PDF for printing/mailing
-  form.flatten();
+  // NOTE: We intentionally do NOT flatten the form so the PDF remains
+  // editable and can be re-imported into ClaimPilot for corrections.
+  // To create a locked/printable copy, open in Adobe Reader and print to PDF.
 
   return await pdfDoc.save();
 }
