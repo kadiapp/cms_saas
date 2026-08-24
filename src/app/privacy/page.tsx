@@ -54,7 +54,7 @@ export default function PrivacyPage() {
 
           <section>
             <p style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
-              If you have any questions regarding this policy, please contact us at compliance@cms1500claimbilling.com.
+              If you have any questions regarding this policy, please contact us at contact@cms1500claimbilling.com.
             </p>
           </section>
         </div>
@@ -62,4 +62,5 @@ export default function PrivacyPage() {
     </div>
   );
 }
+
 
