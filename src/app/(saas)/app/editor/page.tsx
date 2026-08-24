@@ -911,16 +911,17 @@ export default function App() {
       setValidationResults([]);
       showToast('Form imported successfully', 'success');
     } catch (err) {
-      // If it fails (e.g. flat PDF, scanned note), fallback to AI extraction
+            // If it fails (e.g. flat PDF, scanned note), fallback to AI vision extraction
       try {
-        showToast('Standard import failed. Attempting AI text extraction...', 'info');
+        showToast('Standard import failed. Attempting AI vision extraction...', 'info');
         const arrayBuffer = await file.arrayBuffer();
-        const text = await extractTextFromPdf(arrayBuffer);
-        if (text) {
-          await handleAiExtract(text);
-        } else {
-          setShowInvalidTemplateModal(true);
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let binaryString = '';
+        for (let i = 0; i < uint8Array.length; i++) {
+            binaryString += String.fromCharCode(uint8Array[i]);
         }
+        const base64Pdf = btoa(binaryString);
+        await handleAiExtract('', base64Pdf);
       } catch (aiErr) {
         setShowInvalidTemplateModal(true);
       }
