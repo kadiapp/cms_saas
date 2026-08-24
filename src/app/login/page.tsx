@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
 
@@ -17,12 +18,13 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setSuccess(null);
     
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert('Check your email for the confirmation link or try logging in if auto-confirm is enabled.');
+        setSuccess('Account created successfully! Please check your email for a confirmation link to activate your account.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -46,6 +48,7 @@ export default function LoginPage() {
         <h2 style={{ textAlign: 'center', marginBottom: 24, fontSize: '1.2rem' }}>{isSignUp ? 'Create an Account' : 'Welcome Back'}</h2>
         
         {error && <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem' }}>{error}</div>}
+        {success && <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: 12, borderRadius: 8, marginBottom: 16, fontSize: '0.9rem', border: '1px solid rgba(16, 185, 129, 0.2)' }}>{success}</div>}
         
         <form onSubmit={handleAuth} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div>
