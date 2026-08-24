@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/app/', '/login', '/api/'],
     },
-    sitemap: 'https://claimpilot.com/sitemap.xml',
+    sitemap: 'https://cms1500claimbilling.com/sitemap.xml',
   };
 }

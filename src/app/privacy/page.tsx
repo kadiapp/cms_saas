@@ -17,7 +17,7 @@ export default function PrivacyPage() {
         <div style={{ lineHeight: 1.6, color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <section>
             <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>1. Introduction</h2>
-            <p>Welcome to ClaimPilot ("we," "our," or "us"). We are committed to protecting your privacy and ensuring the security of your data, particularly Protected Health Information (PHI) as defined by the Health Insurance Portability and Accountability Act (HIPAA).</p>
+            <p>Welcome to 1500 Claim Billing ("we," "our," or "us"). We are committed to protecting your privacy and ensuring the security of your data, particularly Protected Health Information (PHI) as defined by the Health Insurance Portability and Accountability Act (HIPAA).</p>
           </section>
 
           <section>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>5. HIPAA Business Associate Agreement (BAA)</h2>
-            <p>For covered entities, this agreement serves as an acknowledgment that ClaimPilot utilizes commercially reasonable administrative, physical, and technical safeguards to protect PHI. If you require a signed BAA, please contact our support team before processing live patient data.</p>
+            <p>For covered entities, this agreement serves as an acknowledgment that 1500 Claim Billing utilizes commercially reasonable administrative, physical, and technical safeguards to protect PHI. If you require a signed BAA, please contact our support team before processing live patient data.</p>
           </section>
           
           <hr style={{ borderColor: '#334155', margin: '20px 0' }} />

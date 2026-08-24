@@ -287,7 +287,7 @@ export async function exportToPdf(claim: ClaimForm, templateBuffer: ArrayBuffer)
   setField('grp1', box33b);
 
   // NOTE: We intentionally do NOT flatten the form so the PDF remains
-  // editable and can be re-imported into ClaimPilot for corrections.
+  // editable and can be re-imported into 1500 Claim Billing for corrections.
   // To create a locked/printable copy, open in Adobe Reader and print to PDF.
 
   return await pdfDoc.save();

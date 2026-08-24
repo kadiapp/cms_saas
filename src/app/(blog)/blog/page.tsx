@@ -2,21 +2,21 @@ import { supabase } from '@/api/supabase';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Medical Billing Knowledge Base | ClaimPilot',
+  title: 'Medical Billing Knowledge Base | 1500 Claim Billing',
   description: 'Explore our comprehensive library of medical billing guides, CPT/ICD-10 coding tutorials, and revenue cycle management strategies.',
   alternates: {
-    canonical: 'https://claimpilot.com/blog',
+    canonical: 'https://cms1500claimbilling.com/blog',
   },
   openGraph: {
-    title: 'Medical Billing Knowledge Base | ClaimPilot',
+    title: 'Medical Billing Knowledge Base | 1500 Claim Billing',
     description: 'Explore our comprehensive library of medical billing guides, CPT/ICD-10 coding tutorials, and revenue cycle management strategies.',
-    url: 'https://claimpilot.com/blog',
+    url: 'https://cms1500claimbilling.com/blog',
     type: 'website',
-    siteName: 'ClaimPilot',
+    siteName: '1500 Claim Billing',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Medical Billing Knowledge Base | ClaimPilot',
+    title: 'Medical Billing Knowledge Base | 1500 Claim Billing',
     description: 'Explore our comprehensive library of medical billing guides, CPT/ICD-10 coding tutorials, and revenue cycle management strategies.',
   }
 };

@@ -25,12 +25,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (error || !data) {
     return {
-      title: 'Article Not Found | ClaimPilot',
+      title: 'Article Not Found | 1500 Claim Billing',
       description: 'The requested article could not be found.',
     };
   }
 
-  const absoluteUrl = `https://claimpilot.com/blog/${slug}`;
+  const absoluteUrl = `https://cms1500claimbilling.com/blog/${slug}`;
 
   // Exactly replicates your Yoast SEO meta title and description, and adds OG tags
   return {
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: data.meta_description,
       url: absoluteUrl,
       type: 'article',
-      siteName: 'ClaimPilot',
+      siteName: '1500 Claim Billing',
       publishedTime: data.published_at,
     },
     twitter: {

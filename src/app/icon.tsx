@@ -18,10 +18,9 @@ export default function Icon() {
           justifyContent: 'center',
           color: 'white',
           borderRadius: '8px',
-          fontWeight: 800,
         }}
       >
-        C
+        🩺
       </div>
     ),
     { ...size }

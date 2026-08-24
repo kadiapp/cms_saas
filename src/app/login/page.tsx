@@ -39,8 +39,8 @@ export default function LoginPage() {
     <div className="login-wrapper" style={{ width: '100%' }}>
       <div className="login-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, justifyContent: 'center' }}>
-          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>ClaimPilot</h1>
+          <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🩺</div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800 }}>1500 Claim Billing</h1>
         </div>
         
         <h2 style={{ textAlign: 'center', marginBottom: 24, fontSize: '1.2rem' }}>{isSignUp ? 'Create an Account' : 'Welcome Back'}</h2>

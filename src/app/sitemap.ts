@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { supabase } from '@/api/supabase';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://claimpilot.com';
+  const baseUrl = 'https://cms1500claimbilling.com';
 
   // Fetch all articles from the Knowledge Base
   const { data: articles, error } = await supabase
