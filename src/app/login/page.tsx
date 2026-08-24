@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
 
   const handleAuth = async (e: React.FormEvent) => {
