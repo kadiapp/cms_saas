@@ -13,7 +13,7 @@ export default function Home() {
 
         <div className="landing-badge">
           <Icon.Zap size={13} />
-          <span>1500 Claim Billing 2.0 is Live</span>
+          <span>AI-Powered &bull; Free to Start &bull; No Credit Card Required</span>
         </div>
         
         <h1 className="landing-headline">
@@ -202,3 +202,4 @@ export default function Home() {
     </div>
   );
 }
+
