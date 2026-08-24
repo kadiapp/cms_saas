@@ -847,15 +847,40 @@ export default function App() {
         // Build the merged form — keep existing values where AI returned empty string
         const merged: ClaimForm = { ...prev };
         const stringFields: (keyof ClaimForm)[] = [
+          // Carrier / Payer
+          'payerName','payerAddress','payerCity','payerState','payerZip','payerId',
+          // Patient
           'patientLastName','patientFirstName','patientMI','patientDob','patientSex',
           'patientAddress','patientCity','patientState','patientZip','patientPhone',
-          'insuranceType','insurerId','insuredLastName','insuredFirstName','insuredMI',
+          // Insurance / Insured
+          'insuranceType','insurerId',
+          'insuredLastName','insuredFirstName','insuredMI',
           'insuredAddress','insuredCity','insuredState','insuredZip','insuredPhone',
-          'insuredDob','insuredSex','patientRelationship','insuredPolicyGroup','insuredPolicyName',
-          'dateCurrentIllnessFrom','referringProviderName','referringProviderNpi',
-          'priorAuthNumber','facilityName','facilityAddress','facilityCity','facilityState','facilityZip',
-          'billingProviderName','billingProviderAddress','billingProviderCity','billingProviderState',
-          'billingProviderZip','billingProviderPhone','billingNpi','federalTaxId','totalCharge','patientAccountNo',
+          'insuredDobBox11','insuredSexBox11','patientRelationship',
+          'insuredPolicyGroup','insuredPolicyName','anotherPlan',
+          // Signatures
+          'patientSignature','patientSignatureDate','insuredSignature',
+          'physicianSignature','signatureDate',
+          // Clinical
+          'dateCurrentIllnessFrom','dateCurrentIllnessQual','otherDate','otherDateQual',
+          'unableToWorkFrom','unableToWorkTo','hospitalizationFrom','hospitalizationTo',
+          // Providers
+          'referringProviderName','referringProviderNpi',
+          'referringProviderQual','referringProviderOtherIdQual','referringProviderOtherId',
+          // Conditions / Notes
+          'conditionEmployment','conditionAuto','conditionAutoState','conditionOther',
+          'additionalClaimInfo','outsideLab','outsideLabCharges','icdIndicator',
+          // Billing admin
+          'resubmissionCode','originalRefNum','priorAuthNumber',
+          'federalTaxId','taxIdType','patientAccountNo','acceptAssignment',
+          'totalCharge','amountPaid',
+          // Facility (Box 32)
+          'facilityName','facilityAddress','facilityCity','facilityState','facilityZip',
+          'facilityNpi','facilityOtherId',
+          // Billing Provider (Box 33)
+          'billingProviderName','billingProviderAddress','billingProviderCity',
+          'billingProviderState','billingProviderZip','billingProviderPhone',
+          'billingNpi','billingProviderOtherIdQual','billingProviderOtherId','taxonomyCode',
         ];
         for (const k of stringFields) {
           const val = extracted[k];
