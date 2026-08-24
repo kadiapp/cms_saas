@@ -812,10 +812,10 @@ export default function App() {
     setShowAiModal(true);
   }, []);
 
-  const handleAiExtract = useCallback(async (text: string) => {
+  const handleAiExtract = useCallback(async (text: string, base64Pdf?: string) => {
     setIsAutofilling(true);
     try {
-      const extracted = await extractClaimFromText(text);
+      const extracted = await extractClaimFromText(text, base64Pdf);
       // Merge extracted data into form, preserving structure
       setForm(prev => {
         const diagnosisCodes = Array.isArray(extracted.diagnosisCodes)
@@ -934,7 +934,7 @@ export default function App() {
       const reader = new FileReader();
       reader.onload = (e) => {
         const text = e.target?.result as string;
-        if (text) handleAiExtract(text);
+        if (text) handleAiExtract(text, undefined);
       };
       reader.readAsText(file);
     } else {

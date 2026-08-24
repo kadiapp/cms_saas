@@ -49,12 +49,12 @@ export async function verifyCptCode(code: string): Promise<CodeResult> {
   return data;
 }
 
-export async function extractClaimFromText(text: string): Promise<Record<string, unknown>> {
+export async function extractClaimFromText(text: string, base64Pdf?: string): Promise<Record<string, unknown>> {
   // Call our native Next.js API route (replaces missing Supabase Edge Function)
   const response = await fetch('/api/extract', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, base64Pdf }),
   });
 
   const data = await response.json();
