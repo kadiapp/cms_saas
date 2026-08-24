@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ClaimPilot | Medical Billing & CMS-1500 Software",
+  title: "CMS 1500 Claim Billing | ClaimPilot Software",
   description: "The modern platform for medical billing, CMS-1500 form validation, and payer rules compliance.",
 };
 
