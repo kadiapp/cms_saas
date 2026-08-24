@@ -56,6 +56,21 @@ export default function LoginPage() {
             <label style={{ display: 'block', marginBottom: 8, fontSize: '0.9rem', color: '#94a3b8' }}>Password</label>
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required className="login-input" />
           </div>
+          {isSignUp && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginTop: 4 }}>
+              <input 
+                type="checkbox" 
+                id="terms" 
+                checked={acceptedTerms} 
+                onChange={e => setAcceptedTerms(e.target.checked)} 
+                required={isSignUp}
+                style={{ marginTop: 4 }}
+              />
+              <label htmlFor="terms" style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5 }}>
+                I have read and agree to the <a href="/privacy" target="_blank" style={{ color: '#3b82f6', textDecoration: 'none' }}>Privacy Policy & HIPAA BAA</a> and consent to securely processing PHI.
+              </label>
+            </div>
+          )}
           <button type="submit" disabled={loading} style={{ width: '100%', padding: '14px', borderRadius: 8, background: '#3b82f6', color: '#fff', border: 'none', fontWeight: 600, marginTop: 8, cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1rem' }}>
             {loading ? 'Processing...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </button>
