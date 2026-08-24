@@ -39,6 +39,16 @@ export default function PrivacyPage() {
             <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>5. HIPAA Business Associate Agreement (BAA)</h2>
             <p>For covered entities, this agreement serves as an acknowledgment that 1500 Claim Billing utilizes commercially reasonable administrative, physical, and technical safeguards to protect PHI. If you require a signed BAA, please contact our support team before processing live patient data.</p>
           </section>
+
+          <section>
+            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>6. Data Source Attributions & Copyrights</h2>
+            <p>Our platform aggregates medical coding rules and reference data from authoritative bodies to provide real-time validation. By using this software, you acknowledge the following data sources and their respective copyrights:</p>
+            <ul style={{ paddingLeft: '20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', color: '#94a3b8' }}>
+              <li><strong>American Medical Association (AMA):</strong> CPT® (Current Procedural Terminology) codes, descriptions, and other data are copyright of the American Medical Association. All rights reserved. CPT is a registered trademark of the AMA.</li>
+              <li><strong>Centers for Medicare & Medicaid Services (CMS):</strong> NCCI (National Correct Coding Initiative) Edits, Clinical Rules, Physician Fee Schedules, and ICD-10-CM code sets are public domain data provided by CMS.gov.</li>
+              <li><strong>NPPES:</strong> National Provider Identifier (NPI) verification utilizes the public NPPES API endpoint.</li>
+            </ul>
+          </section>
           
           <hr style={{ borderColor: '#334155', margin: '20px 0' }} />
 
@@ -52,3 +62,4 @@ export default function PrivacyPage() {
     </div>
   );
 }
+
