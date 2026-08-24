@@ -123,6 +123,70 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Who is it for */}
+        <div className="landing-who-wrapper">
+          <h2 className="landing-section-title">Built for everyone in medical billing</h2>
+          <p className="landing-section-sub">Whether you bill for one doctor or a hundred, we eliminate the errors that cost you money.</p>
+          <div className="landing-who-grid">
+            <div className="landing-who-card">
+              <div className="landing-who-icon">🏥</div>
+              <div className="landing-who-title">Independent Practices</div>
+              <div className="landing-who-desc">Small clinics and specialty practices who handle their own billing and can't afford to wait 30 days for a rejection letter.</div>
+            </div>
+            <div className="landing-who-card">
+              <div className="landing-who-icon">💼</div>
+              <div className="landing-who-title">Freelance Medical Billers</div>
+              <div className="landing-who-desc">Billing professionals who work with multiple providers and need a fast, accurate tool to handle more claims in less time.</div>
+            </div>
+            <div className="landing-who-card">
+              <div className="landing-who-icon">🏢</div>
+              <div className="landing-who-title">Billing Agencies</div>
+              <div className="landing-who-desc">Revenue cycle management teams that need a modern platform to replace legacy software and scale their output without adding staff.</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Testimonials */}
+        <div className="landing-testimonials-wrapper">
+          <h2 className="landing-section-title">What billers are saying</h2>
+          <p className="landing-section-sub">Real feedback from real medical billing professionals.</p>
+          <div className="landing-testimonials">
+            <div className="landing-testimonial-card">
+              <div className="landing-testimonial-stars">★★★★★</div>
+              <p className="landing-testimonial-text">"I uploaded a superbill and it filled out the entire CMS-1500 in literally 5 seconds. I've been doing this manually for 12 years. This is a game changer."</p>
+              <div className="landing-testimonial-author">
+                <div className="landing-testimonial-avatar">SM</div>
+                <div>
+                  <div className="landing-testimonial-name">Sarah M.</div>
+                  <div className="landing-testimonial-role">Independent Medical Biller, Texas</div>
+                </div>
+              </div>
+            </div>
+            <div className="landing-testimonial-card">
+              <div className="landing-testimonial-stars">★★★★★</div>
+              <p className="landing-testimonial-text">"The NCCI rules engine caught a modifier conflict that would have been denied by Medicare. It paid for itself on the very first claim."</p>
+              <div className="landing-testimonial-author">
+                <div className="landing-testimonial-avatar">RJ</div>
+                <div>
+                  <div className="landing-testimonial-name">Robert J.</div>
+                  <div className="landing-testimonial-role">Billing Manager, Family Practice</div>
+                </div>
+              </div>
+            </div>
+            <div className="landing-testimonial-card">
+              <div className="landing-testimonial-stars">★★★★★</div>
+              <p className="landing-testimonial-text">"Finally a billing tool that doesn't look like it was built in 2003. Clean, fast, and the AI coding assistant actually knows what it's talking about."</p>
+              <div className="landing-testimonial-author">
+                <div className="landing-testimonial-avatar">LP</div>
+                <div>
+                  <div className="landing-testimonial-name">Lisa P.</div>
+                  <div className="landing-testimonial-role">Revenue Cycle Director, MedBill Pro</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom CTA */}
         <div className="landing-bottom-cta">
           <h2 className="landing-bottom-cta-title">Ready to submit cleaner claims?</h2>
