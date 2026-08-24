@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const SYSTEM_PROMPT = `You are an expert medical billing AI specializing in CMS-1500 claim forms.
 Your job is to extract ALL available data from the provided text (which may come from a scanned or printed CMS-1500 form, a doctor's note, an encounter summary, a referral letter, or a patient intake form) and return it as a single valid JSON object.
