@@ -979,3 +979,6 @@ h3 { font-size: 1.125rem; font-weight: 600; }
     display: none !important;
   }
 }
+
+.footer-link { transition: color 0.2s; }
+.footer-link:hover { color: #3b82f6 !important; }
