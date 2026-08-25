@@ -98,7 +98,7 @@ export default async function BlogPost({ params }: Props) {
           <article style={{ background: 'rgba(16,20,30,0.85)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px', padding: '48px' }}>
             <h1 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: '800', color: '#f0f4ff', lineHeight: '1.25', marginBottom: '16px' }}>{decodeWPEntities(article.title)}</h1>
             <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '40px', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-              Published on {new Date(article.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              Last Updated: {new Date(article.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
             
             
