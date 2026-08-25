@@ -26,13 +26,13 @@ export default function Home() {
         </p>
         
         <div className="landing-ctas">
-          <Link href="/login" className="landing-btn-primary">
+          <Link href="/app/editor" className="landing-btn-primary">
             <Icon.UserPlus size={20} />
             Start for Free
           </Link>
-          <Link href="/app/editor" className="landing-btn-secondary">
-            <Icon.Play size={20} />
-            Try the Demo
+          <Link href="/blog" className="landing-btn-secondary">
+            <Icon.BookOpen size={20} />
+            Read the Guides
           </Link>
         </div>
         <p className="landing-free-note">✓ No credit card required &nbsp;&nbsp; ✓ HIPAA compliant &nbsp;&nbsp; ✓ Free forever plan</p>
@@ -191,9 +191,9 @@ export default function Home() {
         <div className="landing-bottom-cta">
           <h2 className="landing-bottom-cta-title">Ready to submit cleaner claims?</h2>
           <p className="landing-bottom-cta-sub">Join medical billers and practices who use 1500 Claim Billing to eliminate rejections and get paid faster. Free to start, no credit card needed.</p>
-          <Link href="/login" className="landing-btn-primary">
-            <Icon.UserPlus size={20} />
-            Create Your Free Account
+          <Link href="/app/editor" className="landing-btn-primary">
+            <Icon.Play size={20} />
+            Try it for Free
           </Link>
           <p className="landing-free-note" style={{ marginTop: '16px' }}>✓ HIPAA Compliant &nbsp;&nbsp; ✓ Powered by Google AI &nbsp;&nbsp; ✓ CMS &amp; AMA Certified Data</p>
         </div>
