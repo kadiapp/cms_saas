@@ -567,7 +567,8 @@ export default function App() {
       setIsSaving(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        showToast('You must be logged in to save claims.', 'error');
+        alert('You need to create a free account to save claims.\n\nClick OK to go to the Sign Up page.');
+        router.push('/login');
         return;
       }
       
@@ -793,7 +794,13 @@ export default function App() {
       showToast('EDI 837P exported!', 'success');
     };
 
-    const handleExportClick = (type: 'PDF' | 'EDI') => {
+    const handleExportClick = async (type: 'PDF' | 'EDI') => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      alert('You need to create a free account to export claims and unlock the full Dashboard.\n\nClick OK to go to the Sign Up page.');
+      router.push('/login');
+      return;
+    }
     const errors = validationResults.filter(r => r.status === 'error' || r.status === 'critical');
     if (errors.length > 0) {
       setExportWarning({ show: true, type, errorCount: errors.length });

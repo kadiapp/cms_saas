@@ -1,17 +1,22 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/api/supabase';
 import TopNav from '@/components/TopNav';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      
+      // Paths that allow unauthenticated access (PLG Strategy)
+      const isPublicPath = pathname.startsWith('/app/editor') || pathname.startsWith('/app/coding-assistant');
+
+      if (!session && !isPublicPath) {
         router.push('/login');
       } else {
         setLoading(false);
@@ -21,7 +26,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     checkAuth();
     
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
+      const isPublicPath = pathname.startsWith('/app/editor') || pathname.startsWith('/app/coding-assistant');
+      if ((event === 'SIGNED_OUT' || !session) && !isPublicPath) {
         router.push('/login');
       }
     });
@@ -29,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [router, pathname]);
 
   if (loading) {
     return (
