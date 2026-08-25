@@ -101,10 +101,30 @@ export default async function BlogPost({ params }: Props) {
               Published on {new Date(article.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
             
+            
+            {/* INLINE SOFTWARE AD - TOP */}
+            <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: '0 0 8px 0' }}>Stop filling the CMS-1500 form by hand.</h3>
+                <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem' }}>Upload your superbill and let our AI auto-fill the CMS-1500 claim for you in 5 seconds. Catch coding errors and prevent denials before you submit.</p>
+              </div>
+              <div>
+                <a href="/login" style={{ background: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>Try AI Auto-Fill for Free &rarr;</a>
+              </div>
+            </div>
+
             <TableOfContents />
               <div className="blog-article-content" suppressHydrationWarning
               dangerouslySetInnerHTML={{ __html: cleanContent }}
             />
+            
+            {/* INLINE SOFTWARE AD - BOTTOM */}
+            <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '16px', padding: '32px', marginTop: '48px', marginBottom: '48px', textAlign: 'center' }}>
+              <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: '0 0 12px 0' }}>Tired of dealing with rejected claims?</h2>
+              <p style={{ color: '#cbd5e1', margin: '0 0 24px 0', fontSize: '1rem', lineHeight: '1.6' }}>Use our modern CMS-1500 software to instantly validate NPIs, CPT codes, and ICD-10 formatting. It's completely free to start.</p>
+              <a href="/login" style={{ background: '#fff', color: '#0f172a', padding: '12px 28px', borderRadius: '10px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '1rem', boxShadow: '0 4px 14px rgba(255,255,255,0.1)' }}>Create Your Free Account</a>
+            </div>
+
             <RelatedArticles currentArticleId={article.id} />
           </article>
         </main>
