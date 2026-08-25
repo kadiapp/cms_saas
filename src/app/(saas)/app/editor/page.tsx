@@ -531,7 +531,10 @@ export default function App() {
     // Custom Confirm Modal for deletions
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
+
   const [isValidating, setIsValidating] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+
     const [exportWarning, setExportWarning] = useState<{show: boolean, type: 'PDF' | 'EDI', errorCount: number}>({show: false, type: 'PDF', errorCount: 0});
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -567,8 +570,7 @@ export default function App() {
       setIsSaving(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        alert('You need to create a free account to save claims.\n\nClick OK to go to the Sign Up page.');
-        router.push('/login');
+        setShowSignupModal(true);
         return;
       }
       
@@ -797,8 +799,7 @@ export default function App() {
     const handleExportClick = async (type: 'PDF' | 'EDI') => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      alert('You need to create a free account to export claims and unlock the full Dashboard.\n\nClick OK to go to the Sign Up page.');
-      router.push('/login');
+      setShowSignupModal(true);
       return;
     }
     const errors = validationResults.filter(r => r.status === 'error' || r.status === 'critical');
@@ -2233,6 +2234,30 @@ export default function App() {
 
             {/* Textarea */}
             <AiTextInput onExtract={handleAiExtract} isLoading={isAutofilling} />
+          </div>
+        </div>
+      )}
+
+      
+      {/* ===== Signup Prompt Modal (PLG) ===== */}
+      {showSignupModal && (
+        <div className="modal-overlay" onClick={() => setShowSignupModal(false)}>
+          <div className="glass-card modal-panel" style={{ maxWidth: '450px', textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <div style={{ marginBottom: '1.5rem', color: '#3b82f6' }}>
+              <Icon.Shield />
+            </div>
+            <h2 style={{ marginBottom: '1rem', fontSize: '1.4rem' }}>Create a Free Account</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', lineHeight: 1.6 }}>
+              You need to create a free account to save claims to the cloud, export them to PDF, and unlock the full dashboard. It takes 10 seconds.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button className="btn btn-secondary" onClick={() => setShowSignupModal(false)}>
+                Continue Editing
+              </button>
+              <button className="btn btn-primary" onClick={() => router.push('/login')}>
+                Sign Up Free &rarr;
+              </button>
+            </div>
           </div>
         </div>
       )}
