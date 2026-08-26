@@ -514,7 +514,13 @@ export default function App() {
     loadClaim();
   }, [currentClaimId]);
   const [savedClaims, setSavedClaims] = useState<SavedClaim[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
+  
+  const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistClearinghouse, setWaitlistClearinghouse] = useState('');
+  const [isSubmittingWaitlist, setIsSubmittingWaitlist] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+const [isSaving, setIsSaving] = useState(false);
   const [verifiedNpis, setVerifiedNpis] = useState<Record<string, NpiResult>>({});
   const [verifyingNpi, setVerifyingNpi] = useState<Record<string, boolean>>({});
   const [npiErrors, setNpiErrors] = useState<Record<string, string>>({});
@@ -796,7 +802,23 @@ export default function App() {
       showToast('EDI 837P exported!', 'success');
     };
 
-    const handleExportClick = async (type: 'PDF' | 'EDI') => {
+    
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingWaitlist(true);
+    try {
+      await supabase.from('clearinghouse_waitlist').insert([{
+        email: waitlistEmail,
+        clearinghouse: waitlistClearinghouse
+      }]);
+      setWaitlistSuccess(true);
+    } catch(err) {
+      console.error(err);
+      showToast('Error joining waitlist', 'error');
+    }
+    setIsSubmittingWaitlist(false);
+  };
+const handleExportClick = async (type: 'PDF' | 'EDI') => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       setShowSignupModal(true);
@@ -2019,6 +2041,14 @@ export default function App() {
                   >
                     <Icon.Download /> Export EDI
                   </button>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => setShowWaitlistModal(true)}
+                    style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
+                  >
+                    <Icon.Send /> Submit Electronically
+                  </button>
+
                 </div>
               </div>
             </div>
@@ -2331,7 +2361,67 @@ export default function App() {
           <span style={{ fontSize: '0.875rem', color: 'var(--text-primary)' }}>{toast.message}</span>
         </div>
       )}
-    </div>
+    
+      {/* CLEARINGHOUSE FAKE DOOR MODAL */}
+      {showWaitlistModal && (
+        <div className="modal-overlay" onClick={() => setShowWaitlistModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            {waitlistSuccess ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+                <Icon.CheckCircle size={48} color="#10b981" style={{ marginBottom: '1rem' }} />
+                <h2>You're on the list!</h2>
+                <p style={{ color: '#94a3b8', marginTop: '0.5rem' }}>
+                  We are building direct API integrations with major clearinghouses right now. We'll email you the moment it's ready for beta testing!
+                </p>
+                <button className="btn btn-primary" onClick={() => setShowWaitlistModal(false)} style={{ marginTop: '1.5rem', width: '100%' }}>
+                  Close
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2>Submit Electronically</h2>
+                <p style={{ color: '#94a3b8', marginBottom: '1.5rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                  We are currently building direct API integrations with major clearinghouses so you can submit claims with one click! 
+                  <br/><br/>
+                  Join the Beta waitlist below and tell us which clearinghouse you prefer.
+                </p>
+                <form onSubmit={handleWaitlistSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1' }}>Email Address</label>
+                    <input 
+                      type="email" 
+                      required 
+                      value={waitlistEmail}
+                      onChange={e => setWaitlistEmail(e.target.value)}
+                      placeholder="you@practice.com"
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: '#cbd5e1' }}>Which clearinghouse do you currently use? (Optional)</label>
+                    <input 
+                      type="text" 
+                      value={waitlistClearinghouse}
+                      onChange={e => setWaitlistClearinghouse(e.target.value)}
+                      placeholder="e.g. ClaimMD, Availity, Change Healthcare..."
+                      style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                    <button type="button" className="btn btn-secondary" onClick={() => setShowWaitlistModal(false)} style={{ flex: 1 }}>
+                      Cancel
+                    </button>
+                    <button type="submit" className={`btn btn-primary ${isSubmittingWaitlist ? 'loading' : ''}`} disabled={isSubmittingWaitlist} style={{ flex: 2 }}>
+                      {isSubmittingWaitlist ? 'Joining...' : 'Join Beta Waitlist'}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+</div>
   );
 }
 
