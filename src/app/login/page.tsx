@@ -21,7 +21,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: \\/app\
+          redirectTo: `${window.location.origin}/app`
         }
       });
       if (error) throw error;
