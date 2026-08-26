@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import * as Icon from 'react-feather';
 import './login.css';
+import TopNav from '@/components/TopNav';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -61,7 +62,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-page-wrapper">
+    <><TopNav /><div className="login-page-wrapper" style={{ minHeight: "calc(100vh - 64px)" }}>
       
       {/* Left Panel: Social Proof & Features */}
       <div className="login-left-panel">
@@ -182,5 +183,6 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }
