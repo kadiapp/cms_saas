@@ -21,7 +21,7 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/app`
+          redirectTo: `${window.location.origin}/app/editor`
         }
       });
       if (error) throw error;
@@ -50,7 +50,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push('/app'); // Redirect on successful login
+        router.push('/app/editor'); // Redirect on successful login
       }
     } catch (e: any) {
       setError(e.message || 'Authentication failed');
