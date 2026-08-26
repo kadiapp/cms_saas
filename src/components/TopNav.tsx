@@ -53,7 +53,7 @@ export default function TopNav() {
           </Link>
           <Link href="/app/editor" className={`topnav-link ${pathname === '/app/editor' ? 'active' : ''}`} onClick={closeMenu}>
             <Icon.Edit3 size={16} />
-            <span>Editor</span>
+            <span>AI Auto-Fill</span>
           </Link>
           <Link href="/app/coding-assistant" className={`topnav-link ${pathname === '/app/coding-assistant' ? 'active' : ''}`} onClick={closeMenu}>
             <Icon.Activity size={16} />
