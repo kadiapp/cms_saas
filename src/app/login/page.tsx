@@ -26,7 +26,7 @@ export default function LoginPage() {
       });
       if (error) throw error;
     } catch (e: any) {
-      setError(e.message || \Failed to connect to \\);
+      setError(e.message || `Failed to connect to ${provider}`);
     }
   };
 
