@@ -30,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (error) console.error('Sitemap DB Error:', error);
   if (articles) {
     const articleRoutes = articles.map((article) => ({
-      url: `${baseUrl}/blog/${article.slug}`,
+      url: `${baseUrl}/${article.slug}`,
       lastModified: new Date(article.published_at),
       changeFrequency: 'weekly' as const,
       priority: 0.8,

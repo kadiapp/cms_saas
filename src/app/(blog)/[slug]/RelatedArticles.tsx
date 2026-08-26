@@ -36,7 +36,7 @@ export default async function RelatedArticles({ currentArticleId }: { currentArt
       </h3>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         {articles.map((article) => (
-          <Link href={`/blog/${article.slug}`} key={article.id} style={{ textDecoration: 'none' }}>
+          <Link href={`/${article.slug}`} key={article.id} style={{ textDecoration: 'none' }}>
             <div className="related-card">
               <h4 style={{ 
                 color: '#e2e8f0', 

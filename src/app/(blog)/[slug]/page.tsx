@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { supabase } from '@/api/supabase';
 import { notFound } from 'next/navigation';
-import { decodeWPEntities } from '@/utils/decode';
+import { decodeWPEntities, cleanHtmlSchemas } from '@/utils/decode';
 import '@/app/globals.css';
 import TopNav from '@/components/TopNav';
 import TableOfContents from '@/components/TableOfContents';
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const absoluteUrl = `https://cms1500claimbilling.com/blog/${slug}`;
+  const absoluteUrl = `https://cms1500claimbilling.com/${slug}`;
 
   // Exactly replicates your Yoast SEO meta title and description, and adds OG tags
   return {
@@ -70,7 +70,7 @@ export default async function BlogPost({ params }: Props) {
     notFound();
   }
 
-    let cleanContent = article.content || '';
+    let cleanContent = cleanHtmlSchemas(article.content || '');
   // Clean up residual WordPress shortcodes from the database migration
   cleanContent = cleanContent.replace(/<div(?:(?!<div).)*?\[mb_[^\]]+\](?:(?!<div).)*?<\/div>/gis, '');
 
