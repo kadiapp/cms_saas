@@ -14,7 +14,7 @@ import { exportToPdf } from '@/pdfExport';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import { generate837P } from '@/ediExport';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
-import { verifyIcdCode, verifyCptCode, extractClaimFromText, supabase, saveClaim, getUserClaims, deleteClaim, getClaimById, getPayerRules, getProviders, getPatients, type CodeResult, type SavedClaim, type ProviderRecord, type PatientRecord } from '@/api/supabase';
+import { verifyIcdCode, verifyCptCode, extractClaimFromText, supabase, saveClaim, getUserClaims, deleteClaim, getClaimById, getPayerRules, getProviders, getPatients, logActivity, type CodeResult, type SavedClaim, type ProviderRecord, type PatientRecord } from '@/api/supabase';
 import { preScrubClaim } from '@/api/clearinghouse';
 
 // ============================================================
@@ -785,6 +785,7 @@ const [isSaving, setIsSaving] = useState(false);
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         showToast('PDF exported!', 'success');
+        logActivity('export_pdf');
       } catch (e) {
         showToast('Error exporting PDF', 'error');
       }
@@ -814,6 +815,7 @@ const [isSaving, setIsSaving] = useState(false);
         clearinghouse: waitlistClearinghouse
       }]);
       setWaitlistSuccess(true);
+      logActivity('join_waitlist', { clearinghouse: waitlistClearinghouse });
     } catch(err) {
       console.error(err);
       showToast('Error joining waitlist', 'error');

@@ -297,3 +297,18 @@ export async function savePatient(patient: PatientRecord): Promise<void> {
 export async function deletePatient(id: string): Promise<void> {
   await supabase.from('patients').delete().eq('id', id);
 }
+
+export async function logActivity(action: string, details: any = {}) {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id || null;
+    
+    await supabase.from('activity_log').insert([{
+      user_id: userId,
+      action: action,
+      details: details
+    }]);
+  } catch (err) {
+    console.warn('Failed to log activity', err);
+  }
+}
