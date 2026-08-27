@@ -74,6 +74,10 @@ export default async function BlogPost({ params }: Props) {
   // Clean up residual WordPress shortcodes from the database migration
   cleanContent = cleanContent.replace(/<div(?:(?!<div).)*?\[mb_[^\]]+\](?:(?!<div).)*?<\/div>/gis, '');
 
+
+  const articleTitleStr = decodeWPEntities(article.title || '');
+  const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /d{5}/.test(articleTitleStr) || /[A-Z]d{4}/i.test(articleTitleStr);
+
   return (
     <>
       <TopNav />
@@ -102,16 +106,28 @@ export default async function BlogPost({ params }: Props) {
             </div>
             
             
-            {/* INLINE SOFTWARE AD - TOP */}
-            <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: '0 0 8px 0' }}>Stop filling the CMS-1500 form by hand.</h3>
-                <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem' }}>Upload your superbill and let our AI auto-fill the CMS-1500 claim for you in 5 seconds. Catch coding errors and prevent denials before you submit.</p>
+            {/* DYNAMIC INLINE SOFTWARE AD - TOP */}
+            {isCptArticle ? (
+              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: '0 0 8px 0' }}>Are you billing this code correctly?</h3>
+                  <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem' }}>Use our free Medical Coding Assistant to instantly look up Medicare fee schedules, NCCI PTP edits, and mutually exclusive code conflicts for this procedure.</p>
+                </div>
+                <div>
+                  <a href="/app/coding-assistant" style={{ background: '#10b981', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>Launch Coding Assistant &rarr;</a>
+                </div>
               </div>
-              <div>
-                <a href="/app/editor" style={{ background: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>Try AI Auto-Fill for Free &rarr;</a>
+            ) : (
+              <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: '0 0 8px 0' }}>Stop filling the CMS-1500 form by hand.</h3>
+                  <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem' }}>Upload your superbill and let our AI auto-fill the CMS-1500 claim for you in 5 seconds. Catch coding errors and prevent denials before you submit.</p>
+                </div>
+                <div>
+                  <a href="/app/editor" style={{ background: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>Try AI Auto-Fill for Free &rarr;</a>
+                </div>
               </div>
-            </div>
+            )}
 
             <TableOfContents />
               <div className="blog-article-content" suppressHydrationWarning
