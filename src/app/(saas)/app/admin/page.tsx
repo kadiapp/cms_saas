@@ -6,7 +6,7 @@ import { supabase } from '@/api/supabase';
 import './AdminDashboard.css';
 
 // IMPORTANT: Replace this with your actual admin email address
-const ADMIN_EMAIL = 'admin@example.com'; 
+const ADMIN_EMAIL = 'tayebcherifabdelkadermiloud@gmail.com'; 
 
 export default function AdminDashboard() {
   const router = useRouter();
