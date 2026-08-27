@@ -812,7 +812,7 @@ const [isSaving, setIsSaving] = useState(false);
     e.preventDefault();
     setIsSubmittingWaitlist(true);
     try {
-      await supabase.from('clearinghouse_waitlist').insert([{
+      const { error: waitlistError } = await supabase.from('clearinghouse_waitlist').insert([{
         email: waitlistEmail,
         clearinghouse: waitlistClearinghouse
       }]);
