@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 
 import ScrollToTop from '@/components/ScrollToTop';
 import Analytics from '@/components/Analytics';
+import { PostHogProvider } from '@/providers/PostHogProvider';
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full w-full flex flex-col items-center bg-[#080a0f] text-gray-100">
+        <PostHogProvider>
         <Analytics />
         <div style={{ flex: '1 0 auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
           {children}
@@ -40,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </div>
         </footer>
         <ScrollToTop />
+        </PostHogProvider>
       </body>
     </html>
   );
