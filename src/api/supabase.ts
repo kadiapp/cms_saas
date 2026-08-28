@@ -338,8 +338,6 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
 }
 
 export async function checkCodePair(code1: string, code2: string): Promise<any> {
-  // To avoid Postgres statement timeouts from poor query planning on compound queries,
-  // we fetch all conflicts for code1 using the proven reliable function, then filter locally.
   const conflicts = await getNcciConflictsForCode(code1);
   
   const match = conflicts.find(c => 
@@ -352,16 +350,6 @@ export async function checkCodePair(code1: string, code2: string): Promise<any> 
   }
   
   const indicator = String(match.modifier_indicator);
-  if (indicator === '1') {
-    return { status: 'Modifier Required', modifier_indicator: '1' };
-  } else if (indicator === '0') {
-    return { status: 'Mutually Exclusive', modifier_indicator: '0' };
-  } else {
-    return { status: 'Allowed', modifier_indicator: indicator };
-  }
-}
-  
-  const indicator = String(allData[0].modifier_indicator);
   if (indicator === '1') {
     return { status: 'Modifier Required', modifier_indicator: '1' };
   } else if (indicator === '0') {
