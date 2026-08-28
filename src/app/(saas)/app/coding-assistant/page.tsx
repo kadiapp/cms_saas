@@ -333,7 +333,7 @@ export default function CodingAssistant() {
                 placeholder="Patient presents today with severe right knee pain. X-rays were taken showing advanced osteoarthritis. Administered a 40mg Kenalog injection into the right knee joint under ultrasound guidance..."
                 style={{ width: '100%', height: '200px', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '1rem', resize: 'vertical' }}
               />
-              <button type="submit" className="ca-btn-primary" disabled={isAutoLoading || !autoNote.trim()} style={{alignSelf: 'flex-start'}}>
+              <button type="submit" className={`btn btn-primary ca-btn ${isAutoLoading ? 'loading' : ''}`} disabled={isAutoLoading || !autoNote.trim()} style={{alignSelf: 'flex-start', marginTop: '16px'}}>
                 {isAutoLoading ? 'Analyzing Note...' : 'Auto-Code Note'}
               </button>
             </form>
