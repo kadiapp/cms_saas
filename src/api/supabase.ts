@@ -338,18 +338,30 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
 }
 
 export async function checkCodePair(code1: string, code2: string): Promise<any> {
-  // Query where code_1=code1 AND code_2=code2 OR code_1=code2 AND code_2=code1
-  const { data, error } = await supabaseCoding
+  const { data: data1, error: e1 } = await supabaseCoding
     .from('cms_ncci_edits')
     .select('code_1, code_2, modifier_indicator')
-    .or(`and(code_1.eq.${code1},code_2.eq.${code2}),and(code_1.eq.${code2},code_2.eq.${code1})`)
+    .eq('code_1', code1)
+    .eq('code_2', code2)
     .limit(1);
     
-  if (error || !data || data.length === 0) {
+  const { data: data2, error: e2 } = await supabaseCoding
+    .from('cms_ncci_edits')
+    .select('code_1, code_2, modifier_indicator')
+    .eq('code_1', code2)
+    .eq('code_2', code1)
+    .limit(1);
+
+  if (e1) throw new Error(e1.message);
+  if (e2) throw new Error(e2.message);
+
+  const allData = [...(data1 || []), ...(data2 || [])];
+  
+  if (allData.length === 0) {
     return { status: 'Allowed', modifier_indicator: null };
   }
   
-  const indicator = data[0].modifier_indicator;
+  const indicator = String(allData[0].modifier_indicator);
   if (indicator === '1') {
     return { status: 'Modifier Required', modifier_indicator: '1' };
   } else {
