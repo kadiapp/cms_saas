@@ -6,7 +6,7 @@ import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, che
 import './CodingAssistant.css';
 
 export default function CodingAssistant() {
-  const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci'>('dictionary');
+  const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto'>('dictionary');
   
   // Tab 1: Dictionary State
   const [dictQuery, setDictQuery] = useState('');
@@ -16,12 +16,43 @@ export default function CodingAssistant() {
   const [selectedCodeType, setSelectedCodeType] = useState<'CPT' | 'ICD'>('CPT');
   const [selectedFee, setSelectedFee] = useState<any>(null);
   
+  // Tab 3: Auto-Coder State
+  const [autoNote, setAutoNote] = useState('');
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
+  const [autoResults, setAutoResults] = useState<any>(null);
+  
   // Tab 2: NCCI State
   const [code1, setCode1] = useState('');
   const [code2, setCode2] = useState('');
   const [isNcciLoading, setIsNcciLoading] = useState(false);
   const [ncciResult, setNcciResult] = useState<any>(null);
   const [ncciError, setNcciError] = useState('');
+
+  // -----------------------------------------------------
+  // Auto-Coder Logic
+  // -----------------------------------------------------
+  const handleAutoCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!autoNote.trim()) return;
+    
+    setIsAutoLoading(true);
+    setAutoResults(null);
+    try {
+      const res = await fetch('/api/code-suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: autoNote })
+      });
+      if (!res.ok) throw new Error("Failed to process note");
+      const data = await res.json();
+      setAutoResults(data.data);
+    } catch(err) {
+      console.error(err);
+      alert("Error processing clinical note.");
+    } finally {
+      setIsAutoLoading(false);
+    }
+  };
 
   // -----------------------------------------------------
   // Dictionary Logic
@@ -281,6 +312,98 @@ export default function CodingAssistant() {
           )}
         </div>
       )}
+      
+      {activeTab === 'auto' && (
+        <div className="ca-tab-content">
+          <div className="ca-card">
+            <h2 className="ca-card-title">AI Auto-Coder</h2>
+            <p className="ca-card-subtitle" style={{marginBottom: 20}}>Paste a clinical note, operative report, or visit summary. Our AI will extract the medical concepts and use semantic search to suggest validated CPT and ICD-10 codes.</p>
+            
+            <form onSubmit={handleAutoCode} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <textarea
+                value={autoNote}
+                onChange={e => setAutoNote(e.target.value)}
+                placeholder="Patient presents today with severe right knee pain. X-rays were taken showing advanced osteoarthritis. Administered a 40mg Kenalog injection into the right knee joint under ultrasound guidance..."
+                style={{ width: '100%', height: '200px', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '1rem', resize: 'vertical' }}
+              />
+              <button type="submit" className="ca-btn-primary" disabled={isAutoLoading || !autoNote.trim()} style={{alignSelf: 'flex-start'}}>
+                {isAutoLoading ? 'Analyzing Note...' : 'Auto-Code Note'}
+              </button>
+            </form>
+          </div>
+          
+          {isAutoLoading && (
+            <div className="ca-card" style={{ marginTop: 24, textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+              <Icon.Loader size={32} className="spinning" style={{marginBottom: 16}} />
+              <p>Reading note, extracting concepts, and querying vector database...</p>
+            </div>
+          )}
+          
+          {autoResults && (
+            <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+              
+              {autoResults.diagnoses?.length > 0 && (
+                <div className="ca-card">
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', color: '#fff' }}>ICD-10 Diagnoses</h3>
+                  {autoResults.diagnoses.map((diag: any, i: number) => (
+                    <div key={i} style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '16px' }}>
+                      <div style={{ fontWeight: 'bold', color: '#60a5fa', marginBottom: '8px' }}>Concept: {diag.concept}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '16px', borderLeft: '2px solid #334155', paddingLeft: '12px' }}>
+                        "{diag.quote}"
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }}>Top Database Matches:</div>
+                        {diag.suggestions.map((sug: any, j: number) => (
+                          <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px' }}>
+                            <div>
+                              <strong style={{ color: '#fff' }}>{sug.code}</strong> - {sug.short_description}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
+                              {sug.billable ? (
+                                <span className="ca-badge" style={{background: 'rgba(34,197,94,0.2)', color: '#4ade80'}}>Billable</span>
+                              ) : (
+                                <span className="ca-badge" style={{background: 'rgba(239,68,68,0.2)', color: '#f87171'}}>Parent (Need Child)</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {autoResults.procedures?.length > 0 && (
+                <div className="ca-card">
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', color: '#fff' }}>CPT Procedures</h3>
+                  {autoResults.procedures.map((proc: any, i: number) => (
+                    <div key={i} style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '16px' }}>
+                      <div style={{ fontWeight: 'bold', color: '#a855f7', marginBottom: '8px' }}>Concept: {proc.concept}</div>
+                      <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '16px', borderLeft: '2px solid #334155', paddingLeft: '12px' }}>
+                        "{proc.quote}"
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }}>Top Database Matches:</div>
+                        {proc.suggestions.map((sug: any, j: number) => (
+                          <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px' }}>
+                            <div>
+                              <strong style={{ color: '#fff' }}>{sug.code}</strong> - {sug.short_description}
+                            </div>
+                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
