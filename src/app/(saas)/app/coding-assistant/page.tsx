@@ -146,6 +146,13 @@ export default function CodingAssistant() {
         >
           <Icon.Shield size={18} /> NCCI Edit Checker
         </button>
+        <button 
+          className={`ca-tab ${activeTab === 'auto' ? 'active' : ''}`}
+          onClick={() => setActiveTab('auto')}
+          style={{color: '#a855f7'}}
+        >
+          <Icon.Cpu size={18} /> AI Auto-Coder
+        </button>
       </div>
 
       {activeTab === 'dictionary' && (
