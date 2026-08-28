@@ -364,7 +364,9 @@ export async function checkCodePair(code1: string, code2: string): Promise<any> 
   const indicator = String(allData[0].modifier_indicator);
   if (indicator === '1') {
     return { status: 'Modifier Required', modifier_indicator: '1' };
-  } else {
+  } else if (indicator === '0') {
     return { status: 'Mutually Exclusive', modifier_indicator: '0' };
+  } else {
+    return { status: 'Allowed', modifier_indicator: indicator };
   }
 }
