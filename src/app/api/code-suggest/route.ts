@@ -26,7 +26,7 @@ CRITICAL MEDICAL CODING RULES:
 1. Extract the primary diagnoses/conditions and primary procedures/services.
 2. DO NOT extract bundled surgical steps. Things like "making an incision", "surgical approach", "irrigating the site", "hemostasis", and "wound closure/sutures" are ALWAYS bundled into the global surgical package. Do not list them as separate procedures.
 3. DO NOT extract "General Anesthesia" or local anesthesia unless the note explicitly indicates you are billing for the anesthesiologist.
-4. Keep the 'concept' plain English but medically precise.
+4. CRITICAL FOR SEARCH: In the 'concept' string, you MUST translate the procedure into common CMS/AMA abbreviations to help the search engine. For example, instead of just "injection with ultrasound", write "injection (inj) joint/bursa with ultrasound (w/us)". Use abbreviations like w/o (without), px (procedure), dx (diagnosis), exc (excision), bilat (bilateral).
 
 For each extracted concept, provide the exact quote from the note that justifies it.
 
