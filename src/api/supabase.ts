@@ -24,7 +24,7 @@ export interface CodeResult {
 export async function verifyIcdCode(code: string): Promise<CodeResult> {
   const { data, error } = await supabase
     .from('cms_icd10_codes')
-    .select('code, short_description, long_description')
+    .select('code, short_description, long_description, billable')
     .eq('code', code.replace(/\./g, '').toUpperCase())
     .single();
 
@@ -200,7 +200,7 @@ export async function getFeeSchedule(codes: string[]): Promise<any[]> {
   
   const { data, error } = await supabaseCoding
     .from('cms_fee_schedule')
-    .select('cpt_code, non_facility_fee')
+    .select('cpt_code, non_facility_fee, facility_fee')
     .in('cpt_code', codes);
     
   if (error) {

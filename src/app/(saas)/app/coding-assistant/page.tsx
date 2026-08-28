@@ -185,20 +185,36 @@ export default function CodingAssistant() {
 
                 {selectedCodeType === 'CPT' && selectedFee && (
                   <div className="ca-detail-section fee-section">
-                    <h4>Medicare National Fee Schedule (Non-Facility)</h4>
-                    <div className="fee-amount">
-                      ${Number(selectedFee.non_facility_fee).toFixed(2)}
+                    <h4>Medicare National Fee Schedule</h4>
+                    <div style={{ display: 'flex', gap: '40px', marginTop: '12px' }}>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '4px' }}>Non-Facility (Office)</div>
+                        <div className="fee-amount" style={{ margin: 0 }}>${Number(selectedFee.non_facility_fee).toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '4px' }}>Facility (Hospital)</div>
+                        <div className="fee-amount" style={{ margin: 0, color: '#a78bfa' }}>${Number(selectedFee.facility_fee).toFixed(2)}</div>
+                      </div>
                     </div>
-                    <p className="fee-disclaimer">Rates vary by MAC and locality.</p>
+                    <p className="fee-disclaimer" style={{ marginTop: '16px' }}>Rates vary by MAC and locality.</p>
                   </div>
                 )}
                 
-                {selectedCodeType === 'ICD' && (
-                  <div className="ca-detail-section fee-section" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                {selectedCodeType === 'ICD' && selectedCodeDetails && (
+                  <div className="ca-detail-section fee-section" style={{ background: selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)', border: `1px solid ${selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
                      <h4>Billable Status</h4>
-                     <div style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                       <Icon.CheckCircle size={18} /> Official ICD-10-CM Code
-                     </div>
+                     {selectedCodeDetails.billable ? (
+                       <div style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                         <Icon.CheckCircle size={18} /> Valid for Submission
+                       </div>
+                     ) : (
+                       <div style={{ color: '#ef4444', fontWeight: 'bold', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                           <Icon.XCircle size={18} /> Not Billable (Requires greater specificity)
+                         </div>
+                         <span style={{ fontSize: '0.85rem', color: '#fca5a5', fontWeight: 'normal' }}>You cannot bill this code. You must select a more specific child code.</span>
+                       </div>
+                     )}
                   </div>
                 )}
               </div>
