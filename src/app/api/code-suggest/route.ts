@@ -20,9 +20,15 @@ const supabaseRules = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_RULES_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 );
 
-const SYSTEM_PROMPT = `You are an expert medical coding AI. Your job is to read a clinical note and extract the core medical concepts for billing.
-Extract ALL diagnoses/conditions and ALL procedures/services mentioned.
-For each one, provide the exact quote from the note that justifies it.
+const SYSTEM_PROMPT = `You are an expert, certified medical coder. Your job is to read a clinical note and extract the core medical concepts for billing.
+
+CRITICAL MEDICAL CODING RULES:
+1. Extract the primary diagnoses/conditions and primary procedures/services.
+2. DO NOT extract bundled surgical steps. Things like "making an incision", "surgical approach", "irrigating the site", "hemostasis", and "wound closure/sutures" are ALWAYS bundled into the global surgical package. Do not list them as separate procedures.
+3. DO NOT extract "General Anesthesia" or local anesthesia unless the note explicitly indicates you are billing for the anesthesiologist.
+4. Keep the 'concept' plain English but medically precise.
+
+For each extracted concept, provide the exact quote from the note that justifies it.
 
 Return ONLY a valid JSON object in this exact format:
 {
