@@ -312,3 +312,47 @@ export async function logActivity(action: string, details: any = {}) {
     console.warn('Failed to log activity', err);
   }
 }
+
+
+export async function searchCodeDictionary(query: string): Promise<{ cpt: any[], icd: any[] }> {
+  const searchTerm = `%${query.toUpperCase()}%`;
+  
+  // Search CPT
+  const { data: cptData, error: cptError } = await supabase
+    .from('cms_cpt_codes')
+    .select('code, short_description')
+    .or(`code.ilike.${searchTerm},short_description.ilike.${searchTerm},long_description.ilike.${searchTerm}`)
+    .limit(20);
+
+  // Search ICD-10
+  const { data: icdData, error: icdError } = await supabase
+    .from('cms_icd10_codes')
+    .select('code, short_description')
+    .or(`code.ilike.${searchTerm},short_description.ilike.${searchTerm},long_description.ilike.${searchTerm}`)
+    .limit(20);
+
+  return {
+    cpt: cptData || [],
+    icd: icdData || []
+  };
+}
+
+export async function checkCodePair(code1: string, code2: string): Promise<any> {
+  // Query where code_1=code1 AND code_2=code2 OR code_1=code2 AND code_2=code1
+  const { data, error } = await supabaseCoding
+    .from('cms_ncci_edits')
+    .select('code_1, code_2, modifier_indicator')
+    .or(`and(code_1.eq.${code1},code_2.eq.${code2}),and(code_1.eq.${code2},code_2.eq.${code1})`)
+    .limit(1);
+    
+  if (error || !data || data.length === 0) {
+    return { status: 'Allowed', modifier_indicator: null };
+  }
+  
+  const indicator = data[0].modifier_indicator;
+  if (indicator === '1') {
+    return { status: 'Modifier Required', modifier_indicator: '1' };
+  } else {
+    return { status: 'Mutually Exclusive', modifier_indicator: '0' };
+  }
+}
