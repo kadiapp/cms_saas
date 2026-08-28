@@ -338,28 +338,28 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
 }
 
 export async function checkCodePair(code1: string, code2: string): Promise<any> {
-  const { data: data1, error: e1 } = await supabaseCoding
-    .from('cms_ncci_edits')
-    .select('code_1, code_2, modifier_indicator')
-    .eq('code_1', code1)
-    .eq('code_2', code2)
-    .limit(1);
-    
-  const { data: data2, error: e2 } = await supabaseCoding
-    .from('cms_ncci_edits')
-    .select('code_1, code_2, modifier_indicator')
-    .eq('code_1', code2)
-    .eq('code_2', code1)
-    .limit(1);
-
-  if (e1) throw new Error(e1.message);
-  if (e2) throw new Error(e2.message);
-
-  const allData = [...(data1 || []), ...(data2 || [])];
+  // To avoid Postgres statement timeouts from poor query planning on compound queries,
+  // we fetch all conflicts for code1 using the proven reliable function, then filter locally.
+  const conflicts = await getNcciConflictsForCode(code1);
   
-  if (allData.length === 0) {
+  const match = conflicts.find(c => 
+    (c.code_1 === code1 && c.code_2 === code2) ||
+    (c.code_1 === code2 && c.code_2 === code1)
+  );
+
+  if (!match) {
     return { status: 'Allowed', modifier_indicator: null };
   }
+  
+  const indicator = String(match.modifier_indicator);
+  if (indicator === '1') {
+    return { status: 'Modifier Required', modifier_indicator: '1' };
+  } else if (indicator === '0') {
+    return { status: 'Mutually Exclusive', modifier_indicator: '0' };
+  } else {
+    return { status: 'Allowed', modifier_indicator: indicator };
+  }
+}
   
   const indicator = String(allData[0].modifier_indicator);
   if (indicator === '1') {
