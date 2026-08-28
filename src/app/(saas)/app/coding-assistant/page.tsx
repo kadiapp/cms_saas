@@ -147,7 +147,8 @@ export default function CodingAssistant() {
                   {dictResults.cpt.map(c => (
                     <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, 'CPT')}>
                       <span className="ca-badge cpt">CPT</span>
-                      <strong>{c.code}</strong> - {c.short_description}
+                      <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
+                      <Icon.ChevronRight size={16} color="#64748b" />
                     </div>
                   ))}
                   {dictResults.cpt.length === 0 && <p className="ca-empty-text">No CPT codes found.</p>}
@@ -156,7 +157,8 @@ export default function CodingAssistant() {
                   {dictResults.icd.map(c => (
                     <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, 'ICD')}>
                       <span className="ca-badge icd">ICD</span>
-                      <strong>{c.code}</strong> - {c.short_description}
+                      <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
+                      <Icon.ChevronRight size={16} color="#64748b" />
                     </div>
                   ))}
                   {dictResults.icd.length === 0 && <p className="ca-empty-text">No ICD codes found.</p>}
