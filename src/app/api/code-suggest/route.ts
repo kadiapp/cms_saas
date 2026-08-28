@@ -4,21 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-// Create Supabase clients directly in the API to avoid importing client-side code
-const supabaseMain = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '', 
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
-
-const supabaseEmbeddings = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_EMBEDDINGS_URL || '', 
-  process.env.SUPABASE_EMBEDDINGS_SERVICE_ROLE_KEY || ''
-);
-
-const supabaseRules = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_RULES_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '', 
-  process.env.NEXT_PUBLIC_SUPABASE_RULES_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-);
+const supabaseMain = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
+const supabaseEmbeddings = createClient(process.env.NEXT_PUBLIC_SUPABASE_EMBEDDINGS_URL || '', process.env.SUPABASE_EMBEDDINGS_SERVICE_ROLE_KEY || '');
 
 const SYSTEM_PROMPT = `You are an expert, certified medical coder. Your job is to read a clinical note and extract the core medical concepts for billing.
 
@@ -51,22 +38,53 @@ async function getEmbedding(text: string): Promise<number[]> {
       outputDimensionality: 768
     })
   });
-  
   if (!response.ok) throw new Error("Failed to generate embedding");
   const data = await response.json();
   return data.embedding.values;
+}
+
+// NEW: Re-ranking function using Gemini Flash
+async function rerankCandidates(concept: string, candidates: any[], type: 'CPT' | 'ICD-10') {
+  if (candidates.length === 0) return [];
+  
+  const prompt = `You are an expert medical coder.
+I have a medical concept: "${concept}"
+And a list of potential ${type} codes retrieved from a database search. Many of the descriptions use heavy CMS abbreviations (like 'inj' for injection, 'w/us' for with ultrasound, 'px' for procedure).
+
+Here are the candidates:
+${candidates.map((c, i) => `[ID: ${i}] ${c.code} - ${c.short_description}`).join('\n')}
+
+Identify the top 3 best matching codes for the concept. 
+Return ONLY a valid JSON array of the IDs you selected, in order of best match to worst match. Example: [4, 0, 12]
+No markdown, no explanation, just the JSON array.`;
+
+  const res = await fetch(GEMINI_API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: "application/json" }
+    })
+  });
+
+  if (!res.ok) return candidates.slice(0, 3); // Fallback to raw vector scores
+  const data = await res.json();
+  const textOut = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+  try {
+    const ids = JSON.parse(textOut);
+    return ids.map((id: number) => candidates[id]).filter(Boolean).slice(0, 3);
+  } catch(e) {
+    return candidates.slice(0, 3); // Fallback
+  }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { note } = body;
+    if (!note) return NextResponse.json({ error: 'Missing note text' }, { status: 400 });
 
-    if (!note) {
-      return NextResponse.json({ error: 'Missing note text' }, { status: 400 });
-    }
-
-    // 1. Extract concepts using Gemini Flash
     const geminiRes = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -76,41 +94,36 @@ export async function POST(req: NextRequest) {
         generationConfig: { responseMimeType: "application/json" }
       })
     });
-
     if (!geminiRes.ok) throw new Error("Failed to call Gemini API");
     const geminiData = await geminiRes.json();
     const textOut = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!textOut) throw new Error("No text returned from Gemini");
     
     let extracted;
-    try {
-      extracted = JSON.parse(textOut);
-    } catch (e) {
-      throw new Error("Gemini returned invalid JSON");
-    }
+    try { extracted = JSON.parse(textOut || '{}'); } 
+    catch (e) { throw new Error("Gemini returned invalid JSON"); }
 
-    // 2. Process Diagnoses
     const diagnosisResults = [];
     for (const diag of extracted.diagnoses || []) {
       try {
         const vector = await getEmbedding(diag.concept);
         const { data: matches } = await supabaseEmbeddings.rpc('match_icd_embeddings', {
           query_embedding: vector,
-          match_threshold: 0.5,
-          match_count: 3
+          match_threshold: 0.3, // Lower threshold to cast a wider net
+          match_count: 20       // Grab top 20
         });
         
         if (matches && matches.length > 0) {
-          // Verify billable status in main DB
-          const codes = matches.map((m: any) => m.code);
-          const { data: verified } = await supabaseMain.from('cms_icd10_codes').select('code, billable').in('code', codes);
+          // Re-rank the top 20 using Gemini
+          const bestMatches = await rerankCandidates(diag.concept, matches, 'ICD-10');
           
+          const codes = bestMatches.map((m: any) => m.code);
+          const { data: verified } = await supabaseMain.from('cms_icd10_codes').select('code, billable').in('code', codes);
           const verifiedMap = new Map((verified || []).map((v: any) => [v.code, v.billable]));
           
           diagnosisResults.push({
             concept: diag.concept,
             quote: diag.quote,
-            suggestions: matches.map((m: any) => ({
+            suggestions: bestMatches.map((m: any) => ({
               ...m,
               billable: verifiedMap.get(m.code) === true
             }))
@@ -119,39 +132,31 @@ export async function POST(req: NextRequest) {
       } catch (e) { console.error("Error processing diag:", e); }
     }
 
-    // 3. Process Procedures
     const procedureResults = [];
     for (const proc of extracted.procedures || []) {
       try {
         const vector = await getEmbedding(proc.concept);
         const { data: matches } = await supabaseEmbeddings.rpc('match_cpt_embeddings', {
           query_embedding: vector,
-          match_threshold: 0.5,
-          match_count: 3
+          match_threshold: 0.3,
+          match_count: 20
         });
         
         if (matches && matches.length > 0) {
+          // Re-rank the top 20 using Gemini
+          const bestMatches = await rerankCandidates(proc.concept, matches, 'CPT');
           procedureResults.push({
             concept: proc.concept,
             quote: proc.quote,
-            suggestions: matches
+            suggestions: bestMatches
           });
         }
       } catch (e) { console.error("Error processing proc:", e); }
     }
     
-    // We can also run an NCCI check on the top 1 suggestions across all procedures
-    // But we'll leave that to the client for now to keep the API fast.
-
-    return NextResponse.json({
-      data: {
-        diagnoses: diagnosisResults,
-        procedures: procedureResults
-      }
-    });
+    return NextResponse.json({ data: { diagnoses: diagnosisResults, procedures: procedureResults } });
 
   } catch (err: any) {
-    console.error("Code Suggest Error:", err);
     return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
 }
