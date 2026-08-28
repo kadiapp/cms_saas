@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -102,57 +103,41 @@ export async function POST(req: NextRequest) {
     try { extracted = JSON.parse(textOut || '{}'); } 
     catch (e) { throw new Error("Gemini returned invalid JSON"); }
 
-    const diagnosisResults = [];
-    for (const diag of extracted.diagnoses || []) {
+    // Process all concepts in parallel to avoid Vercel timeouts
+    const processDiag = async (diag: any) => {
       try {
         const vector = await getEmbedding(diag.concept);
-        const { data: matches } = await supabaseEmbeddings.rpc('match_icd_embeddings', {
-          query_embedding: vector,
-          match_threshold: 0.3, // Lower threshold to cast a wider net
-          match_count: 20       // Grab top 20
-        });
-        
+        const { data: matches } = await supabaseEmbeddings.rpc('match_icd_embeddings', { query_embedding: vector, match_threshold: 0.3, match_count: 20 });
         if (matches && matches.length > 0) {
-          // Re-rank the top 20 using Gemini
           const bestMatches = await rerankCandidates(diag.concept, matches, 'ICD-10');
-          
           const codes = bestMatches.map((m: any) => m.code);
           const { data: verified } = await supabaseMain.from('cms_icd10_codes').select('code, billable').in('code', codes);
           const verifiedMap = new Map((verified || []).map((v: any) => [v.code, v.billable]));
-          
-          diagnosisResults.push({
-            concept: diag.concept,
-            quote: diag.quote,
-            suggestions: bestMatches.map((m: any) => ({
-              ...m,
-              billable: verifiedMap.get(m.code) === true
-            }))
-          });
+          return { concept: diag.concept, quote: diag.quote, suggestions: bestMatches.map((m: any) => ({ ...m, billable: verifiedMap.get(m.code) === true })) };
         }
-      } catch (e) { console.error("Error processing diag:", e); }
-    }
+      } catch (e) { console.error(e); }
+      return null;
+    };
 
-    const procedureResults = [];
-    for (const proc of extracted.procedures || []) {
+    const processProc = async (proc: any) => {
       try {
         const vector = await getEmbedding(proc.concept);
-        const { data: matches } = await supabaseEmbeddings.rpc('match_cpt_embeddings', {
-          query_embedding: vector,
-          match_threshold: 0.3,
-          match_count: 20
-        });
-        
+        const { data: matches } = await supabaseEmbeddings.rpc('match_cpt_embeddings', { query_embedding: vector, match_threshold: 0.3, match_count: 20 });
         if (matches && matches.length > 0) {
-          // Re-rank the top 20 using Gemini
           const bestMatches = await rerankCandidates(proc.concept, matches, 'CPT');
-          procedureResults.push({
-            concept: proc.concept,
-            quote: proc.quote,
-            suggestions: bestMatches
-          });
+          return { concept: proc.concept, quote: proc.quote, suggestions: bestMatches };
         }
-      } catch (e) { console.error("Error processing proc:", e); }
-    }
+      } catch (e) { console.error(e); }
+      return null;
+    };
+
+    const [diagRes, procRes] = await Promise.all([
+      Promise.all((extracted.diagnoses || []).map(processDiag)),
+      Promise.all((extracted.procedures || []).map(processProc))
+    ]);
+
+    const diagnosisResults = diagRes.filter(Boolean);
+    const procedureResults = procRes.filter(Boolean);
     
     return NextResponse.json({ data: { diagnoses: diagnosisResults, procedures: procedureResults } });
 
