@@ -216,14 +216,15 @@ export async function POST(req: NextRequest) {
     let ncciConflicts = [];
     
     if (allCptCodes.length > 1) {
+      // Optimize query: fetch by code_1 (indexed) and filter code_2 in memory to prevent Supabase timeouts
       const { data: edits } = await supabaseRules
         .from('cms_ncci_edits')
         .select('*')
-        .in('code_1', allCptCodes)
-        .in('code_2', allCptCodes);
+        .in('code_1', allCptCodes);
         
       if (edits && edits.length > 0) {
-        ncciConflicts = edits.map(edit => ({
+        const relevant = edits.filter(e => allCptCodes.includes(e.code_2));
+        ncciConflicts = relevant.map(edit => ({
           primary: edit.code_1,
           bundled: edit.code_2,
           modifier_allowed: edit.modifier_indicator === '1'
