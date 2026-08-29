@@ -123,15 +123,15 @@ export async function POST(req: NextRequest) {
     try { extracted = JSON.parse(textOut || '{}'); }
     catch (e) { throw new Error('Gemini returned invalid JSON'); }
 
-    // ── STEP 2 + 3: For each code, verify in DB → fallback to vector if needed ─
+    // ── STEP 2 + 3: For each code, verify in DB → fallback to vector ONLY if AI missed ─
     const processDiag = async (diag: any) => {
       // Try to verify the AI's suggested code first
       const verified = await verifyCodeInDB(diag.code, 'ICD');
-      
+
       let suggestions = [];
 
       if (verified) {
-        // AI code confirmed in database — mark it as AI suggested
+        // ✅ AI code confirmed — show ONLY this. No vector noise.
         suggestions.push({
           code: verified.code,
           short_description: verified.short_description,
@@ -139,14 +139,11 @@ export async function POST(req: NextRequest) {
           billable: verified.billable === true,
           source: 'ai'
         });
-      }
-
-      // Always add vector alternatives to give the biller options (fallback fills if AI missed)
-      try {
-        const vectorMatches = await vectorFallback(diag.concept, 'ICD', 3);
-        for (const m of vectorMatches) {
-          // Don't duplicate the AI code we already have
-          if (!suggestions.find(s => s.code === m.code)) {
+      } else {
+        // ❌ AI code not in DB — run vector search as fallback
+        try {
+          const vectorMatches = await vectorFallback(diag.concept, 'ICD', 3);
+          for (const m of vectorMatches) {
             const dbRecord = await verifyCodeInDB(m.code, 'ICD');
             suggestions.push({
               code: m.code,
@@ -156,10 +153,9 @@ export async function POST(req: NextRequest) {
               source: 'vector'
             });
           }
-        }
-      } catch(e) { /* vector fallback failed, that's ok */ }
+        } catch(e) { /* vector fallback failed */ }
+      }
 
-      // If AI code wasn't in DB and vector search also failed, skip this concept
       if (suggestions.length === 0) return null;
 
       return {
@@ -178,24 +174,22 @@ export async function POST(req: NextRequest) {
       let suggestions = [];
 
       if (verified) {
-        // AI code confirmed in database — mark as AI suggested
+        // ✅ AI code confirmed — show ONLY this. No vector noise.
         suggestions.push({
           code: verified.code,
           short_description: verified.short_description,
           similarity: 1.0,
           source: 'ai'
         });
-      }
-
-      // Always add vector alternatives
-      try {
-        const vectorMatches = await vectorFallback(proc.concept, 'CPT', 3);
-        for (const m of vectorMatches) {
-          if (!suggestions.find(s => s.code === m.code)) {
+      } else {
+        // ❌ AI code not in DB — run vector search as fallback
+        try {
+          const vectorMatches = await vectorFallback(proc.concept, 'CPT', 3);
+          for (const m of vectorMatches) {
             suggestions.push({ ...m, source: 'vector' });
           }
-        }
-      } catch(e) { /* vector fallback failed */ }
+        } catch(e) { /* vector fallback failed */ }
+      }
 
       if (suggestions.length === 0) return null;
 
