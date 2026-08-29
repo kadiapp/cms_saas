@@ -457,25 +457,21 @@ export default function CodingAssistant() {
                                   </button>
                                 </div>
                               </div>
-                              {sug.ncci_conflicts && sug.ncci_conflicts.length > 0 && sug.ncci_conflicts.map((conflict: any, k: number) => {
-                                const isPrimary = conflict.primary === sug.code;
-                                const otherCode = isPrimary ? conflict.bundled : conflict.primary;
-                                if (isPrimary) return null; // We usually warn on the bundled (column 2) code
-                                return (
-                                  <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', padding: '8px 12px', borderRadius: '6px', fontSize: '0.8rem', color: '#fef08a' }}>
-                                    <Icon.AlertTriangle size={14} style={{ flexShrink: 0, marginTop: '2px', color: '#eab308' }} />
-                                    <div>
-                                      <strong>NCCI Edit Warning:</strong> This code is bundled into <strong style={{color: '#fff'}}>{otherCode}</strong>. 
-                                      {conflict.modifier_allowed ? ' A modifier (e.g., 59, XS) is required if performed on a separate lesion or site.' : ' No modifier is allowed. You cannot bill these together.'}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ))}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}
+                  
+                  {/* Generic NCCI Edit Warning if multiple procedures exist */}
+                  {autoResults.procedures.length > 1 && (
+                    <div style={{ marginTop: '16px', display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', padding: '12px 16px', borderRadius: '6px', fontSize: '0.85rem', color: '#fef08a' }}>
+                      <Icon.AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#eab308' }} />
+                      <div>
+                        <strong>Multiple Procedures Detected:</strong> The AI has extracted multiple CPT codes. Please use the <strong>NCCI Edit Checker</strong> tab to verify that these codes are not bundled together before submitting your claim.
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               

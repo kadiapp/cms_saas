@@ -210,34 +210,6 @@ export async function POST(req: NextRequest) {
     ]);
 
     const finalProcedures = procRes.filter(Boolean);
-    
-    // ── STEP 4: Check for NCCI Edits between all suggested CPT codes ──────────
-    const allCptCodes = finalProcedures.flatMap(p => p.suggestions.map(s => s.code));
-    let ncciConflicts = [];
-    
-    if (allCptCodes.length > 1) {
-      // Use double .in() to find the intersection. This prevents hitting Supabase's 1000-row limit.
-      const { data: edits } = await supabaseRules
-        .from('cms_ncci_edits')
-        .select('*')
-        .in('code_1', allCptCodes)
-        .in('code_2', allCptCodes);
-        
-      if (edits && edits.length > 0) {
-        ncciConflicts = edits.map(edit => ({
-          primary: edit.code_1,
-          bundled: edit.code_2,
-          modifier_allowed: edit.modifier_indicator === '1'
-        }));
-      }
-    }
-    
-    // Inject NCCI conflicts into the procedures that have them
-    for (const proc of finalProcedures) {
-      for (const sug of proc.suggestions) {
-        sug.ncci_conflicts = ncciConflicts.filter(c => c.bundled === sug.code || c.primary === sug.code);
-      }
-    }
 
     return NextResponse.json({
       data: {
