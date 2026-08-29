@@ -26,18 +26,24 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>3. AI Processing & Third Parties</h2>
-            <p>We utilize advanced AI models (such as Google Gemini) to automate data extraction. By using our service, you consent to the transmission of document contents to these trusted third-party subprocessors exclusively for the purpose of data extraction. All data transmitted is encrypted in transit using TLS 1.2+.</p>
+            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>3. "Zero Data Retention" AI Processing</h2>
+            <p>Our platform uses advanced Artificial Intelligence (the "AI Auto-Coder") to extract medical concepts from your operative notes. We maintain a strict <strong>Zero Data Retention policy</strong> for all AI endpoints. Specifically:</p>
+            <ul style={{ paddingLeft: '20px', marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px', color: '#cbd5e1' }}>
+              <li><strong>No Model Training:</strong> Your clinical notes and Protected Health Information (PHI) are <strong>never</strong> used to train, fine-tune, or improve our AI models or third-party AI models.</li>
+              <li><strong>Stateless Processing:</strong> Text submitted to the AI Auto-Coder is processed in memory and discarded immediately upon returning the suggested codes. We do not store your raw clinical notes in our databases unless you explicitly choose to save a claim.</li>
+              <li><strong>Encrypted Pipelines:</strong> All data sent to our enterprise AI subprocessors is transmitted via secure, encrypted channels (TLS 1.2+) under strict enterprise confidentiality agreements.</li>
+            </ul>
           </section>
 
           <section>
-            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>4. Data Retention</h2>
-            <p>Your claim data is saved to your secure account dashboard. You have full rights to delete any claim at any time. When a claim is deleted, the data is permanently removed from our active databases.</p>
+            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>4. Data Retention & Your Dashboard</h2>
+            <p>If you choose to export your codes into a CMS-1500 claim form on your dashboard, that claim data is saved to your secure, encrypted database instance. You maintain absolute control over this data. You have full rights to permanently delete any claim, patient profile, or billing record at any time.</p>
           </section>
 
           <section>
-            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>5. HIPAA Business Associate Agreement (BAA)</h2>
-            <p>For covered entities, this agreement serves as an acknowledgment that 1500 Claim Billing utilizes commercially reasonable administrative, physical, and technical safeguards to protect PHI. If you require a signed BAA, please contact our support team before processing live patient data.</p>
+            <h2 style={{ color: '#fff', fontSize: '1.25rem', marginBottom: '12px' }}>5. HIPAA Compliance & Business Associate Agreement (BAA)</h2>
+            <p>We built this platform from the ground up for healthcare professionals. 1500 Claim Billing implements commercially reasonable administrative, physical, and technical safeguards in compliance with HIPAA guidelines.</p>
+            <p style={{ marginTop: '8px' }}>For clinics, hospitals, and medical billing agencies (Covered Entities), we offer a formalized <strong>Business Associate Agreement (BAA)</strong>. Executing a BAA with us ensures that utilizing our AI Auto-Coder is legally compliant for your organization. Please contact our compliance team to execute a signed BAA before submitting live PHI.</p>
           </section>
 
           <section>
