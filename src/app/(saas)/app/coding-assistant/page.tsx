@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import * as Icon from 'react-feather';
 import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair } from '@/api/supabase';
+import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
 export default function CodingAssistant() {
@@ -20,6 +21,37 @@ export default function CodingAssistant() {
   const [autoNote, setAutoNote] = useState('');
   const [isAutoLoading, setIsAutoLoading] = useState(false);
   const [autoResults, setAutoResults] = useState<any>(null);
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsPdfLoading(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const text = await extractTextFromPdf(arrayBuffer);
+      setAutoNote(text);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to extract text from PDF.");
+    } finally {
+      setIsPdfLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+  
+  const handleStageCode = (code: string, type: 'CPT' | 'ICD') => {
+    const existing = JSON.parse(localStorage.getItem('claimpilot_staged_codes') || '[]');
+    if (!existing.find((x: any) => x.code === code)) {
+      existing.push({ code, type, timestamp: Date.now() });
+      localStorage.setItem('claimpilot_staged_codes', JSON.stringify(existing));
+      alert(`${code} has been staged! Go to the CMS-1500 editor to apply it.`);
+    } else {
+      alert(`${code} is already staged.`);
+    }
+  };
   
   // Tab 2: NCCI State
   const [code1, setCode1] = useState('');
@@ -328,15 +360,21 @@ export default function CodingAssistant() {
             
             <form onSubmit={handleAutoCode} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <textarea
-                value={autoNote}
-                onChange={e => setAutoNote(e.target.value)}
-                placeholder="Patient presents today with severe right knee pain. X-rays were taken showing advanced osteoarthritis. Administered a 40mg Kenalog injection into the right knee joint under ultrasound guidance..."
-                style={{ width: '100%', height: '200px', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '1rem', resize: 'vertical' }}
-              />
-              <button type="submit" className={`btn btn-primary ca-btn ${isAutoLoading ? 'loading' : ''}`} disabled={isAutoLoading || !autoNote.trim()} style={{alignSelf: 'flex-start', marginTop: '16px'}}>
-                {isAutoLoading ? 'Analyzing Note...' : 'Auto-Code Note'}
-              </button>
-            </form>
+                  value={autoNote}
+                  onChange={e => setAutoNote(e.target.value)}
+                  placeholder="Patient presents today with severe right knee pain. X-rays were taken showing advanced osteoarthritis. Administered a 40mg Kenalog injection into the right knee joint under ultrasound guidance..."
+                  style={{ width: '100%', height: '200px', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.3)', color: '#fff', fontSize: '1rem', resize: 'vertical' }}
+                />
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <button type="submit" className={`btn btn-primary ca-btn ${isAutoLoading ? 'loading' : ''}`} disabled={isAutoLoading || !autoNote.trim()}>
+                    {isAutoLoading ? 'Analyzing Note...' : 'Auto-Code Note'}
+                  </button>
+                  <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: 'none' }} onChange={handlePdfUpload} />
+                  <button type="button" className="btn btn-secondary ca-btn" onClick={() => fileInputRef.current?.click()} disabled={isPdfLoading}>
+                    {isPdfLoading ? 'Reading PDF...' : <><Icon.Upload size={16} style={{marginRight: 8}}/> Upload PDF</>}
+                  </button>
+                </div>
+              </form>
           </div>
           
           {isAutoLoading && (
@@ -366,13 +404,16 @@ export default function CodingAssistant() {
                               <strong style={{ color: '#fff' }}>{sug.code}</strong> - {sug.short_description}
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
-                              {sug.billable ? (
-                                <span className="ca-badge" style={{background: 'rgba(34,197,94,0.2)', color: '#4ade80'}}>Billable</span>
-                              ) : (
-                                <span className="ca-badge" style={{background: 'rgba(239,68,68,0.2)', color: '#f87171'}}>Parent (Need Child)</span>
-                              )}
-                            </div>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
+                                {sug.billable ? (
+                                  <span className="ca-badge" style={{background: 'rgba(34,197,94,0.2)', color: '#4ade80'}}>Billable</span>
+                                ) : (
+                                  <span className="ca-badge" style={{background: 'rgba(239,68,68,0.2)', color: '#f87171'}}>Parent (Need Child)</span>
+                                )}
+                                <button type="button" onClick={() => handleStageCode(sug.code, 'ICD')} style={{ padding: '4px 8px', background: 'rgba(59,130,246,0.2)', border: '1px solid #3b82f6', borderRadius: '4px', color: '#60a5fa', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <Icon.Plus size={12}/> Stage
+                                </button>
+                              </div>
                           </div>
                         ))}
                       </div>
