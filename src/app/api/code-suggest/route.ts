@@ -64,7 +64,7 @@ No markdown, no explanation, just the JSON array.`;
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json" }
+      generationConfig: { responseMimeType: "application/json", temperature: 0.0 }
     })
   });
 
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         contents: [{ role: "user", parts: [{ text: note }] }],
         systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        generationConfig: { responseMimeType: "application/json" }
+        generationConfig: { responseMimeType: "application/json", temperature: 0.0 }
       })
     });
     if (!geminiRes.ok) throw new Error("Failed to call Gemini API");
