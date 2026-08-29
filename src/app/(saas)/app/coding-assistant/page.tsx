@@ -445,7 +445,16 @@ export default function CodingAssistant() {
                             <div>
                               <strong style={{ color: '#fff' }}>{sug.code}</strong> - {sug.short_description}
                             </div>
-                            <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                {sug.source === 'ai' ? (
+                                  <span style={{ fontSize: '0.7rem', background: 'rgba(139,92,246,0.25)', color: '#c084fc', border: '1px solid rgba(139,92,246,0.5)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
+                                ) : (
+                                  <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
+                                )}
+                                <button type="button" onClick={() => handleCopyCode(sug.code)} style={{ padding: '4px 8px', background: copiedCode === sug.code ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.1)', border: copiedCode === sug.code ? '1px solid #4ade80' : '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: copiedCode === sug.code ? '#4ade80' : '#cbd5e1', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                                  {copiedCode === sug.code ? <><Icon.Check size={12}/> Copied</> : <><Icon.Copy size={12}/> Copy</>}
+                                </button>
+                              </div>
                           </div>
                         ))}
                       </div>
