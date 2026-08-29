@@ -58,9 +58,11 @@ function normalizeCode(code: string): string {
 async function verifyCodeInDB(rawCode: string, type: 'CPT' | 'ICD') {
   const code = normalizeCode(rawCode);
   const table = type === 'CPT' ? 'cms_cpt_codes' : 'cms_icd10_codes';
+  // Note: cms_cpt_codes does NOT have a billable column — ICD-10 only
+  const selectFields = type === 'CPT' ? 'code, short_description' : 'code, short_description, billable';
   const { data } = await supabaseMain
     .from(table)
-    .select('code, short_description, billable')
+    .select(selectFields)
     .eq('code', code)
     .maybeSingle();
   return data || null;
