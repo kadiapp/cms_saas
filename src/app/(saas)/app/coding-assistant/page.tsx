@@ -60,17 +60,15 @@ export default function CodingAssistant() {
   // -----------------------------------------------------
   // Auto-Coder Logic
   // -----------------------------------------------------
-  const handleAutoCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!autoNote.trim()) return;
-    
+  const runAutoCoder = async (noteText: string) => {
+    if (!noteText.trim()) return;
     setIsAutoLoading(true);
     setAutoResults(null);
     try {
       const res = await fetch('/api/code-suggest', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ note: autoNote })
+        body: JSON.stringify({ note: noteText })
       });
       if (!res.ok) throw new Error("Failed to process note");
       const data = await res.json();
@@ -82,6 +80,22 @@ export default function CodingAssistant() {
       setIsAutoLoading(false);
     }
   };
+
+  const handleAutoCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await runAutoCoder(autoNote);
+  };
+
+  React.useEffect(() => {
+    const savedNote = sessionStorage.getItem('pending_auto_note');
+    if (savedNote) {
+      setActiveTab('auto');
+      setAutoNote(savedNote);
+      sessionStorage.removeItem('pending_auto_note');
+      setTimeout(() => runAutoCoder(savedNote), 50);
+    }
+  }, []);
+
 
   // -----------------------------------------------------
   // Dictionary Logic

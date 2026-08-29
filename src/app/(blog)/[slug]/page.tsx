@@ -6,6 +6,7 @@ import '@/app/globals.css';
 import TopNav from '@/components/TopNav';
 import TableOfContents from '@/components/TableOfContents';
 import RelatedArticles from './RelatedArticles';
+import InlineAutoCoderCTA from '@/components/InlineAutoCoderCTA';
 
 // This is required for Next.js App Router dynamic params
 type Props = {
@@ -108,15 +109,7 @@ export default async function BlogPost({ params }: Props) {
             
             {/* DYNAMIC INLINE SOFTWARE AD - TOP */}
             {isCptArticle ? (
-              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: '0 0 8px 0' }}>Are you billing this code correctly?</h3>
-                  <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem' }}>Use our free Medical Coding Assistant to instantly look up Medicare fee schedules, NCCI PTP edits, and mutually exclusive code conflicts for this procedure.</p>
-                </div>
-                <div>
-                  <a href="/app/coding-assistant" style={{ background: '#10b981', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>Launch Coding Assistant &rarr;</a>
-                </div>
-              </div>
+              <InlineAutoCoderCTA />
             ) : (
               <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
