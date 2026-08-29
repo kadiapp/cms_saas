@@ -74,7 +74,12 @@ No markdown, no explanation, just the JSON array.`;
   
   try {
     const ids = JSON.parse(textOut);
-    return ids.map((id: number) => candidates[id]).filter(Boolean).slice(0, 3);
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return candidates.slice(0, 3); // Fallback if AI returns empty array
+    }
+    const selected = ids.map((id: number) => candidates[id]).filter(Boolean);
+    if (selected.length === 0) return candidates.slice(0, 3);
+    return selected.slice(0, 3);
   } catch(e) {
     return candidates.slice(0, 3); // Fallback
   }
