@@ -42,15 +42,12 @@ export default function CodingAssistant() {
     }
   };
   
-  const handleStageCode = (code: string, type: 'CPT' | 'ICD') => {
-    const existing = JSON.parse(localStorage.getItem('claimpilot_staged_codes') || '[]');
-    if (!existing.find((x: any) => x.code === code)) {
-      existing.push({ code, type, timestamp: Date.now() });
-      localStorage.setItem('claimpilot_staged_codes', JSON.stringify(existing));
-      alert(`${code} has been staged! Go to the CMS-1500 editor to apply it.`);
-    } else {
-      alert(`${code} is already staged.`);
-    }
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
   };
   
   // Tab 2: NCCI State
@@ -410,8 +407,8 @@ export default function CodingAssistant() {
                                 ) : (
                                   <span className="ca-badge" style={{background: 'rgba(239,68,68,0.2)', color: '#f87171'}}>Parent (Need Child)</span>
                                 )}
-                                <button type="button" onClick={() => handleStageCode(sug.code, 'ICD')} style={{ padding: '4px 8px', background: 'rgba(59,130,246,0.2)', border: '1px solid #3b82f6', borderRadius: '4px', color: '#60a5fa', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                  <Icon.Plus size={12}/> Stage
+                                <button type="button" onClick={() => handleCopyCode(sug.code)} style={{ padding: '4px 8px', background: copiedCode === sug.code ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.1)', border: copiedCode === sug.code ? '1px solid #4ade80' : '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: copiedCode === sug.code ? '#4ade80' : '#cbd5e1', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s' }}>
+                                  {copiedCode === sug.code ? <><Icon.Check size={12}/> Copied</> : <><Icon.Copy size={12}/> Copy</>}
                                 </button>
                               </div>
                           </div>
