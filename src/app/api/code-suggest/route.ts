@@ -92,7 +92,7 @@ async function vectorFallback(concept: string, type: 'CPT' | 'ICD', limit = 3) {
   const rpcName = type === 'ICD' ? 'match_icd_embeddings' : 'match_cpt_embeddings';
   const { data: matches } = await supabaseEmbeddings.rpc(rpcName, {
     query_embedding: vector,
-    match_threshold: 0.3,
+    match_threshold: 0.15,
     match_count: limit
   });
   return (matches || []).map((m: any) => ({ ...m, source: 'vector' as const }));
