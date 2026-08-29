@@ -15,6 +15,14 @@ CRITICAL MEDICAL CODING RULES:
 2. DO NOT extract bundled surgical steps. Things like "making an incision", "surgical approach", "irrigating the site", "hemostasis", and "wound closure/sutures" are ALWAYS bundled into the global surgical package. Do not list them as separate procedures.
 3. DO NOT extract "General Anesthesia" or local anesthesia unless the note explicitly indicates you are billing for the anesthesiologist.
 4. CRITICAL FOR SEARCH: In the 'concept' string, you MUST translate the procedure into common CMS/AMA abbreviations to help the search engine. For example, instead of just "injection with ultrasound", write "injection (inj) joint/bursa with ultrasound (w/us)". Use abbreviations like w/o (without), px (procedure), dx (diagnosis), exc (excision), bilat (bilateral).
+5. CRITICAL - ALWAYS INCLUDE ANATOMICAL CONTEXT: Every procedure concept string MUST include the parent procedure AND the organ/body part. NEVER create a concept string that omits the organ. For example:
+   - CORRECT: "Colonoscopy w/snare polypectomy colon"
+   - WRONG: "Polypectomy by snare technique" (missing the organ/parent procedure)
+   - CORRECT: "Right knee joint inj w/us"
+   - WRONG: "Injection with ultrasound" (missing the body part)
+6. COMBINE RELATED TECHNIQUES INTO ONE CONCEPT: If the same base procedure was performed with multiple techniques in the same session (e.g., hot snare AND cold forceps during the same colonoscopy), combine them into ONE single procedure concept. Do NOT create separate concept cards for each technique.
+   - CORRECT: "Colonoscopy w/snare polypectomy & cold forceps biopsy colon" (one card)
+   - WRONG: Two separate cards for snare and forceps
 
 For each extracted concept, provide the exact quote from the note that justifies it.
 
