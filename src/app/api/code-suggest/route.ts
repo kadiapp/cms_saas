@@ -49,7 +49,14 @@ Confidence levels: "high" = certain, "medium" = likely but could be one of two c
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 2: Database verification — confirms the AI's code exists in our DB
 // ─────────────────────────────────────────────────────────────────────────────
-async function verifyCodeInDB(code: string, type: 'CPT' | 'ICD') {
+
+// AI sometimes formats codes with dots (K63.5, Z80.0) — strip them before lookup
+function normalizeCode(code: string): string {
+  return (code || '').replace(/\./g, '').trim().toUpperCase();
+}
+
+async function verifyCodeInDB(rawCode: string, type: 'CPT' | 'ICD') {
+  const code = normalizeCode(rawCode);
   const table = type === 'CPT' ? 'cms_cpt_codes' : 'cms_icd10_codes';
   const { data } = await supabaseMain
     .from(table)
@@ -156,7 +163,7 @@ export async function POST(req: NextRequest) {
       return {
         concept: diag.concept,
         quote: diag.quote,
-        ai_code: diag.code,
+        ai_code: normalizeCode(diag.code),
         confidence: diag.confidence,
         suggestions: suggestions.slice(0, 3)
       };
@@ -193,7 +200,7 @@ export async function POST(req: NextRequest) {
       return {
         concept: proc.concept,
         quote: proc.quote,
-        ai_code: proc.code,
+        ai_code: normalizeCode(proc.code),
         confidence: proc.confidence,
         suggestions: suggestions.slice(0, 3)
       };
