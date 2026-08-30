@@ -14,6 +14,12 @@ export const supabaseCoding = (rulesSupabaseUrl && rulesSupabaseKey)
   ? createClient(rulesSupabaseUrl, rulesSupabaseKey)
   : supabase;
 
+const medNecUrl = process.env.NEXT_PUBLIC_SUPABASE_MEDICAL_NECESSITY_URL || '';
+const medNecKey = process.env.NEXT_PUBLIC_SUPABASE_MEDICAL_NECESSITY_ANON_KEY || '';
+export const supabaseMedicalNecessity = (medNecUrl && medNecKey)
+  ? createClient(medNecUrl, medNecKey)
+  : supabase;
+
 
 export interface CodeResult {
   code: string;
@@ -358,3 +364,20 @@ export async function checkCodePair(code1: string, code2: string): Promise<any> 
     return { status: 'Allowed', modifier_indicator: indicator };
   }
 }
+
+export async function getMedicalNecessity(cptCode: string): Promise<string[]> {
+  if (!medNecUrl) return [];
+  try {
+    const { data, error } = await supabaseMedicalNecessity
+      .from('cms_medical_necessity')
+      .select('icd10_code')
+      .eq('cpt_code', cptCode);
+
+    if (error || !data) return [];
+    return data.map(r => r.icd10_code);
+  } catch (err) {
+    console.error(err);
+    return [];
+  }
+}
+
