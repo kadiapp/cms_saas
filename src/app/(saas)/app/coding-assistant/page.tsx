@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import * as Icon from 'react-feather';
-import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair } from '@/api/supabase';
+import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
 export default function CodingAssistant() {
-  const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto'>('dictionary');
+  const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto' | 'mednec'>('dictionary');
   
   // Tab 1: Dictionary State
   const [dictQuery, setDictQuery] = useState('');
@@ -21,6 +21,13 @@ export default function CodingAssistant() {
   const [autoNote, setAutoNote] = useState('');
   const [isAutoLoading, setIsAutoLoading] = useState(false);
   const [autoResults, setAutoResults] = useState<any>(null);
+  const [autoMedNecWarnings, setAutoMedNecWarnings] = useState<any[]>([]);
+
+  // Tab 4: Medical Necessity State
+  const [medNecQuery, setMedNecQuery] = useState('');
+  const [isMedNecLoading, setIsMedNecLoading] = useState(false);
+  const [medNecResults, setMedNecResults] = useState<string[] | null>(null);
+  const [medNecSearchedCode, setMedNecSearchedCode] = useState('');
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -72,7 +79,28 @@ export default function CodingAssistant() {
       });
       if (!res.ok) throw new Error("Failed to process note");
       const data = await res.json();
-      setAutoResults(data.data);
+      const results = data.data;
+
+      // Run medical necessity checks on extracted codes
+      const warnings = [];
+      if (results.procedures && results.diagnoses) {
+        for (const proc of results.procedures) {
+          const cptCode = proc.code;
+          const coveredIcds = await getMedicalNecessity(cptCode);
+          if (coveredIcds.length > 0) {
+            const extractedIcds = results.diagnoses.map((d: any) => d.code.replace(/\./g, ''));
+            const hasCovered = extractedIcds.some((icd: string) => coveredIcds.includes(icd));
+            if (!hasCovered) {
+              warnings.push({
+                cpt: cptCode,
+                message: `None of the extracted diagnoses are on the strict Medicare LCD/NCD covered list for CPT ${cptCode}.`
+              });
+            }
+          }
+        }
+      }
+      setAutoMedNecWarnings(warnings);
+      setAutoResults(results);
     } catch(err) {
       console.error(err);
       alert("Error processing clinical note.");
@@ -95,6 +123,27 @@ export default function CodingAssistant() {
       setTimeout(() => runAutoCoder(savedNote), 50);
     }
   }, []);
+
+
+  // -----------------------------------------------------
+  // Medical Necessity Logic
+  // -----------------------------------------------------
+  const handleMedNecSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!medNecQuery.trim()) return;
+
+    setIsMedNecLoading(true);
+    setMedNecResults(null);
+    setMedNecSearchedCode(medNecQuery.trim().toUpperCase());
+    try {
+      const results = await getMedicalNecessity(medNecQuery.trim().toUpperCase());
+      setMedNecResults(results);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsMedNecLoading(false);
+    }
+  };
 
 
   // -----------------------------------------------------
@@ -195,6 +244,13 @@ export default function CodingAssistant() {
           style={{color: '#a855f7'}}
         >
           <Icon.Cpu size={18} /> AI Auto-Coder
+        </button>
+        <button 
+          className={`ca-tab ${activeTab === 'mednec' ? 'active' : ''}`}
+          onClick={() => setActiveTab('mednec')}
+          style={{color: '#10b981'}}
+        >
+          <Icon.CheckCircle size={18} /> Medical Necessity
         </button>
       </div>
 
@@ -486,11 +542,75 @@ export default function CodingAssistant() {
                       </div>
                     </div>
                   )}
+
+                  {autoMedNecWarnings.map((warning: any, i: number) => (
+                    <div key={i} style={{ marginTop: '16px', display: 'flex', alignItems: 'flex-start', gap: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '12px 16px', borderRadius: '6px', fontSize: '0.85rem', color: '#fca5a5' }}>
+                      <Icon.Shield size={16} style={{ flexShrink: 0, marginTop: '2px', color: '#ef4444' }} />
+                      <div>
+                        <strong>Medical Necessity Risk (CPT {warning.cpt}):</strong> {warning.message}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
               
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'mednec' && (
+        <div className="ca-tab-content">
+          <div className="ca-ncci-box glass-card">
+            <h2>Medical Necessity (LCD/NCD) Checker</h2>
+            <p className="ca-ncci-subtitle">Enter a CPT procedure code to find its Medicare-approved ICD-10 diagnosis codes.</p>
+            
+            <form onSubmit={handleMedNecSearch} className="ca-ncci-form" style={{ maxWidth: '500px' }}>
+              <div className="ca-input-wrapper">
+                <Icon.Search size={20} className="ca-search-icon" />
+                <input 
+                  type="text" 
+                  placeholder="Enter CPT Code (e.g., 82306)" 
+                  value={medNecQuery}
+                  onChange={(e) => setMedNecQuery(e.target.value.toUpperCase())}
+                  className="ca-input"
+                />
+              </div>
+              <button type="submit" className="ca-btn primary" disabled={isMedNecLoading || !medNecQuery.trim()}>
+                {isMedNecLoading ? 'Checking...' : 'Check Coverage'}
+              </button>
+            </form>
+
+            {medNecResults && medNecResults.length > 0 && (
+              <div className="ca-ncci-result" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16,185,129,0.3)', marginTop: '24px' }}>
+                <div className="ca-ncci-result-header" style={{ color: '#10b981' }}>
+                  <Icon.CheckCircle size={24} />
+                  <div>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{medNecResults.length} Approved Diagnoses Found for CPT {medNecSearchedCode}</h3>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>These ICD-10 codes satisfy Medicare NCD/LCD medical necessity requirements for this procedure.</p>
+                  </div>
+                </div>
+                <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
+                  {medNecResults.map(icd => (
+                    <span key={icd} style={{ background: 'rgba(15,23,42,0.8)', padding: '6px 12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', fontSize: '0.9rem', fontFamily: 'monospace' }}>
+                      {icd}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {medNecResults && medNecResults.length === 0 && (
+              <div className="ca-ncci-result" style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', marginTop: '24px' }}>
+                <div className="ca-ncci-result-header" style={{ color: '#f59e0b' }}>
+                  <Icon.Info size={24} />
+                  <div>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>No specific LCD/NCD rules found</h3>
+                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>We couldn't find a strict national coverage list for {medNecSearchedCode}. Standard medical necessity documentation rules apply.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
