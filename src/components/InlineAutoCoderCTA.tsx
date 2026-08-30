@@ -47,7 +47,11 @@ export default function InlineAutoCoderCTA() {
             resize: 'vertical'
           }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', fontSize: '0.85rem' }}>
+            <Icon.Lock size={14} color="#10b981" />
+            <span><strong>HIPAA Compliant</strong> &bull; Zero Data Retention &bull; No PHI stored</span>
+          </div>
           <button 
             type="submit" 
             disabled={!note.trim()}
