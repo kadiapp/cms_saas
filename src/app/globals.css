@@ -7,19 +7,19 @@
    ============================================================ */
 
 :root {
-  /* Core palette */
-  --bg-base:        #080a0f;
-  --bg-surface:     #0d1017;
-  --bg-card:        rgba(16, 20, 30, 0.85);
-  --bg-card-hover:  rgba(20, 25, 38, 0.95);
-  --bg-input:       rgba(10, 14, 22, 0.9);
-  --bg-header:      rgba(8, 10, 15, 0.97);
+  /* Core palette - Dramatic Midnight Blue */
+  --bg-base:        #020617; /* Rich dark navy */
+  --bg-surface:     #0f172a; /* Slate 900 */
+  --bg-card:        rgba(15, 23, 42, 0.85);
+  --bg-card-hover:  rgba(30, 41, 59, 0.95);
+  --bg-input:       rgba(2, 6, 23, 0.9);
+  --bg-header:      rgba(2, 6, 23, 0.97);
 
   /* Accent gradient — electric violet → cyan */
-  --accent-1:       #7c3aed;
-  --accent-2:       #06b6d4;
-  --accent-mid:     #a855f7;
-  --accent-glow:    rgba(124, 58, 237, 0.25);
+  --accent-1:       #3b82f6; /* Shifted to electric blue */
+  --accent-2:       #06b6d4; /* Cyan */
+  --accent-mid:     #6366f1; /* Indigo */
+  --accent-glow:    rgba(59, 130, 246, 0.25);
   --accent-glow-2:  rgba(6, 182, 212, 0.15);
 
   /* Semantic colours */
