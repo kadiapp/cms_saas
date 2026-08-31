@@ -55,8 +55,15 @@ interface FieldProps {
   helpSlug?: string;
 }
 
+export const ValidationContext = React.createContext<ValidationResult[]>([]);
+
 function Field({ label, required, children, error, boxNum, helpSlug }: FieldProps) {
   const [showHelp, setShowHelp] = useState(false);
+  const validationResults = React.useContext(ValidationContext);
+  
+  // Check if there's an error specifically for this box based on the label structure
+  const myErrors = validationResults.filter(r => boxNum && r.label.startsWith(`${boxNum}.`) && (r.status === 'error' || r.status === 'critical'));
+  const hasError = myErrors.length > 0;
   
   const getHelpText = (slug: string) => {
     if (slug.includes('patient-portion')) return "Select 'Medicare' to ensure cross-over rules apply, or the primary payer type.";
@@ -70,8 +77,8 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
   };
 
   return (
-    <div className="form-group">
-      <label className="form-label">
+    <div className="form-group" id={boxNum ? `box-${boxNum}` : undefined} style={hasError ? { padding: '8px', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px' } : {}}>
+      <label className="form-label" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
         {boxNum && <span style={{ color: 'var(--text-muted)', marginRight: 4, fontFamily: 'var(--font-mono)', fontSize: '0.65rem' }}>{boxNum}.</span>}
         {label}
         {required && <span className="required">*</span>}
@@ -97,6 +104,12 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
             <Icon.Info size={14} style={{ marginRight: 4 }} />
             Guide
           </button>
+        )}
+        
+        {hasError && (
+          <div title={myErrors.map(e => e.message).join(' | ')} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px', cursor: 'help' }}>
+            <Icon.Warn /> <span style={{ marginLeft: 4 }}>Action Required</span>
+          </div>
         )}
       </label>
       {showHelp && helpSlug && (
@@ -157,7 +170,7 @@ interface ValidationModalProps {
   onClose: () => void;
 }
 
-function SidebarValidationReport({ results }: { results: ValidationResult[] }) {
+function SidebarValidationReport({ results, onItemClick }: { results: ValidationResult[], onItemClick?: (label: string) => void }) {
   const criticals = results.filter(r => r.status === 'critical');
   const errors = results.filter(r => r.status === 'error');
   const warns  = results.filter(r => r.status === 'warn');
@@ -185,7 +198,7 @@ function SidebarValidationReport({ results }: { results: ValidationResult[] }) {
               </div>
               <div className="validation-section-body">
                 {criticals.map((c, i) => (
-                  <div key={i} className="validation-item critical" style={{ animationDelay: `${i * 0.1}s` }}>
+                  <div key={i} className="validation-item critical" style={{ animationDelay: `${i * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(c.label)}>
                     <div className="validation-badge">{c.label.split('.')[0]}</div>
                     <div className="validation-message">
                       <strong>{c.label.substring(c.label.indexOf('.') + 1).trim()}:</strong> {c.message}
@@ -203,7 +216,7 @@ function SidebarValidationReport({ results }: { results: ValidationResult[] }) {
               </div>
               <div className="validation-section-body">
                 {errors.map((e, i) => (
-                  <div key={i} className="validation-item error" style={{ animationDelay: `${(criticals.length + i) * 0.1}s` }}>
+                  <div key={i} className="validation-item error" style={{ animationDelay: `${(criticals.length + i) * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(e.label)}>
                     <div className="validation-badge">{e.label.split('.')[0] || 'Req'}</div>
                     <div className="validation-message">
                       <strong>{e.label.includes('.') ? e.label.substring(e.label.indexOf('.') + 1).trim() : e.label}:</strong> {e.message}
@@ -1080,19 +1093,20 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
     !(form.diagnosisCodes || []).some(c => c) && (!(form.serviceLines || [])[0] || !form.serviceLines[0].cptCode);
 
   return (
-    <div className="app-shell">
-      {/* Hidden file input for uploads */}
-      <input 
-        type="file" 
-        accept="application/pdf, text/plain" 
-        ref={fileInputRef} 
-        style={{ display: 'none' }} 
-        onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])} 
-      />
-
-      <main onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
-        <div className={`main-content ${isFormEmpty ? 'welcome-mode' : ''}`}>
-          <div className="form-column">
+    <ValidationContext.Provider value={validationResults}>
+      <div className="app-shell">
+        {/* Hidden file input for uploads */}
+        <input 
+          type="file" 
+          accept="application/pdf, text/plain" 
+          ref={fileInputRef} 
+          style={{ display: 'none' }} 
+          onChange={e => e.target.files?.[0] && handleFileSelect(e.target.files[0])} 
+        />
+  
+        <main onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}>
+          <div className={`main-content ${isFormEmpty ? 'welcome-mode' : ''}`}>
+            <div className="form-column">
 
             {/* =========================================== */}
             {/* WELCOME DASHBOARD (shown when form is empty) */}
@@ -2128,7 +2142,25 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
 
             {/* Validation Report OR Checklist */}
             {hasValidated && validationResults.length > 0 ? (
-              <SidebarValidationReport results={validationResults} />
+              <SidebarValidationReport 
+                results={validationResults} 
+                onItemClick={(label) => {
+                  const boxId = label.split('.')[0];
+                  const el = document.getElementById(`box-${boxId}`);
+                  if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.style.transition = 'all 0.3s';
+                    const origBg = el.style.backgroundColor;
+                    const origBorder = el.style.borderColor;
+                    el.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                    el.style.borderColor = '#ef4444';
+                    setTimeout(() => {
+                      el.style.backgroundColor = origBg;
+                      el.style.borderColor = origBorder;
+                    }, 1500);
+                  }
+                }}
+              />
             ) : (
               <div className="glass-card sidebar-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2455,7 +2487,8 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
           </div>
         </div>
       )}
-</div>
+    </div>
+  </ValidationContext.Provider>
   );
 }
 
