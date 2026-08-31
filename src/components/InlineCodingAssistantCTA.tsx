@@ -25,11 +25,11 @@ export default function InlineCodingAssistantCTA({ defaultCpt = '' }: InlineCodi
       if (autoNote.trim()) {
         sessionStorage.setItem('pending_auto_note', autoNote);
       }
-      router.push(/app/coding-assistant?tab=auto);
+      router.push(`/app/coding-assistant?tab=auto`);
       return;
     }
 
-    router.push(/app/coding-assistant?tab=${tab}&${queryParam}=${encodeURIComponent(queryValue.trim())});
+    router.push(`/app/coding-assistant?tab=${tab}&${queryParam}=${encodeURIComponent(queryValue.trim())}`);
   };
 
   const tabs = [
@@ -60,7 +60,7 @@ export default function InlineCodingAssistantCTA({ defaultCpt = '' }: InlineCodi
             style={{
               background: activeTab === tab.id ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
               color: activeTab === tab.id ? '#3b82f6' : '#94a3b8',
-              border: 1px solid ,
+              border: `1px solid ${activeTab === tab.id ? 'rgba(59, 130, 246, 0.3)' : 'transparent'}`,
               padding: '8px 16px',
               borderRadius: '8px',
               cursor: 'pointer',
