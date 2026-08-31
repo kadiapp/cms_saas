@@ -56,6 +56,19 @@ interface FieldProps {
 }
 
 function Field({ label, required, children, error, boxNum, helpSlug }: FieldProps) {
+  const [showHelp, setShowHelp] = useState(false);
+  
+  const getHelpText = (slug: string) => {
+    if (slug.includes('patient-portion')) return "Select 'Medicare' to ensure cross-over rules apply, or the primary payer type.";
+    if (slug.includes('box-11')) return "Enter the Medicare Beneficiary Identifier (MBI) or the insured's primary ID without dashes.";
+    if (slug.includes('box-17')) return "Enter the referring provider's name (First Last). If Medicare, you MUST include the NPI in box 17b.";
+    if (slug.includes('box-19')) return "Usually left blank, but occasionally used for specific EPSDT codes, NOC descriptions, or taxonomy codes.";
+    if (slug.includes('box-21')) return "Select '0' for ICD-10. Enter up to 12 diagnosis codes indicating medical necessity.";
+    if (slug.includes('box-22')) return "Use '7' for Replacement of prior claim, or '8' for Void/Cancel. Include original reference number.";
+    if (slug.includes('box-23')) return "Enter the Prior Auth number here. For labs, enter the 10-digit CLIA number.";
+    return "Review the official guidelines to avoid claim denials.";
+  };
+
   return (
     <div className="form-group">
       <label className="form-label">
@@ -63,28 +76,38 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
         {label}
         {required && <span className="required">*</span>}
         {helpSlug && (
-          <a
-            href={`/${helpSlug}`}
-            target="_blank"
-            rel="noreferrer"
-            title="Read our guide on this field"
+          <button
+            type="button"
+            onClick={() => setShowHelp(!showHelp)}
+            title="Toggle Medicare guidance for this field"
             style={{ 
               marginLeft: 8, 
               display: 'inline-flex', 
               alignItems: 'center', 
               color: 'var(--accent-2)', 
-              textDecoration: 'none',
-              background: 'rgba(6, 182, 212, 0.1)',
-              padding: '2px 4px',
+              background: showHelp ? 'rgba(6, 182, 212, 0.2)' : 'rgba(6, 182, 212, 0.1)',
+              padding: '2px 6px',
               borderRadius: '4px',
-              border: '1px solid var(--accent-2)'
+              border: '1px solid var(--accent-2)',
+              cursor: 'pointer',
+              fontSize: '11px',
+              fontWeight: 'bold'
             }}
           >
             <Icon.Info size={14} style={{ marginRight: 4 }} />
-            <span style={{ fontSize: '11px', fontWeight: 'bold' }}>Guide</span>
-          </a>
+            Guide
+          </button>
         )}
       </label>
+      {showHelp && helpSlug && (
+        <div style={{ padding: '8px 12px', background: 'rgba(6, 182, 212, 0.05)', borderLeft: '3px solid var(--accent-2)', marginBottom: '12px', fontSize: '0.85rem', color: '#94a3b8', borderRadius: '0 4px 4px 0' }}>
+          <strong style={{ color: 'var(--accent-2)', display: 'block', marginBottom: '4px' }}>Medicare Hint:</strong>
+          {getHelpText(helpSlug)}
+          <div style={{ marginTop: '6px' }}>
+            <a href={`/${helpSlug}`} target="_blank" style={{ color: 'var(--text-color)', fontSize: '0.8rem', textDecoration: 'underline' }}>Read full detailed article ↗</a>
+          </div>
+        </div>
+      )}
       {children}
       {error && <div className="field-error"><Icon.Warn />{error}</div>}
     </div>
@@ -745,29 +768,34 @@ const [isSaving, setIsSaving] = useState(false);
     setVerifiedCpts(newVerifiedCpts);
     setCptErrors(newCptErrors);
 
-    // Fetch dynamic rules from Supabase for Phase 1
-    let customRules;
-    if (form.payerId) {
-      customRules = await getPayerRules(form.payerId) || undefined;
+    try {
+      // Fetch dynamic rules from Supabase for Phase 1
+      let customRules;
+      if (form.payerId) {
+        customRules = await getPayerRules(form.payerId) || undefined;
+      }
+
+      // Re-run the main sync validator with updated DB results
+      const localResults = validateClaim(form, newVerifiedNpis, newNpiErrors, newVerifiedIcds, newIcdErrors, newVerifiedCpts, newCptErrors, customRules);
+      
+      // Phase 2: Call the Clearinghouse Pre-Scrub API
+      showToast('Connecting to Clearinghouse API...', 'info');
+      const chResults = await preScrubClaim(form);
+
+      // Phase 4: Advanced Clinical Rules & NCCI Edits
+      showToast('Running Advanced Clinical Rules...', 'info');
+      const advancedResults = await runAdvancedClinicalValidation(form);
+
+      setLocalValidationResults(localResults);
+      setDeepValidationResults([...chResults, ...advancedResults]);
+      setHasValidated(true);
+      showToast('Validation complete', 'success');
+    } catch (err) {
+      console.error(err);
+      showToast('Validation failed to complete properly. Check connection.', 'error');
+    } finally {
+      setIsValidating(false);
     }
-
-    // Re-run the main sync validator with updated DB results
-    const localResults = validateClaim(form, newVerifiedNpis, newNpiErrors, newVerifiedIcds, newIcdErrors, newVerifiedCpts, newCptErrors, customRules);
-    
-    // Phase 2: Call the Clearinghouse Pre-Scrub API
-    showToast('Connecting to Clearinghouse API...', 'info');
-    const chResults = await preScrubClaim(form);
-
-    // Phase 4: Advanced Clinical Rules & NCCI Edits
-    showToast('Running Advanced Clinical Rules...', 'info');
-    const advancedResults = await runAdvancedClinicalValidation(form);
-
-    setLocalValidationResults(localResults);
-    setDeepValidationResults([...chResults, ...advancedResults]);
-
-    setIsValidating(false);
-    setHasValidated(true);
-    showToast('Validation complete', 'success');
   }, [form, verifiedNpis, npiErrors, verifiedIcds, icdErrors, verifiedCpts, cptErrors, showToast]);
 
   
