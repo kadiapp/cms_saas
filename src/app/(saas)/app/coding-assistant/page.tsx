@@ -577,7 +577,7 @@ export default function CodingAssistant() {
                   className="ca-input"
                 />
               </div>
-              <button type="submit" className="ca-btn primary" disabled={isMedNecLoading || !medNecQuery.trim()}>
+              <button type="submit" className="btn btn-primary ca-btn" disabled={isMedNecLoading || !medNecQuery.trim()}>
                 {isMedNecLoading ? 'Checking...' : 'Check Coverage'}
               </button>
             </form>
