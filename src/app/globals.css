@@ -996,3 +996,13 @@ h3 { font-size: 1.125rem; font-weight: 600; }
 .blog-article-content th * {
   color: #f8fafc !important;
 }
+
+.blog-article-content div,
+.blog-article-content section,
+.blog-article-content p,
+.blog-article-content span,
+.blog-article-content blockquote {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+

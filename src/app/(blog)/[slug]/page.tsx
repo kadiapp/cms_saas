@@ -75,9 +75,22 @@ export default async function BlogPost({ params }: Props) {
   // Clean up residual WordPress shortcodes from the database migration
   cleanContent = cleanContent.replace(/<div(?:(?!<div)[\s\S])*?\[mb_[^\]]+\](?:(?!<div)[\s\S])*?<\/div>/gi, '');
   
-  // Strip hardcoded inline styles and bgcolors from legacy WordPress tables
-  cleanContent = cleanContent.replace(/<(table|thead|tbody|tr|th|td)\b([^>]*)>/gi, (match, tag, attrs) => {
-    let newAttrs = attrs.replace(/\b(style|bgcolor)=["'][^"']*["']/gi, '');
+  // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
+  cleanContent = cleanContent.replace(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/gi, (match, tag, attrs) => {
+    // Remove bgcolor attribute entirely
+    let newAttrs = attrs.replace(/\s*bgcolor=["'][^"']*["']/gi, '');
+    // Remove background-color and background from style attribute but keep other styles
+    newAttrs = newAttrs.replace(/\bstyle=(["'])([^"']*)\1/gi, (styleMatch, quote, styleVal) => {
+      const cleaned = styleVal
+        .split(';')
+        .filter(rule => {
+          const prop = rule.split(':')[0].trim().toLowerCase();
+          return prop !== 'background' && prop !== 'background-color' && prop !== 'color';
+        })
+        .join(';')
+        .trim();
+      return cleaned ? `style=${quote}${cleaned}${quote}` : '';
+    });
     return `<${tag}${newAttrs}>`;
   });
 
