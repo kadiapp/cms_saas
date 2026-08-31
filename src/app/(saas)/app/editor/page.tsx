@@ -107,8 +107,8 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
         )}
         
         {hasError && (
-          <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-            <Icon.Warn /> <span style={{ marginLeft: 4 }}>Action Required</span>
+          <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', color: '#ef4444', fontSize: '0.70rem', letterSpacing: '0.5px', fontWeight: 700, background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+            <Icon.Warn /> <span style={{ marginLeft: 4 }}>ACTION REQUIRED</span>
           </div>
         )}
       </label>
@@ -123,9 +123,9 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
       )}
       {children}
       {hasError && (
-        <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ marginTop: '8px', padding: '6px 10px', background: 'rgba(239,68,68,0.05)', borderRadius: '4px', borderLeft: '3px solid #ef4444', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {myErrors.map((err, i) => (
-            <div key={i} style={{ color: '#ef4444', fontSize: '0.8rem', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+            <div key={i} style={{ color: '#ef4444', fontSize: '0.85rem', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
               <div style={{ marginTop: '2px' }}><Icon.Warn /></div>
               <span><strong>{err.status === 'critical' ? 'Critical:' : 'Error:'}</strong> {err.message}</span>
             </div>
@@ -191,7 +191,7 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
     <div className="glass-card sidebar-card validation-report-card">
       <div className="validation-report-header">
         <Icon.FileText size={18} />
-        <h3>Detailed Report</h3>
+        <h3>Detailed Validation Report</h3>
       </div>
       
       {(criticals.length > 0 || errors.length > 0) && (
