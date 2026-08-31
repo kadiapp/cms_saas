@@ -234,7 +234,7 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
               </div>
               <div className="validation-section-body">
                 {warns.map((w, i) => (
-                  <div key={i} className="validation-item warn" style={{ animationDelay: `${(criticals.length + errors.length + i) * 0.1}s` }}>
+                  <div key={i} className="validation-item warn" style={{ animationDelay: `${(criticals.length + errors.length + i) * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(w.label)}>
                     <div className="validation-badge">{w.label.split('.')[0] || 'Warn'}</div>
                     <div className="validation-message">
                       <strong>{w.label.includes('.') ? w.label.substring(w.label.indexOf('.') + 1).trim() : w.label}:</strong> {w.message}
@@ -252,7 +252,7 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
               </div>
               <div className="validation-section-body">
                 {infos.map((info, i) => (
-                  <div key={i} className="validation-item info" style={{ animationDelay: `${(criticals.length + errors.length + warns.length + i) * 0.1}s` }}>
+                  <div key={i} className="validation-item info" style={{ animationDelay: `${(criticals.length + errors.length + warns.length + i) * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(info.label)}>
                     <div className="validation-badge">{info.label.split('.')[0] || 'Info'}</div>
                     <div className="validation-message">
                       <strong>{info.label.includes('.') ? info.label.substring(info.label.indexOf('.') + 1).trim() : info.label}:</strong> {info.message}
@@ -271,7 +271,7 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
                 </summary>
                 <div className="validation-section-body">
                   {oks.map((ok, i) => (
-                    <div key={i} className="validation-item ok">
+                    <div key={i} className="validation-item ok" style={{ animationDelay: `${(criticals.length + errors.length + warns.length + infos.length + i) * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(ok.label)}>
                       <div className="validation-badge">{ok.label.split('.')[0] || 'OK'}</div>
                       <div className="validation-message">
                         <strong>{ok.label.includes('.') ? ok.label.substring(ok.label.indexOf('.') + 1).trim() : ok.label}:</strong> {ok.message}
