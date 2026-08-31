@@ -275,21 +275,19 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
 
           {oks.length > 0 && (
             <div className="validation-section ok">
-              <details open>
-                <summary>
-                  <Icon.Check /> Passed ({oks.length})
-                </summary>
-                <div className="validation-section-body">
-                  {oks.map((ok, i) => (
-                    <div key={i} className="validation-item ok" style={{ animationDelay: `${(criticals.length + errors.length + warns.length + infos.length + i) * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(ok.label)}>
-                      <div className="validation-badge">{ok.label.split('.')[0] || 'OK'}</div>
-                      <div className="validation-message">
-                        <strong>{ok.label.includes('.') ? ok.label.substring(ok.label.indexOf('.') + 1).trim() : ok.label}:</strong> {ok.message}
-                      </div>
+              <div className="validation-section-header">
+                <Icon.Check /> Passed ({oks.length})
+              </div>
+              <div className="validation-section-body">
+                {oks.map((ok, i) => (
+                  <div key={i} className="validation-item ok" style={{ animationDelay: `${(criticals.length + errors.length + warns.length + infos.length + i) * 0.1}s`, cursor: onItemClick ? 'pointer' : 'default' }} onClick={() => onItemClick && onItemClick(ok.label)}>
+                    <div className="validation-badge">{ok.label.split('.')[0] || 'OK'}</div>
+                    <div className="validation-message">
+                      <strong>{ok.label.includes('.') ? ok.label.substring(ok.label.indexOf('.') + 1).trim() : ok.label}:</strong> {ok.message}
                     </div>
-                  ))}
-                </div>
-              </details>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
