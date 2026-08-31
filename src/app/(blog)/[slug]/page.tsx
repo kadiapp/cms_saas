@@ -74,7 +74,12 @@ export default async function BlogPost({ params }: Props) {
     let cleanContent = cleanHtmlSchemas(article.content || '');
   // Clean up residual WordPress shortcodes from the database migration
   cleanContent = cleanContent.replace(/<div(?:(?!<div)[\s\S])*?\[mb_[^\]]+\](?:(?!<div)[\s\S])*?<\/div>/gi, '');
-
+  
+  // Strip hardcoded inline styles and bgcolors from legacy WordPress tables
+  cleanContent = cleanContent.replace(/<(table|thead|tbody|tr|th|td)\b([^>]*)>/gi, (match, tag, attrs) => {
+    let newAttrs = attrs.replace(/\b(style|bgcolor)=["'][^"']*["']/gi, '');
+    return `<${tag}${newAttrs}>`;
+  });
 
   const articleTitleStr = decodeWPEntities(article.title || '');
   const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /\b\d{5}\b/.test(articleTitleStr) || /\b[A-Z]\d{4}\b/i.test(articleTitleStr);
