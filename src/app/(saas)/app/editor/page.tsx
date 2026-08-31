@@ -107,7 +107,7 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
         )}
         
         {hasError && (
-          <div title={myErrors.map(e => e.message).join(' | ')} style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px', cursor: 'help' }}>
+          <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239,68,68,0.1)', padding: '2px 8px', borderRadius: '4px' }}>
             <Icon.Warn /> <span style={{ marginLeft: 4 }}>Action Required</span>
           </div>
         )}
@@ -122,6 +122,16 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
         </div>
       )}
       {children}
+      {hasError && (
+        <div style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {myErrors.map((err, i) => (
+            <div key={i} style={{ color: '#ef4444', fontSize: '0.8rem', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+              <div style={{ marginTop: '2px' }}><Icon.Warn /></div>
+              <span><strong>{err.status === 'critical' ? 'Critical:' : 'Error:'}</strong> {err.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {error && <div className="field-error"><Icon.Warn />{error}</div>}
     </div>
   );
@@ -265,7 +275,7 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
 
           {oks.length > 0 && (
             <div className="validation-section ok">
-              <details>
+              <details open>
                 <summary>
                   <Icon.Check /> Passed ({oks.length})
                 </summary>
