@@ -25,6 +25,7 @@ export default function CodingAssistant() {
 
   // Tab 4: Medical Necessity State
   const [medNecQuery, setMedNecQuery] = useState('');
+  const [medNecFilter, setMedNecFilter] = useState('');
   const [isMedNecLoading, setIsMedNecLoading] = useState(false);
   const [medNecResults, setMedNecResults] = useState<string[] | null>(null);
   const [medNecSearchedCode, setMedNecSearchedCode] = useState('');
@@ -583,19 +584,37 @@ export default function CodingAssistant() {
 
             {medNecResults && medNecResults.length > 0 && (
               <div className="ca-ncci-result" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16,185,129,0.3)', marginTop: '24px' }}>
-                <div className="ca-ncci-result-header" style={{ color: '#10b981' }}>
+                <div className="ca-ncci-result-header" style={{ color: '#10b981', marginBottom: '16px' }}>
                   <Icon.CheckCircle size={24} />
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{medNecResults.length} Approved Diagnoses Found for CPT {medNecSearchedCode}</h3>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>These ICD-10 codes satisfy Medicare NCD/LCD medical necessity requirements for this procedure.</p>
                   </div>
                 </div>
-                <div style={{ marginTop: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
-                  {medNecResults.map(icd => (
+
+                <div style={{ marginBottom: '16px', position: 'relative' }}>
+                  <Icon.Search size={16} style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }} />
+                  <input
+                    type="text"
+                    placeholder="Filter ICD-10 codes..."
+                    value={medNecFilter}
+                    onChange={(e) => setMedNecFilter(e.target.value)}
+                    className="ca-input"
+                    style={{ paddingLeft: '36px', width: '100%' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
+                  {medNecResults.filter(icd => icd.toLowerCase().includes(medNecFilter.toLowerCase())).map(icd => (
                     <span key={icd} style={{ background: 'rgba(15,23,42,0.8)', padding: '6px 12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', fontSize: '0.9rem', fontFamily: 'monospace' }}>
                       {icd}
                     </span>
                   ))}
+                  {medNecResults.filter(icd => icd.toLowerCase().includes(medNecFilter.toLowerCase())).length === 0 && (
+                    <div style={{ color: '#94a3b8', padding: '12px 0', fontStyle: 'italic' }}>
+                      No diagnosis codes match "{medNecFilter}"
+                    </div>
+                  )}
                 </div>
               </div>
             )}
