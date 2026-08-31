@@ -114,12 +114,12 @@ export default function Home() {
             <div className="landing-feature-desc">Guarantee clean claims every time. We tap into Medicare NCCI edits, payer-specific clinical rules, and fee schedules to instantly flag bundling conflicts and missing modifiers.</div>
           </div>
 
-          <div className="landing-feature-card" style={{ border: '1px solid rgba(168, 85, 247, 0.4)', background: 'linear-gradient(145deg, rgba(168, 85, 247, 0.05) 0%, rgba(0,0,0,0) 100%)' }}>
+          <div className="landing-feature-card" style={{ border: '1px solid rgba(59, 130, 246)', background: 'linear-gradient(145deg, rgba(59, 130, 246) 0%, rgba(0,0,0,0) 100%)' }}>
             <div className="landing-feature-icon purple">
               <Icon.Database size={28} />
             </div>
             <div className="landing-feature-title">Free Universal Coding Assistant</div>
-            <div className="landing-feature-desc">Stop paying for expensive code lookup software. We maintain a <strong>massive, real-time updated CMS database</strong> with over 3 million official rows. <Link href="/app/coding-assistant" style={{color: '#a855f7', fontWeight: 'bold', textDecoration: 'underline'}}>Try the Free Assistant</Link> to instantly search ICD-10 and CPT codes, check NCCI PTP edits, and view Medicare Fee Schedules.</div>
+            <div className="landing-feature-desc">Stop paying for expensive code lookup software. We maintain a <strong>massive, real-time updated CMS database</strong> with over 3 million official rows. <Link href="/app/coding-assistant" style={{color: '#3b82f6', fontWeight: 'bold', textDecoration: 'underline'}}>Try the Free Assistant</Link> to instantly search ICD-10 and CPT codes, check NCCI PTP edits, and view Medicare Fee Schedules.</div>
           </div>
         </div>
 

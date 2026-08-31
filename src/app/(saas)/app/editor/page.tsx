@@ -407,7 +407,7 @@ Prior Auth: PA-2026-88421`;
           onClick={() => onExtract(text)}
           style={{
             flex: 1,
-            background: isLoading ? undefined : 'linear-gradient(135deg, #a855f7, #6366f1)',
+            background: isLoading ? undefined : 'linear-gradient(135deg, #3b82f6, #6366f1)',
             boxShadow: isLoading ? 'none' : '0 4px 15px rgba(168,85,247,0.35)',
           }}
         >
@@ -1181,7 +1181,7 @@ const [isSaving, setIsSaving] = useState(false);
               {/* --- Bottom: 3-Step Visual Flow --- */}
               <div className="welcome-steps">
                 <div className="welcome-step">
-                  <div className="welcome-step-icon" style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
+                  <div className="welcome-step-icon" style={{ background: 'rgba(29,78,216)', color: '#a78bfa' }}>
                     <Icon.Document />
                   </div>
                   <div className="welcome-step-num">Step 1</div>
@@ -2323,7 +2323,7 @@ const [isSaving, setIsSaving] = useState(false);
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
               <div style={{
                 width: 40, height: 40, borderRadius: '50%',
-                background: 'linear-gradient(135deg, #a855f7, #6366f1)',
+                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
               }}>
                 <Icon.Sparkles />

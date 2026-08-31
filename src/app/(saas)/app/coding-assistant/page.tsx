@@ -265,7 +265,7 @@ export default function CodingAssistant() {
         <button 
           className={`ca-tab ${activeTab === 'auto' ? 'active' : ''}`}
           onClick={() => setActiveTab('auto')}
-          style={{color: '#a855f7'}}
+          style={{color: '#3b82f6'}}
         >
           <Icon.Cpu size={18} /> AI Auto-Coder
         </button>
@@ -499,7 +499,7 @@ export default function CodingAssistant() {
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                 {sug.source === 'ai' ? (
-                                  <span style={{ fontSize: '0.7rem', background: 'rgba(139,92,246,0.25)', color: '#c084fc', border: '1px solid rgba(139,92,246,0.5)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
+                                  <span style={{ fontSize: '0.7rem', background: 'rgba(59,130,246)', color: '#c084fc', border: '1px solid rgba(59,130,246)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
                                 ) : (
                                   <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
                                 )}
@@ -525,9 +525,9 @@ export default function CodingAssistant() {
                   <h3 style={{ fontSize: '1.2rem', marginBottom: '16px', color: '#fff' }}>CPT Procedures</h3>
                   {autoResults.procedures.map((proc: any, i: number) => (
                     <div key={i} style={{ padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '16px' }}>
-                      <div style={{ fontWeight: 'bold', color: '#a855f7', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontWeight: 'bold', color: '#3b82f6', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span>Concept: {proc.concept}</span>
-                          {proc.ai_code && <span style={{ fontSize: '0.7rem', background: 'rgba(139,92,246,0.1)', color: '#a855f7', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '4px', padding: '2px 8px' }}>AI suggests: {proc.ai_code}</span>}
+                          {proc.ai_code && <span style={{ fontSize: '0.7rem', background: 'rgba(59,130,246)', color: '#3b82f6', border: '1px solid rgba(59,130,246)', borderRadius: '4px', padding: '2px 8px' }}>AI suggests: {proc.ai_code}</span>}
                         </div>
                       <div style={{ fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '16px', borderLeft: '2px solid #334155', paddingLeft: '12px' }}>
                         "{proc.quote}"
@@ -542,7 +542,7 @@ export default function CodingAssistant() {
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                   {sug.source === 'ai' ? (
-                                    <span style={{ fontSize: '0.7rem', background: 'rgba(139,92,246,0.25)', color: '#c084fc', border: '1px solid rgba(139,92,246,0.5)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
+                                    <span style={{ fontSize: '0.7rem', background: 'rgba(59,130,246)', color: '#c084fc', border: '1px solid rgba(59,130,246)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
                                   ) : (
                                     <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
                                   )}
