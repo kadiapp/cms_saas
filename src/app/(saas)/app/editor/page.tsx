@@ -101,7 +101,7 @@ function Field({ label, required, children, error, boxNum, helpSlug }: FieldProp
               fontWeight: 'bold'
             }}
           >
-            <Icon.Info size={14} style={{ marginRight: 4 }} />
+            <span style={{ marginRight: 4, display: 'flex' }}><Icon.Info /></span>
             Guide
           </button>
         )}
@@ -190,7 +190,7 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
   return (
     <div className="glass-card sidebar-card validation-report-card">
       <div className="validation-report-header">
-        <Icon.FileText size={18} />
+        <Icon.FileText />
         <h3>Detailed Validation Report</h3>
       </div>
       
@@ -2144,7 +2144,7 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
                   disabled={isValidating}
                   style={{ width: '100%', justifyContent: 'center', padding: '12px', fontSize: '0.95rem', fontWeight: 600 }}
                 >
-                  <Icon.Check size={18} /> {isValidating ? 'Running Validation...' : 'Validate Claim'}
+                  <Icon.Check /> {isValidating ? 'Running Validation...' : 'Validate Claim'}
                 </button>
               </div>
 

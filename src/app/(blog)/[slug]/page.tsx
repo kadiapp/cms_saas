@@ -73,7 +73,7 @@ export default async function BlogPost({ params }: Props) {
 
     let cleanContent = cleanHtmlSchemas(article.content || '');
   // Clean up residual WordPress shortcodes from the database migration
-  cleanContent = cleanContent.replace(/<div(?:(?!<div).)*?\[mb_[^\]]+\](?:(?!<div).)*?<\/div>/gis, '');
+  cleanContent = cleanContent.replace(/<div(?:(?!<div)[\s\S])*?\[mb_[^\]]+\](?:(?!<div)[\s\S])*?<\/div>/gi, '');
 
 
   const articleTitleStr = decodeWPEntities(article.title || '');

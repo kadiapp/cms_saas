@@ -56,7 +56,7 @@ function normalizeCode(code: string): string {
   return (code || '').replace(/\./g, '').trim().toUpperCase();
 }
 
-async function verifyCodeInDB(rawCode: string, type: 'CPT' | 'ICD') {
+async function verifyCodeInDB(rawCode: string, type: 'CPT' | 'ICD'): Promise<any> {
   const code = normalizeCode(rawCode);
   const table = type === 'CPT' ? 'cms_cpt_codes' : 'cms_icd10_codes';
   // Note: cms_cpt_codes does NOT have a billable column — ICD-10 only
