@@ -33,6 +33,29 @@ export default function CodingAssistant() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'dictionary' || tab === 'ncci' || tab === 'auto' || tab === 'mednec') {
+        setActiveTab(tab);
+      }
+      
+      const code = params.get('code');
+      const code1 = params.get('code1');
+      
+      if (tab === 'dictionary' && code) setDictQuery(code);
+      if (tab === 'ncci' && code1) setCode1(code1);
+      if (tab === 'mednec' && code) setMedNecQuery(code);
+      
+      // Auto-trigger search if code is present
+      if (tab === 'mednec' && code) {
+        // We'll let the user click Check Coverage so they see what's happening, 
+        // or we could auto-execute. For now, just pre-filling is great.
+      }
+    }
+  }, []);
+
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

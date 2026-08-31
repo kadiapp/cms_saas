@@ -6,7 +6,7 @@ import '@/app/globals.css';
 import TopNav from '@/components/TopNav';
 import TableOfContents from '@/components/TableOfContents';
 import RelatedArticles from './RelatedArticles';
-import InlineAutoCoderCTA from '@/components/InlineAutoCoderCTA';
+import InlineCodingAssistantCTA from '@/components/InlineCodingAssistantCTA';
 
 // This is required for Next.js App Router dynamic params
 type Props = {
@@ -77,7 +77,9 @@ export default async function BlogPost({ params }: Props) {
 
 
   const articleTitleStr = decodeWPEntities(article.title || '');
-  const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /d{5}/.test(articleTitleStr) || /[A-Z]d{4}/i.test(articleTitleStr);
+  const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /\b\d{5}\b/.test(articleTitleStr) || /\b[A-Z]\d{4}\b/i.test(articleTitleStr);
+  const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
+  const primaryCode = cptMatch ? cptMatch[0] : '';
 
   return (
     <>
@@ -109,7 +111,7 @@ export default async function BlogPost({ params }: Props) {
             
             {/* DYNAMIC INLINE SOFTWARE AD - TOP */}
             {isCptArticle ? (
-              <InlineAutoCoderCTA />
+              <InlineCodingAssistantCTA defaultCpt={primaryCode} />
             ) : (
               <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
