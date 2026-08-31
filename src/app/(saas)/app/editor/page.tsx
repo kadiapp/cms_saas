@@ -150,6 +150,15 @@ interface SectionProps {
 
 function Section({ num, title, children, badge, defaultOpen = false }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+
+  React.useEffect(() => {
+    const handleOpen = (e: any) => {
+      if (e.detail === num) setOpen(true);
+    };
+    window.addEventListener('open-section', handleOpen);
+    return () => window.removeEventListener('open-section', handleOpen);
+  }, [num]);
+
   return (
     <div className="glass-card form-section">
       <div className="section-header" onClick={() => setOpen(o => !o)} role="button" tabIndex={0}
@@ -2154,19 +2163,34 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
                 results={validationResults} 
                 onItemClick={(label) => {
                   const boxId = label.split('.')[0];
-                  const el = document.getElementById(`box-${boxId}`);
-                  if (el) {
-                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.style.transition = 'all 0.3s';
-                    const origBg = el.style.backgroundColor;
-                    const origBorder = el.style.borderColor;
-                    el.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-                    el.style.borderColor = '#ef4444';
-                    setTimeout(() => {
-                      el.style.backgroundColor = origBg;
-                      el.style.borderColor = origBorder;
-                    }, 1500);
-                  }
+                  
+                  const b = parseInt(boxId);
+                  let secNum = "1";
+                  if (label.toLowerCase().includes('insurance') || label.toLowerCase().includes('payer')) secNum = "A";
+                  else if (b >= 1 && b <= 13) secNum = "1";
+                  else if (b >= 14 && b <= 20) secNum = "2";
+                  else if (b === 21) secNum = "21";
+                  else if (b === 24) secNum = "24";
+                  else if (b >= 25 && b <= 30) secNum = "25-30";
+                  else if (b >= 31 && b <= 33) secNum = "31-33";
+                  
+                  window.dispatchEvent(new CustomEvent('open-section', { detail: secNum }));
+
+                  setTimeout(() => {
+                    const el = document.getElementById(`box-${boxId}`);
+                    if (el) {
+                      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      el.style.transition = 'all 0.3s';
+                      const origBg = el.style.backgroundColor;
+                      const origBorder = el.style.borderColor;
+                      el.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+                      el.style.borderColor = '#ef4444';
+                      setTimeout(() => {
+                        el.style.backgroundColor = origBg;
+                        el.style.borderColor = origBorder;
+                      }, 1500);
+                    }
+                  }, 150);
                 }}
               />
             ) : (
