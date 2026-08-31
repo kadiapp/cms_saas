@@ -882,12 +882,7 @@ const [isSaving, setIsSaving] = useState(false);
     }
     setIsSubmittingWaitlist(false);
   };
-const handleExportClick = async (type: 'PDF' | 'EDI') => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setShowSignupModal(true);
-      return;
-    }
+  const handleExportClick = async (type: 'PDF' | 'EDI') => {
     const errors = validationResults.filter(r => r.status === 'error' || r.status === 'critical');
     if (errors.length > 0) {
       setExportWarning({ show: true, type, errorCount: errors.length });
