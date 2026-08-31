@@ -1856,7 +1856,7 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
             {/* ──────────────────────────────────────────── */}
             {/* SECTION 5 — Billing / Tax / Totals (25-30) */}
             {/* ──────────────────────────────────────────── */}
-            <Section num="25–30" title="Tax ID · Totals · Assignment" defaultOpen={false}>
+            <Section num="25-30" title="Tax ID · Totals · Assignment" defaultOpen={false}>
               <div className="grid-3">
                 <Field label="Federal Tax ID Number" required boxNum="25">
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -1913,7 +1913,7 @@ const handleExportClick = async (type: 'PDF' | 'EDI') => {
             {/* ──────────────────────────────────────────── */}
             {/* SECTION 6 — Signatures + Facility + Billing */}
             {/* ──────────────────────────────────────────── */}
-            <Section num="31–33" title="Signatures · Facility · Billing Provider" defaultOpen={false}>
+            <Section num="31-33" title="Signatures · Facility · Billing Provider" defaultOpen={false}>
               {/* Box 31 */}
               <div className="grid-2">
                 <Field label="Signature of Physician or Supplier" required boxNum="31">
