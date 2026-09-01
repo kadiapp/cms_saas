@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import * as Icon from 'react-feather';
+import { useRouter } from 'next/navigation';
+import { EMPTY_FORM } from '@/types';
 import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
@@ -91,6 +93,47 @@ export default function CodingAssistant() {
   // -----------------------------------------------------
   // Auto-Coder Logic
   // -----------------------------------------------------
+  const router = useRouter();
+
+  const handleSendToClaim = () => {
+    if (!autoResults) return;
+    
+    // Parse existing or start fresh
+    let savedForm;
+    try {
+      const saved = localStorage.getItem('cms1500_autosave');
+      savedForm = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(EMPTY_FORM));
+    } catch (e) {
+      savedForm = JSON.parse(JSON.stringify(EMPTY_FORM));
+    }
+
+    // Ensure arrays exist
+    if (!savedForm.diagnosisCodes) savedForm.diagnosisCodes = Array(12).fill('');
+    if (!savedForm.serviceLines) savedForm.serviceLines = JSON.parse(JSON.stringify(EMPTY_FORM.serviceLines));
+
+    // 1. Populate ICD-10 into Box 21 (without decimals)
+    const extractedDiags = (autoResults.diagnoses || []).map((d: any) => d.code.replace(/\./g, ''));
+    extractedDiags.slice(0, 12).forEach((code: string, i: number) => {
+      savedForm.diagnosisCodes[i] = code;
+    });
+
+    // 2. Populate CPT into Box 24D
+    const extractedProcs = autoResults.procedures || [];
+    extractedProcs.slice(0, 6).forEach((proc: any, i: number) => {
+      if (savedForm.serviceLines[i]) {
+        savedForm.serviceLines[i].cptCode = proc.code;
+        // Default point to first diagnosis (A) if not already set and we have diags
+        if (!savedForm.serviceLines[i].diagnosisPointer && extractedDiags.length > 0) {
+          savedForm.serviceLines[i].diagnosisPointer = 'A';
+        }
+      }
+    });
+
+    // Save back to local storage and redirect to editor
+    localStorage.setItem('cms1500_autosave', JSON.stringify(savedForm));
+    router.push('/app/editor');
+  };
+
   const runAutoCoder = async (noteText: string) => {
     if (!noteText.trim()) return;
     setIsAutoLoading(true);
@@ -575,6 +618,16 @@ export default function CodingAssistant() {
                       </div>
                     </div>
                   ))}
+
+                  <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '20px' }}>
+                    <button 
+                      onClick={handleSendToClaim}
+                      className="ca-btn ca-btn-primary" 
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                      <Icon.Send size={16} /> Send to Claim Form
+                    </button>
+                  </div>
                 </div>
               )}
               
