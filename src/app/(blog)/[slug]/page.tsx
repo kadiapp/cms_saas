@@ -8,6 +8,8 @@ import TableOfContents from '@/components/TableOfContents';
 import RelatedArticles from './RelatedArticles';
 import InlineCodingAssistantCTA from '@/components/InlineCodingAssistantCTA';
 import CopyAttribution from '@/components/CopyAttribution';
+import BlogMicroCTA from '@/components/BlogMicroCTA';
+import parse, { DOMNode, Element, Text } from 'html-react-parser';
 
 // This is required for Next.js App Router dynamic params
 type Props = {
@@ -100,6 +102,21 @@ export default async function BlogPost({ params }: Props) {
   const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
   const primaryCode = cptMatch ? cptMatch[0] : '';
 
+  // Parse HTML and replace our custom shortcodes with React Micro-CTAs
+  const parsedContent = parse(cleanContent, {
+    replace: (domNode: DOMNode) => {
+      if (domNode.type === 'tag' && domNode.name === 'p' && (domNode as Element).children.length > 0) {
+        const firstChild = (domNode as Element).children[0];
+        if (firstChild.type === 'text') {
+          const text = (firstChild as Text).data.trim();
+          if (text === '[inject_ncci]') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
+          if (text === '[inject_mednec]') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
+          if (text === '[inject_dictionary]') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
+        }
+      }
+    }
+  });
+
   return (
     <>
       <TopNav />
@@ -145,9 +162,9 @@ export default async function BlogPost({ params }: Props) {
             )}
 
             <TableOfContents />
-              <div className="blog-article-content" suppressHydrationWarning
-              dangerouslySetInnerHTML={{ __html: cleanContent }}
-            />
+              <div className="blog-article-content" suppressHydrationWarning>
+                {parsedContent}
+              </div>
             
             {/* INLINE SOFTWARE AD - BOTTOM */}
             <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '16px', padding: '32px', marginTop: '48px', marginBottom: '48px', textAlign: 'center' }}>
