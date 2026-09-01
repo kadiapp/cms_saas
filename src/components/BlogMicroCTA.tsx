@@ -17,7 +17,7 @@ export default function BlogMicroCTA({ type, defaultCode = '' }: BlogMicroCTAPro
     ncci: {
       icon: <Icon.Shield size={20} color="#3b82f6" />,
       title: "Check NCCI Edits Instantly",
-      desc: "Not sure if these codes bundle? Check the 2025 Medicare NCCI database before you bill.",
+      desc: "Not sure if these codes bundle? Check the latest Medicare NCCI database updates before you bill.",
       placeholder: "e.g., 74178",
       btnText: "Check Edits",
       param: 'code1'
