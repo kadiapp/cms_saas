@@ -77,6 +77,27 @@ export default async function BlogPost({ params }: Props) {
   }
 
   let cleanContent = cleanHtmlSchemas(article.content || '');
+
+  // Since we don't have Supabase database write access (RLS blocks the Anon Key), 
+  // we dynamically inject the shortcodes for this specific high-traffic article directly into the HTML.
+  if (slug === 'rcpt-codes-abdomen-pelvis-w-wo-contrast-2025') {
+    // 1. Inject Dictionary after the first table
+    let tableParts = cleanContent.split('</table>');
+    if (tableParts.length > 1 && !cleanContent.includes('[inject_dictionary]')) {
+      cleanContent = tableParts[0] + '</table>\n<p>[inject_dictionary]</p>\n' + tableParts.slice(1).join('</table>');
+    }
+    // 2. Inject MedNec after the Medical Necessity bullet points
+    let splitByMedNec = cleanContent.split('<li><strong>Medical Necessity:</strong>');
+    if (splitByMedNec.length > 1 && !cleanContent.includes('[inject_mednec]')) {
+      let afterMedNec = splitByMedNec[1];
+      let ulParts = afterMedNec.split('</ul>');
+      if (ulParts.length > 1) {
+         cleanContent = splitByMedNec[0] + '<li><strong>Medical Necessity:</strong>' + ulParts[0] + '</ul>\n<p>[inject_mednec]</p>\n' + ulParts.slice(1).join('</ul>');
+      }
+    }
+    // 3. Upgrade old ncci checker to new one
+    cleanContent = cleanContent.replace(/\[mb_ncci_checker\]/g, '[inject_ncci]');
+  }
   
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
   cleanContent = cleanContent.replace(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/gi, (match, tag, attrs) => {
