@@ -102,15 +102,21 @@ export default async function BlogPost({ params }: Props) {
   const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
   const primaryCode = cptMatch ? cptMatch[0] : '';
 
-  // Parse HTML and replace our custom shortcodes with React Micro-CTAs
-  const parsedContent = parse(cleanContent, {
+  // Pre-process shortcodes into predictable HTML tags so the parser always finds them
+  let processedContent = cleanContent
+    .replace(/\[inject_ncci\]/g, '<span data-inject="ncci"></span>')
+    .replace(/\[mb_ncci_checker\]/g, '<span data-inject="ncci"></span>')
+    .replace(/\[inject_mednec\]/g, '<span data-inject="mednec"></span>')
+    .replace(/\[inject_dictionary\]/g, '<span data-inject="dictionary"></span>');
+
+  // Parse HTML and replace our custom spans with React Micro-CTAs
+  const parsedContent = parse(processedContent, {
     replace: (domNode: DOMNode) => {
-      // Find the shortcode anywhere in the text
-      if (domNode.type === 'text') {
-        const text = (domNode as Text).data.trim();
-        if (text === '[inject_ncci]' || text === '[mb_ncci_checker]') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
-        if (text === '[inject_mednec]') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
-        if (text === '[inject_dictionary]') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
+      if (domNode.type === 'tag' && (domNode as Element).attribs && (domNode as Element).attribs['data-inject']) {
+        const type = (domNode as Element).attribs['data-inject'];
+        if (type === 'ncci') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
+        if (type === 'mednec') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
+        if (type === 'dictionary') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
       }
     }
   });
