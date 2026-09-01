@@ -83,10 +83,10 @@ export default async function BlogPost({ params }: Props) {
     // Remove bgcolor attribute entirely
     let newAttrs = attrs.replace(/\s*bgcolor=["'][^"']*["']/gi, '');
     // Remove background-color and background from style attribute but keep other styles
-    newAttrs = newAttrs.replace(/\bstyle=(["'])([^"']*)\1/gi, (styleMatch, quote, styleVal) => {
+    newAttrs = newAttrs.replace(/\bstyle=(["'])([^"']*)\1/gi, (styleMatch: string, quote: string, styleVal: string) => {
       const cleaned = styleVal
         .split(';')
-        .filter(rule => {
+        .filter((rule: string) => {
           const prop = rule.split(':')[0].trim().toLowerCase();
           return prop !== 'background' && prop !== 'background-color' && prop !== 'color';
         })
