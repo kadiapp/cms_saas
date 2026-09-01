@@ -60,6 +60,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // 2. The Page Component
+export const revalidate = 60; // Revalidate every 60 seconds so DB edits show up live
+
 export default async function BlogPost({ params }: Props) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
@@ -74,9 +76,7 @@ export default async function BlogPost({ params }: Props) {
     notFound();
   }
 
-    let cleanContent = cleanHtmlSchemas(article.content || '');
-  // Clean up residual WordPress shortcodes from the database migration
-  cleanContent = cleanContent.replace(/<div(?:(?!<div)[\s\S])*?\[mb_[^\]]+\](?:(?!<div)[\s\S])*?<\/div>/gi, '');
+  let cleanContent = cleanHtmlSchemas(article.content || '');
   
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
   cleanContent = cleanContent.replace(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/gi, (match, tag, attrs) => {
