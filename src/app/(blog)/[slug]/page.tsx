@@ -7,6 +7,7 @@ import TopNav from '@/components/TopNav';
 import TableOfContents from '@/components/TableOfContents';
 import RelatedArticles from './RelatedArticles';
 import InlineCodingAssistantCTA from '@/components/InlineCodingAssistantCTA';
+import CopyAttribution from '@/components/CopyAttribution';
 
 // This is required for Next.js App Router dynamic params
 type Props = {
@@ -102,6 +103,7 @@ export default async function BlogPost({ params }: Props) {
   return (
     <>
       <TopNav />
+      <CopyAttribution />
       {/* 3. Injecting the EXACT Yoast JSON-LD Schema markup */}
       {article.schema_markup && (
         <script type="application/ld+json" suppressHydrationWarning
