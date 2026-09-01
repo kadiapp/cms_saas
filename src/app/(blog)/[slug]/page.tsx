@@ -105,14 +105,12 @@ export default async function BlogPost({ params }: Props) {
   // Parse HTML and replace our custom shortcodes with React Micro-CTAs
   const parsedContent = parse(cleanContent, {
     replace: (domNode: DOMNode) => {
-      if (domNode.type === 'tag' && domNode.name === 'p' && (domNode as Element).children.length > 0) {
-        const firstChild = (domNode as Element).children[0];
-        if (firstChild.type === 'text') {
-          const text = (firstChild as Text).data.trim();
-          if (text === '[inject_ncci]') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
-          if (text === '[inject_mednec]') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
-          if (text === '[inject_dictionary]') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
-        }
+      // Find the shortcode anywhere in the text
+      if (domNode.type === 'text') {
+        const text = (domNode as Text).data.trim();
+        if (text === '[inject_ncci]' || text === '[mb_ncci_checker]') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
+        if (text === '[inject_mednec]') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
+        if (text === '[inject_dictionary]') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
       }
     }
   });
