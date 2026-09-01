@@ -78,25 +78,40 @@ export default async function BlogPost({ params }: Props) {
 
   let cleanContent = cleanHtmlSchemas(article.content || '');
 
-  // Since we don't have Supabase database write access (RLS blocks the Anon Key), 
-  // we dynamically inject the shortcodes for this specific high-traffic article directly into the HTML.
-  if (slug === 'rcpt-codes-abdomen-pelvis-w-wo-contrast-2025') {
-    // 1. Inject Dictionary after the first table
+  // --- DYNAMIC AUTO-INJECTION SYSTEM ---
+  // Since we don't rely on manual Supabase shortcodes (due to RLS limitations), 
+  // we dynamically inject Micro-CTAs into ALL articles based on smart contextual landmarks.
+  
+  // 1. Upgrade old ncci checker to new one globally
+  cleanContent = cleanContent.replace(/\[mb_ncci_checker\]/g, '[inject_ncci]');
+
+  // 2. Dictionary CTA: Inject after the first table if it exists
+  if (!cleanContent.includes('[inject_dictionary]')) {
     let tableParts = cleanContent.split('</table>');
-    if (tableParts.length > 1 && !cleanContent.includes('[inject_dictionary]')) {
+    if (tableParts.length > 1) {
       cleanContent = tableParts[0] + '</table>\n<p>[inject_dictionary]</p>\n' + tableParts.slice(1).join('</table>');
     }
-    // 2. Inject MedNec after the Medical Necessity bullet points
+  }
+
+  // 3. MedNec CTA: Inject near "Medical Necessity"
+  if (!cleanContent.includes('[inject_mednec]')) {
+    // Try to inject after a "Medical Necessity:" bullet point
     let splitByMedNec = cleanContent.split('<li><strong>Medical Necessity:</strong>');
-    if (splitByMedNec.length > 1 && !cleanContent.includes('[inject_mednec]')) {
+    if (splitByMedNec.length > 1) {
       let afterMedNec = splitByMedNec[1];
       let ulParts = afterMedNec.split('</ul>');
       if (ulParts.length > 1) {
          cleanContent = splitByMedNec[0] + '<li><strong>Medical Necessity:</strong>' + ulParts[0] + '</ul>\n<p>[inject_mednec]</p>\n' + ulParts.slice(1).join('</ul>');
       }
+    } else {
+      // Fallback: Inject after an H2/H3 containing "Medical Necessity"
+      cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?Medical Necessity.*?<\/h[23]>)/i, '$1\n<p>[inject_mednec]</p>\n');
     }
-    // 3. Upgrade old ncci checker to new one
-    cleanContent = cleanContent.replace(/\[mb_ncci_checker\]/g, '[inject_ncci]');
+  }
+
+  // 4. NCCI CTA: Inject near "NCCI" if it isn't already placed by the old mb_ncci_checker
+  if (!cleanContent.includes('[inject_ncci]')) {
+    cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?NCCI.*?<\/h[23]>)/i, '$1\n<p>[inject_ncci]</p>\n');
   }
   
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
