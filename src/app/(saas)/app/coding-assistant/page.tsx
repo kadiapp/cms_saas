@@ -398,7 +398,7 @@ export default function CodingAssistant() {
                   }}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                 >
-                  <Icon.Sparkles size={16} />
+                  <Icon.Cpu size={16} />
                   Ask AI Auto-Coder
                 </button>
               </div>
