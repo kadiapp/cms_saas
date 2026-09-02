@@ -4,13 +4,37 @@ import React, { useState } from 'react';
 import * as Icon from 'react-feather';
 import { useRouter } from 'next/navigation';
 import { EMPTY_FORM } from '@/types';
+import { verifyNpi, type NpiResult } from '@/api/nppes';
 import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
 export default function CodingAssistant() {
-  const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto' | 'mednec'>('dictionary');
+  const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto' | 'mednec' | 'npi'>('dictionary');
   
+  // NPI Tab State
+  const [npiQuery, setNpiQuery] = useState('');
+  const [isNpiLoading, setIsNpiLoading] = useState(false);
+  const [npiResult, setNpiResult] = useState<NpiResult | null>(null);
+  const [npiError, setNpiError] = useState('');
+  
+  const handleNpiSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!npiQuery.trim()) return;
+    setIsNpiLoading(true);
+    setNpiError('');
+    setNpiResult(null);
+    try {
+      const result = await verifyNpi(npiQuery.trim());
+      if (result.isValid) setNpiResult(result);
+      else setNpiError('NPI not found.');
+    } catch(err) {
+      setNpiError('Error searching NPI registry.');
+    } finally {
+      setIsNpiLoading(false);
+    }
+  };
+
   // Tab 1: Dictionary State
   const [dictQuery, setDictQuery] = useState('');
   const [isDictLoading, setIsDictLoading] = useState(false);
@@ -39,21 +63,28 @@ export default function CodingAssistant() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      if (tab === 'dictionary' || tab === 'ncci' || tab === 'auto' || tab === 'mednec') {
+      if (tab === 'dictionary' || tab === 'ncci' || tab === 'auto' || tab === 'mednec' || tab === 'npi') {
         setActiveTab(tab);
-      }
-      
-      const code = params.get('code');
-      const code1 = params.get('code1');
-      
-      if (tab === 'dictionary' && code) setDictQuery(code);
-      if (tab === 'ncci' && code1) setCode1(code1);
-      if (tab === 'mednec' && code) setMedNecQuery(code);
-      
-      // Auto-trigger search if code is present
-      if (tab === 'mednec' && code) {
-        // We'll let the user click Check Coverage so they see what's happening, 
-        // or we could auto-execute. For now, just pre-filling is great.
+        
+        if (tab === 'dictionary' && params.get('q')) {
+          setDictQuery(params.get('q') || '');
+        }
+        if (tab === 'ncci' && (params.get('code1') || params.get('code2'))) {
+          setCode1(params.get('code1') || '');
+          setCode2(params.get('code2') || '');
+        }
+        if (tab === 'npi' && params.get('npi')) {
+          setNpiQuery(params.get('npi') || '');
+        }
+        if (tab === 'auto' && params.get('note')) {
+          setAutoNote(params.get('note') || '');
+          // Auto trigger run?
+          const savedNote = params.get('note') || '';
+          setTimeout(() => runAutoCoder(savedNote), 50);
+        }
+        if (tab === 'mednec' && params.get('code')) {
+          setMedNecQuery(params.get('code') || '');
+        }
       }
     }
   }, []);
@@ -318,6 +349,13 @@ export default function CodingAssistant() {
           style={{color: '#10b981'}}
         >
           <Icon.CheckCircle size={18} /> Medical Necessity
+        </button>
+        <button 
+          className={`ca-tab ${activeTab === 'npi' ? 'active' : ''}`}
+          onClick={() => setActiveTab('npi')}
+          style={{color: '#8b5cf6'}}
+        >
+          <Icon.UserCheck size={18} /> Provider NPI
         </button>
       </div>
 
@@ -729,6 +767,49 @@ export default function CodingAssistant() {
                     <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>No specific LCD/NCD rules found</h3>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>We couldn't find a strict national coverage list for {medNecSearchedCode}. Standard medical necessity documentation rules apply.</p>
                   </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'npi' && (
+        <div className="ca-tab-content">
+          <div className="ca-ncci-box glass-card">
+            <h2>Verify Provider NPI & Credentials</h2>
+            <p className="ca-ncci-subtitle">Enter a 10-digit National Provider Identifier to check the official NPPES registry.</p>
+            
+            <form onSubmit={handleNpiSearch} className="ca-form" style={{ marginTop: '24px' }}>
+              <div className="ca-input-group" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  placeholder="e.g. 1234567890"
+                  className="ca-input"
+                  value={npiQuery}
+                  onChange={e => setNpiQuery(e.target.value)}
+                  style={{ flex: 1, padding: '12px 16px', fontSize: '1.1rem' }}
+                />
+                <button type="submit" className="ca-btn ca-btn-primary" disabled={isNpiLoading}>
+                  {isNpiLoading ? 'Searching...' : 'Search NPI'}
+                </button>
+              </div>
+            </form>
+
+            {npiError && <div className="ca-error" style={{marginTop: '16px'}}><Icon.AlertCircle size={16} /> {npiError}</div>}
+
+            {npiResult && npiResult.details && (
+              <div className="ncci-result-body" style={{ marginTop: '24px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '20px', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                  <Icon.CheckCircle size={32} color="#8b5cf6" />
+                  <div>
+                    <h3 style={{ margin: 0, color: '#8b5cf6', fontSize: '1.2rem' }}>{npiResult.details.name}</h3>
+                    <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>NPI: <strong>{npiResult.details.npi}</strong></div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#cbd5e1' }}>
+                  <div><strong>Taxonomy:</strong> {npiResult.details.taxonomy || 'Not available'}</div>
+                  <div><strong>Address:</strong> {npiResult.details.address || 'Not available'}</div>
                 </div>
               </div>
             )}

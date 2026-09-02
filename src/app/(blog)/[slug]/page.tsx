@@ -113,6 +113,16 @@ export default async function BlogPost({ params }: Props) {
   if (!cleanContent.includes('[inject_ncci]')) {
     cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?NCCI.*?<\/h[23]>)/i, '$1\n<p>[inject_ncci]</p>\n');
   }
+
+  // 5. Box 17 CTA: Inject near "Box 17" or "Referring Provider"
+  if (!cleanContent.includes('[inject_box17]')) {
+    cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?(?:Box 17|Referring Provider).*?<\/h[23]>)/i, '$1\n<p>[inject_box17]</p>\n');
+  }
+
+  // 6. UB-04 CTA: Inject near "UB-04" or "Discharge Status"
+  if (!cleanContent.includes('[inject_ub04]')) {
+    cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?(?:UB-04|Discharge Status|FL 17).*?<\/h[23]>)/i, '$1\n<p>[inject_ub04]</p>\n');
+  }
   
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
   cleanContent = cleanContent.replace(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/gi, (match, tag, attrs) => {
@@ -143,7 +153,9 @@ export default async function BlogPost({ params }: Props) {
     .replace(/\[inject_ncci\]/g, '<span data-inject="ncci"></span>')
     .replace(/\[mb_ncci_checker\]/g, '<span data-inject="ncci"></span>')
     .replace(/\[inject_mednec\]/g, '<span data-inject="mednec"></span>')
-    .replace(/\[inject_dictionary\]/g, '<span data-inject="dictionary"></span>');
+    .replace(/\[inject_dictionary\]/g, '<span data-inject="dictionary"></span>')
+    .replace(/\[inject_box17\]/g, '<span data-inject="box17"></span>')
+    .replace(/\[inject_ub04\]/g, '<span data-inject="ub04"></span>');
 
   // Parse HTML and replace our custom spans with React Micro-CTAs
   const parsedContent = parse(processedContent, {
@@ -153,6 +165,8 @@ export default async function BlogPost({ params }: Props) {
         if (type === 'ncci') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
         if (type === 'mednec') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
         if (type === 'dictionary') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
+        if (type === 'box17') return <BlogMicroCTA type="box17" />;
+        if (type === 'ub04') return <BlogMicroCTA type="ub04" />;
       }
     }
   });

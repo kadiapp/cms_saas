@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import * as Icon from 'react-feather';
 
 interface BlogMicroCTAProps {
-  type: 'ncci' | 'mednec' | 'dictionary';
+  type: 'ncci' | 'mednec' | 'dictionary' | 'box17' | 'ub04';
   defaultCode?: string;
 }
 
@@ -37,6 +37,24 @@ export default function BlogMicroCTA({ type, defaultCode = '' }: BlogMicroCTAPro
       placeholder: "Enter CPT (e.g. 74177)",
       btnText: "Lookup Code",
       param: 'q'
+    },
+    box17: {
+      icon: <Icon.UserCheck size={20} color="#8b5cf6" />,
+      title: "Verify Referring Provider NPI",
+      desc: "Box 17 requires a valid NPI and qualifier (DN, DK, DQ). Look up any provider instantly.",
+      placeholder: "Enter 10-digit NPI",
+      btnText: "Lookup NPI",
+      param: 'npi',
+      targetTab: 'npi'
+    },
+    ub04: {
+      icon: <Icon.Activity size={20} color="#f43f5e" />,
+      title: "UB-04 Discharge Status AI",
+      desc: "Not sure which Patient Discharge Status Code (FL 17) applies? Let our AI analyze the scenario.",
+      placeholder: "e.g., Patient transferred to SNF...",
+      btnText: "Ask AI Auto-Coder",
+      param: 'note',
+      targetTab: 'auto'
     }
   };
 
@@ -45,7 +63,8 @@ export default function BlogMicroCTA({ type, defaultCode = '' }: BlogMicroCTAPro
   const handleRoute = (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-    router.push(`/app/coding-assistant?tab=${type}&${config.param}=${encodeURIComponent(query.trim())}`);
+    const tab = (config as any).targetTab || type;
+    router.push(`/app/coding-assistant?tab=${tab}&${config.param}=${encodeURIComponent(query.trim())}`);
   };
 
   return (
