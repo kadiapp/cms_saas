@@ -78,6 +78,11 @@ export default async function BlogPost({ params }: Props) {
 
   let cleanContent = cleanHtmlSchemas(article.content || '');
 
+  const articleTitleStr = decodeWPEntities(article.title || '');
+  const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /\b\d{5}\b/.test(articleTitleStr) || /\b[A-Z]\d{4}\b/i.test(articleTitleStr);
+  const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
+  const primaryCode = cptMatch ? cptMatch[0] : '';
+
   // --- DYNAMIC AUTO-INJECTION SYSTEM ---
   // Since we don't rely on manual Supabase shortcodes (due to RLS limitations), 
   // we dynamically inject Micro-CTAs into ALL articles based on smart contextual landmarks.
@@ -162,11 +167,6 @@ export default async function BlogPost({ params }: Props) {
     });
     return `<${tag}${newAttrs}>`;
   });
-
-  const articleTitleStr = decodeWPEntities(article.title || '');
-  const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /\b\d{5}\b/.test(articleTitleStr) || /\b[A-Z]\d{4}\b/i.test(articleTitleStr);
-  const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
-  const primaryCode = cptMatch ? cptMatch[0] : '';
 
   // Pre-process shortcodes into predictable HTML tags so the parser always finds them
   let processedContent = cleanContent
