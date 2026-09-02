@@ -104,24 +104,44 @@ export default async function BlogPost({ params }: Props) {
          cleanContent = splitByMedNec[0] + '<li><strong>Medical Necessity:</strong>' + ulParts[0] + '</ul>\n<p>[inject_mednec]</p>\n' + ulParts.slice(1).join('</ul>');
       }
     } else {
-      // Fallback: Inject after an H2/H3 containing "Medical Necessity"
-      cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?Medical Necessity.*?<\/h[23]>)/i, '$1\n<p>[inject_mednec]</p>\n');
+      // Fallback: Inject after an H2/H3/H4 containing "Medical Necessity"
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?Medical Necessity[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_mednec]</p>\n');
     }
   }
 
   // 4. NCCI CTA: Inject near "NCCI" if it isn't already placed by the old mb_ncci_checker
   if (!cleanContent.includes('[inject_ncci]')) {
-    cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?NCCI.*?<\/h[23]>)/i, '$1\n<p>[inject_ncci]</p>\n');
+    cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?NCCI[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_ncci]</p>\n');
   }
 
   // 5. Box 17 CTA: Inject near "Box 17" or "Referring Provider"
   if (!cleanContent.includes('[inject_box17]')) {
-    cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?(?:Box 17|Referring Provider).*?<\/h[23]>)/i, '$1\n<p>[inject_box17]</p>\n');
+    if (/Box 17|Referring Provider/i.test(articleTitleStr)) {
+      // If the article is specifically about this, inject under the first H2/H3/H4
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box17]</p>\n');
+    } else {
+      // Otherwise find a relevant header
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:Box 17|Referring Provider)[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box17]</p>\n');
+    }
+    // Ultimate fallback for Box 17 articles with weird formatting (like just paragraphs)
+    if (!cleanContent.includes('[inject_box17]') && /Box 17|Referring Provider/i.test(articleTitleStr)) {
+      cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_box17]</p>\n');
+    }
   }
 
   // 6. UB-04 CTA: Inject near "UB-04" or "Discharge Status"
   if (!cleanContent.includes('[inject_ub04]')) {
-    cleanContent = cleanContent.replace(/(<h[23][^>]*>.*?(?:UB-04|Discharge Status|FL 17).*?<\/h[23]>)/i, '$1\n<p>[inject_ub04]</p>\n');
+    if (/UB-04|UB04|Discharge Status/i.test(articleTitleStr)) {
+      // If the article is specifically about this, inject under the first H2/H3/H4
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_ub04]</p>\n');
+    } else {
+      // Otherwise find a relevant header
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:UB-04|UB04|Discharge Status|FL 17)[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_ub04]</p>\n');
+    }
+    // Ultimate fallback for UB-04 articles with weird formatting
+    if (!cleanContent.includes('[inject_ub04]') && /UB-04|UB04|Discharge Status/i.test(articleTitleStr)) {
+      cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_ub04]</p>\n');
+    }
   }
   
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
