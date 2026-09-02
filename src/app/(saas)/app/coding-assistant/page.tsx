@@ -27,10 +27,13 @@ export default function CodingAssistant() {
     setNpiResult(null);
     try {
       const result = await verifyNpi(queryToUse.trim());
-      if (result.isValid) setNpiResult(result);
-      else setNpiError('NPI not found.');
-    } catch(err) {
-      setNpiError('Error searching NPI registry.');
+      setNpiResult(result);
+    } catch(err: any) {
+      if (err.message?.includes('not found')) {
+        setNpiError('NPI not found in registry.');
+      } else {
+        setNpiError('Error searching NPI registry.');
+      }
     } finally {
       setIsNpiLoading(false);
     }
@@ -804,18 +807,22 @@ export default function CodingAssistant() {
 
             {npiError && <div className="ca-error" style={{marginTop: '16px'}}><Icon.AlertCircle size={16} /> {npiError}</div>}
 
-            {npiResult && npiResult.details && (
+            {npiResult && (
               <div className="ncci-result-body" style={{ marginTop: '24px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', padding: '20px', borderRadius: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
                   <Icon.CheckCircle size={32} color="#8b5cf6" />
                   <div>
-                    <h3 style={{ margin: 0, color: '#8b5cf6', fontSize: '1.2rem' }}>{npiResult.details.name}</h3>
-                    <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>NPI: <strong>{npiResult.details.npi}</strong></div>
+                    <h3 style={{ margin: 0, color: '#8b5cf6', fontSize: '1.2rem' }}>
+                      {npiResult.type === 'individual' 
+                        ? `${npiResult.firstName} ${npiResult.lastName}`
+                        : npiResult.organizationName}
+                    </h3>
+                    <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>NPI: <strong>{npiResult.number}</strong></div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#cbd5e1' }}>
-                  <div><strong>Taxonomy:</strong> {npiResult.details.taxonomy || 'Not available'}</div>
-                  <div><strong>Address:</strong> {npiResult.details.address || 'Not available'}</div>
+                  <div><strong>Taxonomy:</strong> {npiResult.primaryTaxonomy || 'Not available'}</div>
+                  <div><strong>Type:</strong> {npiResult.type === 'individual' ? 'Individual / Sole Proprietor' : 'Organization'}</div>
                 </div>
               </div>
             )}
