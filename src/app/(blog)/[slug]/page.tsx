@@ -90,6 +90,11 @@ export default async function BlogPost({ params }: Props) {
   // 1. Upgrade old ncci checker to new one globally
   cleanContent = cleanContent.replace(/\[mb_ncci_checker\]/g, '[inject_ncci]');
 
+  // 1.5 TL;DR AI Quick Answer (Inject after first paragraph)
+  if (!cleanContent.includes('[inject_tldr]')) {
+    cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_tldr]</p>\n');
+  }
+
   // 2. Dictionary CTA: Inject after the first table if it exists
   if (!cleanContent.includes('[inject_dictionary]')) {
     let tableParts = cleanContent.split('</table>');
@@ -149,6 +154,19 @@ export default async function BlogPost({ params }: Props) {
     }
   }
   
+  // 7. Box 24 CTA: Inject near Box 24 or Date of Service
+  if (!cleanContent.includes('[inject_box24]')) {
+    if (/Box 24|Date of Service/i.test(articleTitleStr)) {
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box24]</p>\n');
+    } else {
+      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:Box 24|Date of Service)[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box24]</p>\n');
+    }
+    // Ultimate fallback for Box 24 articles with weird formatting
+    if (!cleanContent.includes('[inject_box24]') && /Box 24|Date of Service/i.test(articleTitleStr)) {
+      cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_box24]</p>\n');
+    }
+  }
+
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
   cleanContent = cleanContent.replace(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/gi, (match, tag, attrs) => {
     // Remove bgcolor attribute entirely
@@ -175,7 +193,9 @@ export default async function BlogPost({ params }: Props) {
     .replace(/\[inject_mednec\]/g, '<span data-inject="mednec"></span>')
     .replace(/\[inject_dictionary\]/g, '<span data-inject="dictionary"></span>')
     .replace(/\[inject_box17\]/g, '<span data-inject="box17"></span>')
-    .replace(/\[inject_ub04\]/g, '<span data-inject="ub04"></span>');
+    .replace(/\[inject_ub04\]/g, '<span data-inject="ub04"></span>')
+    .replace(/\[inject_box24\]/g, '<span data-inject="box24"></span>')
+    .replace(/\[inject_tldr\]/g, '<span data-inject="tldr_ai"></span>');
 
   // Parse HTML and replace our custom spans with React Micro-CTAs
   const parsedContent = parse(processedContent, {
@@ -187,6 +207,8 @@ export default async function BlogPost({ params }: Props) {
         if (type === 'dictionary') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
         if (type === 'box17') return <BlogMicroCTA type="box17" />;
         if (type === 'ub04') return <BlogMicroCTA type="ub04" />;
+        if (type === 'box24') return <BlogMicroCTA type="box24" />;
+        if (type === 'tldr_ai') return <BlogMicroCTA type="tldr_ai" />;
       }
     }
   });

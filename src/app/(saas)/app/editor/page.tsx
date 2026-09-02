@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useCallback, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Select from 'react-select';
 
@@ -555,6 +555,16 @@ export default function App() {
   // DB Persistence State
   const { id: currentClaimId } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Auto-open AI Modal if requested by Blog Micro-CTA
+  useEffect(() => {
+    if (searchParams?.get('action') === 'auto_fill') {
+      setShowAiModal(true);
+      // Clean up the URL so it doesn't reopen on refresh
+      window.history.replaceState({}, '', '/app/editor');
+    }
+  }, [searchParams]);
 
   // Load claim when URL changes
   useEffect(() => {
