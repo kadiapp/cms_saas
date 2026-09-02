@@ -399,7 +399,7 @@ export default function CodingAssistant() {
                   Are you trying to extract codes from a complex clinical scenario?
                 </p>
                 <button 
-                  className="ca-btn ca-btn-primary"
+                  className="btn btn-primary ca-btn"
                   onClick={() => {
                     setAutoNote(dictQuery);
                     setActiveTab('auto');
@@ -696,7 +696,7 @@ export default function CodingAssistant() {
                   <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid #1e293b', paddingTop: '20px' }}>
                     <button 
                       onClick={handleSendToClaim}
-                      className="ca-btn ca-btn-primary" 
+                      className="btn btn-primary ca-btn" 
                       style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
                       <Icon.Send size={16} /> Send to Claim Form
@@ -799,7 +799,7 @@ export default function CodingAssistant() {
                   onChange={e => setNpiQuery(e.target.value)}
                   style={{ flex: 1, padding: '12px 16px', fontSize: '1.1rem' }}
                 />
-                <button type="submit" className="ca-btn ca-btn-primary" disabled={isNpiLoading}>
+                <button type="submit" className="btn btn-primary ca-btn" disabled={isNpiLoading}>
                   {isNpiLoading ? 'Searching...' : 'Search NPI'}
                 </button>
               </div>
