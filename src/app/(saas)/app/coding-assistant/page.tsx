@@ -18,14 +18,15 @@ export default function CodingAssistant() {
   const [npiResult, setNpiResult] = useState<NpiResult | null>(null);
   const [npiError, setNpiError] = useState('');
   
-  const handleNpiSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!npiQuery.trim()) return;
+  const handleNpiSearch = async (e?: React.FormEvent, directNpi?: string) => {
+    if (e) e.preventDefault();
+    const queryToUse = directNpi || npiQuery;
+    if (!queryToUse.trim()) return;
     setIsNpiLoading(true);
     setNpiError('');
     setNpiResult(null);
     try {
-      const result = await verifyNpi(npiQuery.trim());
+      const result = await verifyNpi(queryToUse.trim());
       if (result.isValid) setNpiResult(result);
       else setNpiError('NPI not found.');
     } catch(err) {
@@ -74,7 +75,12 @@ export default function CodingAssistant() {
           setCode2(params.get('code2') || '');
         }
         if (tab === 'npi' && params.get('npi')) {
-          setNpiQuery(params.get('npi') || '');
+          const incomingNpi = params.get('npi') || '';
+          setNpiQuery(incomingNpi);
+          // Auto trigger run
+          setTimeout(() => {
+            handleNpiSearch(undefined, incomingNpi);
+          }, 50);
         }
         if (tab === 'auto' && params.get('note')) {
           setAutoNote(params.get('note') || '');
