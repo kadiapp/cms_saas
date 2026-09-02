@@ -343,29 +343,56 @@ export default function CodingAssistant() {
           </div>
 
           <div className="ca-dict-layout">
-            {dictResults && (
+            {dictResults && (dictResults.cpt.length === 0 && dictResults.icd.length === 0) ? (
+              <div className="ca-dict-results glass-card" style={{ textAlign: 'center', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Icon.Search size={48} color="#475569" style={{ marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '1.2rem', marginBottom: '8px' }}>No exact matches found</h3>
+                <p style={{ color: '#94a3b8', marginBottom: '24px', fontSize: '0.95rem', maxWidth: '400px' }}>
+                  We couldn't find a direct dictionary match for <strong>"{dictQuery}"</strong>. 
+                  Are you trying to extract codes from a complex clinical scenario?
+                </p>
+                <button 
+                  className="ca-btn ca-btn-primary"
+                  onClick={() => {
+                    setAutoNote(dictQuery);
+                    setActiveTab('auto');
+                    setTimeout(() => runAutoCoder(dictQuery), 50);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+                >
+                  <Icon.Sparkles size={16} />
+                  Ask AI Auto-Coder
+                </button>
+              </div>
+            ) : dictResults && (
               <div className="ca-dict-results glass-card">
                 <h3>Search Results</h3>
                 <div className="ca-result-list">
-                  <h4 className="ca-result-header">CPT / HCPCS Codes ({dictResults.cpt.length})</h4>
-                  {dictResults.cpt.map(c => (
-                    <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, 'CPT')}>
-                      <span className="ca-badge cpt">CPT</span>
-                      <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
-                      <Icon.ChevronRight size={16} color="#64748b" />
-                    </div>
-                  ))}
-                  {dictResults.cpt.length === 0 && <p className="ca-empty-text">No CPT codes found.</p>}
-
-                  <h4 className="ca-result-header" style={{ marginTop: '24px' }}>ICD-10 Diagnoses ({dictResults.icd.length})</h4>
-                  {dictResults.icd.map(c => (
-                    <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, 'ICD')}>
-                      <span className="ca-badge icd">ICD</span>
-                      <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
-                      <Icon.ChevronRight size={16} color="#64748b" />
-                    </div>
-                  ))}
-                  {dictResults.icd.length === 0 && <p className="ca-empty-text">No ICD codes found.</p>}
+                  {dictResults.cpt.length > 0 && (
+                    <>
+                      <h4 className="ca-result-header">CPT / HCPCS Codes ({dictResults.cpt.length})</h4>
+                      {dictResults.cpt.map(c => (
+                        <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, 'CPT')}>
+                          <span className="ca-badge cpt">CPT</span>
+                          <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
+                          <Icon.ChevronRight size={16} color="#64748b" />
+                        </div>
+                      ))}
+                    </>
+                  )}
+  
+                  {dictResults.icd.length > 0 && (
+                    <>
+                      <h4 className="ca-result-header" style={{ marginTop: dictResults.cpt.length > 0 ? '24px' : '0' }}>ICD-10 Diagnoses ({dictResults.icd.length})</h4>
+                      {dictResults.icd.map(c => (
+                        <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, 'ICD')}>
+                          <span className="ca-badge icd">ICD</span>
+                          <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
+                          <Icon.ChevronRight size={16} color="#64748b" />
+                        </div>
+                      ))}
+                    </>
+                  )}
                 </div>
               </div>
             )}
