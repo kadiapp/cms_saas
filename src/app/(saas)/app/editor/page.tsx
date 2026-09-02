@@ -422,6 +422,12 @@ Prior Auth: PA-2026-88421`;
 // Main App
 // ============================================================
 export default function App() {
+  const trackEvent = (eventName: string) => {
+    if (typeof window !== 'undefined' && (window as any).clarity) {
+      (window as any).clarity('event', eventName);
+    }
+  };
+
   const [form, setForm] = useState<ClaimForm>(() => {
     try {
       const saved = localStorage.getItem('cms1500_autosave');
@@ -758,6 +764,7 @@ const [isSaving, setIsSaving] = useState(false);
   }, []);
 
   const handleValidate = useCallback(async () => {
+    trackEvent('validate_claim_clicked');
     setIsValidating(true);
     showToast('Validating claim data...', 'info');
 
@@ -883,6 +890,7 @@ const [isSaving, setIsSaving] = useState(false);
     setIsSubmittingWaitlist(false);
   };
   const handleExportClick = async (type: 'PDF' | 'EDI') => {
+    trackEvent(`export_${type.toLowerCase()}_clicked`);
     const errors = validationResults.filter(r => r.status === 'error' || r.status === 'critical');
     if (errors.length > 0) {
       setExportWarning({ show: true, type, errorCount: errors.length });
@@ -904,6 +912,7 @@ const [isSaving, setIsSaving] = useState(false);
   }, []);
 
   const handleAiExtract = useCallback(async (text: string, base64Pdf?: string) => {
+    trackEvent('ai_autofill_file_dropped');
     setIsAutofilling(true);
     try {
       const extracted = await extractClaimFromText(text, base64Pdf);

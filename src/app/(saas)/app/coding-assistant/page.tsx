@@ -10,6 +10,12 @@ import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
 export default function CodingAssistant() {
+  const trackEvent = (eventName: string) => {
+    if (typeof window !== 'undefined' && (window as any).clarity) {
+      (window as any).clarity('event', eventName);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto' | 'mednec' | 'npi'>('dictionary');
   
   // NPI Tab State
@@ -19,6 +25,7 @@ export default function CodingAssistant() {
   const [npiError, setNpiError] = useState('');
   
   const handleNpiSearch = async (e?: React.FormEvent, directNpi?: string) => {
+    trackEvent('npi_search_clicked');
     if (e) e.preventDefault();
     const queryToUse = directNpi || npiQuery;
     if (!queryToUse.trim()) return;
@@ -169,13 +176,13 @@ export default function CodingAssistant() {
       }
     });
 
-    // Save back to local storage and redirect to editor
     localStorage.setItem('cms1500_autosave', JSON.stringify(savedForm));
     router.push('/app/editor');
   };
 
   const runAutoCoder = async (noteText: string) => {
     if (!noteText.trim()) return;
+    trackEvent('ai_autocoder_clicked');
     setIsAutoLoading(true);
     setAutoResults(null);
     try {
@@ -236,6 +243,7 @@ export default function CodingAssistant() {
   // Medical Necessity Logic
   // -----------------------------------------------------
   const handleMedNecSearch = async (e: React.FormEvent) => {
+    trackEvent('mednec_search_clicked');
     e.preventDefault();
     if (!medNecQuery.trim()) return;
 
@@ -257,6 +265,7 @@ export default function CodingAssistant() {
   // Dictionary Logic
   // -----------------------------------------------------
   const handleDictSearch = async (e: React.FormEvent) => {
+    trackEvent('dictionary_search_clicked');
     e.preventDefault();
     if (!dictQuery.trim()) return;
 
@@ -301,6 +310,7 @@ export default function CodingAssistant() {
   // NCCI Logic
   // -----------------------------------------------------
   const handleNcciCheck = async (e: React.FormEvent) => {
+    trackEvent('ncci_search_clicked');
     e.preventDefault();
     if (!code1.trim() || !code2.trim()) return;
 

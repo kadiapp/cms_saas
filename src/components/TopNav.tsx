@@ -51,7 +51,16 @@ export default function TopNav() {
             <Icon.Grid size={16} />
             <span>Dashboard</span>
           </Link>
-          <Link href="/app/editor" className={`topnav-link ${pathname === '/app/editor' ? 'active' : ''}`} onClick={closeMenu}>
+          <Link 
+            href="/app/editor" 
+            className={`topnav-link ${pathname === '/app/editor' ? 'active' : ''}`} 
+            onClick={() => {
+              if (typeof window !== 'undefined' && (window as any).clarity) {
+                (window as any).clarity('event', 'ai_autofill_nav_clicked');
+              }
+              closeMenu();
+            }}
+          >
             <Icon.Edit3 size={16} />
             <span>AI Auto-Fill</span>
           </Link>
