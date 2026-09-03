@@ -92,7 +92,10 @@ export default function BlogMicroCTA({ type, defaultCode = '' }: BlogMicroCTAPro
       return;
     }
 
-    if (!(config as any).hideInput && !query.trim()) return;
+    if (!(config as any).hideInput && !query.trim()) {
+      router.push(`/app/coding-assistant?tab=${tab}`);
+      return;
+    }
     router.push(`/app/coding-assistant?tab=${tab}&${config.param}=${encodeURIComponent(query.trim())}`);
   };
 
