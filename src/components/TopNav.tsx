@@ -36,7 +36,19 @@ export default function TopNav() {
         <div className="topnav-brand" onClick={() => { closeMenu(); router.push('/app'); }} role="button" tabIndex={0}>
           <div className="topnav-logo-icon">🩺</div>
           <div className="topnav-brand-text">
-            <div className="topnav-logo-name">1500 Claim Billing</div>
+            <div className="topnav-logo-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              1500 Claim Billing
+              <span style={{ 
+                fontSize: '0.65rem', 
+                background: 'rgba(59, 130, 246, 0.2)', 
+                color: '#60a5fa', 
+                padding: '2px 6px', 
+                borderRadius: '4px', 
+                fontWeight: 'bold',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase'
+              }}>BETA</span>
+            </div>
           </div>
         </div>
 
