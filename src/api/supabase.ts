@@ -384,11 +384,14 @@ export async function getMedicalNecessity(cptCode: string): Promise<string[]> {
   try {
     const { data, error } = await supabaseMedicalNecessity
       .from('cms_medical_necessity')
-      .select('icd10_code')
-      .eq('cpt_code', cptCode);
+      .select('icd10_codes')
+      .eq('cpt_code', cptCode)
+      .maybeSingle();
 
-    if (error || !data) return [];
-    return data.map(r => r.icd10_code);
+    if (error || !data || !data.icd10_codes) return [];
+    
+    // The optimized DB stores them as a single comma-separated string
+    return data.icd10_codes.split(',').map((c: string) => c.trim()).filter(Boolean);
   } catch (err) {
     console.error(err);
     return [];
