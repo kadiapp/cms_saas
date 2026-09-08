@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import * as Icon from 'react-feather';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { EMPTY_FORM } from '@/types';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
 import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity } from '@/api/supabase';
@@ -30,6 +30,8 @@ function ProgressiveAutoCoderText() {
 }
 
 export default function CodingAssistant() {
+  const searchParams = useSearchParams();
+
   const trackEvent = (eventName: string) => {
     if (typeof window !== 'undefined' && (window as any).clarity) {
       (window as any).clarity('event', eventName);
@@ -110,22 +112,21 @@ export default function CodingAssistant() {
   const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab');
+    if (searchParams) {
+      const tab = searchParams.get('tab');
       if (tab === 'dictionary' || tab === 'ncci' || tab === 'auto' || tab === 'mednec' || tab === 'npi') {
         setActiveTab(tab);
         
         if (tab === 'dictionary') {
-          const dictQ = params.get('q') || params.get('code');
+          const dictQ = searchParams.get('q') || searchParams.get('code');
           if (dictQ) {
             setDictQuery(dictQ);
             setTimeout(() => handleDictSearch(undefined, dictQ), 50);
           }
         }
         if (tab === 'ncci') {
-          const c1 = params.get('code1') || '';
-          const c2 = params.get('code2') || '';
+          const c1 = searchParams.get('code1') || '';
+          const c2 = searchParams.get('code2') || '';
           if (c1 || c2) {
             setCode1(c1);
             setCode2(c2);
@@ -135,26 +136,26 @@ export default function CodingAssistant() {
           }
         }
         if (tab === 'mednec') {
-          const c = params.get('code') || '';
+          const c = searchParams.get('code') || '';
           if (c) {
             setMedNecQuery(c);
             setTimeout(() => handleMedNecSearch(undefined, c), 50);
           }
         }
-        if (tab === 'npi' && params.get('npi')) {
-          const incomingNpi = params.get('npi') || '';
+        if (tab === 'npi' && searchParams.get('npi')) {
+          const incomingNpi = searchParams.get('npi') || '';
           setNpiQuery(incomingNpi);
           setTimeout(() => handleNpiSearch(undefined, incomingNpi), 50);
         }
-        if (tab === 'auto' && params.get('note')) {
-          const savedNote = params.get('note') || '';
+        if (tab === 'auto' && searchParams.get('note')) {
+          const savedNote = searchParams.get('note') || '';
           setAutoNote(savedNote);
           setTimeout(() => runAutoCoder(savedNote), 50);
         }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
