@@ -13,6 +13,10 @@ export default function BlogMicroCTA({ type, defaultCode = '' }: BlogMicroCTAPro
   const router = useRouter();
   const [query, setQuery] = useState(defaultCode);
 
+  React.useEffect(() => {
+    setQuery(defaultCode);
+  }, [defaultCode]);
+
   const configs = {
     ncci: {
       icon: <Icon.Shield size={20} color="#3b82f6" />,

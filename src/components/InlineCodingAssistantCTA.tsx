@@ -18,6 +18,12 @@ export default function InlineCodingAssistantCTA({ defaultCpt = '' }: InlineCodi
   const [ncciCode, setNcciCode] = useState(defaultCpt);
   const [autoNote, setAutoNote] = useState('');
 
+  React.useEffect(() => {
+    setDictQuery(defaultCpt);
+    setMedNecQuery(defaultCpt);
+    setNcciCode(defaultCpt);
+  }, [defaultCpt]);
+
   const handleRoute = (tab: string, queryParam: string, queryValue: string) => {
     if (!queryValue.trim() && tab !== 'auto') return;
     
