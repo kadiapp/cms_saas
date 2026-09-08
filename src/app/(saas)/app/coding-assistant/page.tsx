@@ -116,32 +116,44 @@ export default function CodingAssistant() {
       if (tab === 'dictionary' || tab === 'ncci' || tab === 'auto' || tab === 'mednec' || tab === 'npi') {
         setActiveTab(tab);
         
-        if (tab === 'dictionary' && params.get('q')) {
-          setDictQuery(params.get('q') || '');
+        if (tab === 'dictionary') {
+          const dictQ = params.get('q') || params.get('code');
+          if (dictQ) {
+            setDictQuery(dictQ);
+            setTimeout(() => handleDictSearch(undefined, dictQ), 50);
+          }
         }
-        if (tab === 'ncci' && (params.get('code1') || params.get('code2'))) {
-          setCode1(params.get('code1') || '');
-          setCode2(params.get('code2') || '');
+        if (tab === 'ncci') {
+          const c1 = params.get('code1') || '';
+          const c2 = params.get('code2') || '';
+          if (c1 || c2) {
+            setCode1(c1);
+            setCode2(c2);
+            if (c1 && c2) {
+              setTimeout(() => handleNcciCheck(undefined, c1, c2), 50);
+            }
+          }
+        }
+        if (tab === 'mednec') {
+          const c = params.get('code') || '';
+          if (c) {
+            setMedNecQuery(c);
+            setTimeout(() => handleMedNecSearch(undefined, c), 50);
+          }
         }
         if (tab === 'npi' && params.get('npi')) {
           const incomingNpi = params.get('npi') || '';
           setNpiQuery(incomingNpi);
-          // Auto trigger run
-          setTimeout(() => {
-            handleNpiSearch(undefined, incomingNpi);
-          }, 50);
+          setTimeout(() => handleNpiSearch(undefined, incomingNpi), 50);
         }
         if (tab === 'auto' && params.get('note')) {
-          setAutoNote(params.get('note') || '');
-          // Auto trigger run?
           const savedNote = params.get('note') || '';
+          setAutoNote(savedNote);
           setTimeout(() => runAutoCoder(savedNote), 50);
-        }
-        if (tab === 'mednec' && params.get('code')) {
-          setMedNecQuery(params.get('code') || '');
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -281,16 +293,17 @@ export default function CodingAssistant() {
   // -----------------------------------------------------
   // Medical Necessity Logic
   // -----------------------------------------------------
-  const handleMedNecSearch = async (e: React.FormEvent) => {
+  const handleMedNecSearch = async (e?: React.FormEvent, directCode?: string) => {
     trackEvent('mednec_search_clicked');
-    e.preventDefault();
-    if (!medNecQuery.trim()) return;
+    if (e) e.preventDefault();
+    const queryToUse = directCode || medNecQuery;
+    if (!queryToUse.trim()) return;
 
     setIsMedNecLoading(true);
     setMedNecResults(null);
-    setMedNecSearchedCode(medNecQuery.trim().toUpperCase());
+    setMedNecSearchedCode(queryToUse.trim().toUpperCase());
     try {
-      const results = await getMedicalNecessity(medNecQuery.trim().toUpperCase());
+      const results = await getMedicalNecessity(queryToUse.trim().toUpperCase());
       setMedNecResults(results);
     } catch (err) {
       console.error(err);
@@ -303,15 +316,16 @@ export default function CodingAssistant() {
   // -----------------------------------------------------
   // Dictionary Logic
   // -----------------------------------------------------
-  const handleDictSearch = async (e: React.FormEvent) => {
+  const handleDictSearch = async (e?: React.FormEvent, directQuery?: string) => {
     trackEvent('dictionary_search_clicked');
-    e.preventDefault();
-    if (!dictQuery.trim()) return;
+    if (e) e.preventDefault();
+    const queryToUse = directQuery || dictQuery;
+    if (!queryToUse.trim()) return;
 
     setIsDictLoading(true);
     setSelectedCodeDetails(null);
     try {
-      const results = await searchCodeDictionary(dictQuery.trim());
+      const results = await searchCodeDictionary(queryToUse.trim());
       setDictResults(results);
     } catch (err: any) {
       console.error(err);
@@ -348,20 +362,18 @@ export default function CodingAssistant() {
   // -----------------------------------------------------
   // NCCI Logic
   // -----------------------------------------------------
-  const handleNcciCheck = async (e: React.FormEvent) => {
+  const handleNcciCheck = async (e?: React.FormEvent, directCode1?: string, directCode2?: string) => {
     trackEvent('ncci_search_clicked');
-    e.preventDefault();
-    if (!code1.trim() || !code2.trim()) return;
+    if (e) e.preventDefault();
+    const c1 = (directCode1 || code1).trim().toUpperCase();
+    const c2 = (directCode2 || code2).trim().toUpperCase();
+    if (!c1 || !c2) return;
 
     setIsNcciLoading(true);
     setNcciResult(null);
     setNcciError('');
 
     try {
-      // Clean inputs
-      const c1 = code1.trim().toUpperCase();
-      const c2 = code2.trim().toUpperCase();
-      
       const result = await checkCodePair(c1, c2);
       setNcciResult({
         c1, c2, ...result
