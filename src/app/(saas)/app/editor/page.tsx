@@ -310,6 +310,29 @@ function SidebarValidationReport({ results, onItemClick }: { results: Validation
 interface ToastState { message: string; type: 'success' | 'error' | 'info'; }
 
 // ============================================================
+// Progressive Loading Sub-component
+// ============================================================
+function ProgressiveLoadingText() {
+  const [phase, setPhase] = useState(0);
+  const phases = [
+    "Reading clinical notes...",
+    "Extracting patient demographics...",
+    "Mapping ICD-10 & CPT codes...",
+    "Validating against NCCI edits...",
+    "Finalizing CMS-1500 fields..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase(p => (p + 1) % phases.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <p className="ai-loading-sub fade-text">{phases[phase]}</p>;
+}
+
+// ============================================================
 // AI Text Input sub-component
 // ============================================================
 function AiTextInput({ onExtract, isLoading }: { onExtract: (text: string) => void; isLoading: boolean }) {
@@ -561,10 +584,28 @@ export default function App() {
   useEffect(() => {
     if (searchParams?.get('action') === 'auto_fill') {
       setShowAiModal(true);
-      // Clean up the URL so it doesn't reopen on refresh
-      window.history.replaceState({}, '', '/app/editor');
+      window.history.replaceState({ modal: 'ai' }, '', '/app/editor');
     }
   }, [searchParams]);
+
+  // Support Back Button for AI Modal
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      // If we go back, close the modal
+      if (showAiModal) {
+        setShowAiModal(false);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [showAiModal]);
+
+  // Push state when modal opens manually
+  useEffect(() => {
+    if (showAiModal && !window.history.state?.modal) {
+      window.history.pushState({ modal: 'ai' }, '');
+    }
+  }, [showAiModal]);
 
   // Load claim when URL changes
   useEffect(() => {
@@ -2250,7 +2291,7 @@ const [isSaving, setIsSaving] = useState(false);
           <div className="ai-loading-content">
             <div className="ai-spinner"></div>
             <h2 className="ai-loading-title">AI is analyzing your document...</h2>
-            <p className="ai-loading-sub">Extracting patient data, mapping ICD-10 & CPT codes, and validating against clearinghouse rules.</p>
+            <ProgressiveLoadingText />
           </div>
         </div>
       )}

@@ -9,6 +9,26 @@ import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, che
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
+function ProgressiveAutoCoderText() {
+  const [phase, setPhase] = useState(0);
+  const phases = [
+    "Reading clinical note...",
+    "Extracting clinical concepts...",
+    "Querying vector database...",
+    "Cross-referencing ICD-10 & CPT codes...",
+    "Formulating final suggestions..."
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhase(p => (p + 1) % phases.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <p>{phases[phase]}</p>;
+}
+
 export default function CodingAssistant() {
   const trackEvent = (eventName: string) => {
     if (typeof window !== 'undefined' && (window as any).clarity) {
@@ -18,6 +38,25 @@ export default function CodingAssistant() {
 
   const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'auto' | 'mednec' | 'npi'>('dictionary');
   
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab === 'dictionary' || tab === 'ncci' || tab === 'auto' || tab === 'mednec' || tab === 'npi') {
+        setActiveTab(tab as any);
+      } else {
+        setActiveTab('dictionary');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const changeTab = (tab: 'dictionary' | 'ncci' | 'auto' | 'mednec' | 'npi') => {
+    setActiveTab(tab);
+    window.history.pushState(null, '', `?tab=${tab}`);
+  };
+
   // NPI Tab State
   const [npiQuery, setNpiQuery] = useState('');
   const [isNpiLoading, setIsNpiLoading] = useState(false);
@@ -345,33 +384,33 @@ export default function CodingAssistant() {
       <div className="ca-tabs">
         <button 
           className={`ca-tab ${activeTab === 'dictionary' ? 'active' : ''}`}
-          onClick={() => setActiveTab('dictionary')}
+          onClick={() => changeTab('dictionary')}
         >
           <Icon.BookOpen size={18} /> Code Dictionary
         </button>
         <button 
           className={`ca-tab ${activeTab === 'ncci' ? 'active' : ''}`}
-          onClick={() => setActiveTab('ncci')}
+          onClick={() => changeTab('ncci')}
         >
           <Icon.Shield size={18} /> NCCI Edit Checker
         </button>
         <button 
           className={`ca-tab ${activeTab === 'auto' ? 'active' : ''}`}
-          onClick={() => setActiveTab('auto')}
+          onClick={() => changeTab('auto')}
           style={{color: '#3b82f6'}}
         >
           <Icon.Cpu size={18} /> AI Auto-Coder
         </button>
         <button 
           className={`ca-tab ${activeTab === 'mednec' ? 'active' : ''}`}
-          onClick={() => setActiveTab('mednec')}
+          onClick={() => changeTab('mednec')}
           style={{color: '#10b981'}}
         >
           <Icon.CheckCircle size={18} /> Medical Necessity
         </button>
         <button 
           className={`ca-tab ${activeTab === 'npi' ? 'active' : ''}`}
-          onClick={() => setActiveTab('npi')}
+          onClick={() => changeTab('npi')}
           style={{color: '#8b5cf6'}}
         >
           <Icon.UserCheck size={18} /> Provider NPI
@@ -412,7 +451,7 @@ export default function CodingAssistant() {
                   className="btn btn-primary ca-btn"
                   onClick={() => {
                     setAutoNote(dictQuery);
-                    setActiveTab('auto');
+                    changeTab('auto');
                     setTimeout(() => runAutoCoder(dictQuery), 50);
                   }}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
@@ -589,7 +628,7 @@ export default function CodingAssistant() {
                   </button>
                   <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: 'none' }} onChange={handlePdfUpload} />
                   <button type="button" className="btn btn-secondary ca-btn" onClick={() => fileInputRef.current?.click()} disabled={isPdfLoading}>
-                    {isPdfLoading ? 'Reading PDF...' : <><Icon.Upload size={16} style={{marginRight: 8}}/> Upload PDF</>}
+{isPdfLoading ? 'Reading PDF...' : <><Icon.Upload size={16} style={{marginRight: 8}}/> Upload PDF</>}
                   </button>
                 </div>
               </form>
@@ -598,7 +637,7 @@ export default function CodingAssistant() {
           {isAutoLoading && (
             <div className="ca-card" style={{ marginTop: 24, textAlign: 'center', padding: 40, color: '#94a3b8' }}>
               <Icon.Loader size={32} className="spinning" style={{marginBottom: 16}} />
-              <p>Reading note, extracting concepts, and querying vector database...</p>
+              <ProgressiveAutoCoderText />
             </div>
           )}
           
