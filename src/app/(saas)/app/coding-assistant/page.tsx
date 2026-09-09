@@ -328,6 +328,16 @@ export default function CodingAssistant() {
     try {
       const results = await searchCodeDictionary(queryToUse.trim());
       setDictResults(results);
+
+      // UX Improvement: Auto-select if there is exactly 1 result
+      const totalCount = (results?.cpt?.length || 0) + (results?.icd?.length || 0);
+      if (totalCount === 1) {
+        if (results?.cpt?.length === 1) {
+          handleSelectCode(results.cpt[0].code, 'CPT');
+        } else if (results?.icd?.length === 1) {
+          handleSelectCode(results.icd[0].code, 'ICD');
+        }
+      }
     } catch (err: any) {
       console.error(err);
     } finally {
@@ -506,7 +516,7 @@ export default function CodingAssistant() {
               </div>
             )}
 
-            {selectedCodeDetails && (
+            {selectedCodeDetails ? (
               <div className="ca-dict-details glass-card">
                 <div className="ca-details-header">
                   <span className={`ca-badge large ${selectedCodeType.toLowerCase()}`}>{selectedCodeType}</span>
@@ -560,7 +570,13 @@ export default function CodingAssistant() {
                   </div>
                 )}
               </div>
-            )}
+            ) : dictResults && (dictResults.cpt.length > 0 || dictResults.icd.length > 0) ? (
+              <div className="ca-dict-details glass-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', minHeight: '300px', textAlign: 'center', padding: '40px' }}>
+                <Icon.MousePointer size={48} style={{ opacity: 0.2, marginBottom: '16px' }} />
+                <h3 style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '8px' }}>Select a Code</h3>
+                <p>Click on any code in the search results to view its official details, guidelines, and Medicare fee schedules.</p>
+              </div>
+            ) : null}
           </div>
         </div>
       )}
