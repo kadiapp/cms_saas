@@ -514,6 +514,13 @@ export default function CodingAssistant() {
                     </>
                   )}
                 </div>
+                {dictResults.cpt.length === 0 && dictResults.icd.length === 0 && (
+                  <div className="ca-empty-state" style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8' }}>
+                    <Icon.Search size={32} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                    <p style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>No codes found</p>
+                    <p style={{ marginTop: '8px', fontSize: '0.9rem' }}>We couldn't find any CPT or ICD-10 codes matching "{dictQuery}". Try using broader keywords or a specific code.</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -694,9 +701,11 @@ export default function CodingAssistant() {
                               <strong style={{ color: '#fff' }}>{sug.code}</strong> - {sug.short_description}
                             </div>
                             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                                {sug.source === 'ai' ? (
-                                  <span style={{ fontSize: '0.7rem', background: 'rgba(59,130,246)', color: '#c084fc', border: '1px solid rgba(59,130,246)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
-                                ) : (
+                                  {sug.source === 'ai' ? (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '0.7rem', background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>
+                                      <Icon.Cpu size={10} style={{ marginRight: '4px' }} /> AI Coded
+                                    </span>
+                                  ) : (
                                   <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
                                 )}
                                 {sug.billable ? (
@@ -738,7 +747,9 @@ export default function CodingAssistant() {
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                   {sug.source === 'ai' ? (
-                                    <span style={{ fontSize: '0.7rem', background: 'rgba(59,130,246)', color: '#c084fc', border: '1px solid rgba(59,130,246)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>🤖 AI Coded</span>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', fontSize: '0.7rem', background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '4px', padding: '2px 6px', fontWeight: 700 }}>
+                                      <Icon.Cpu size={10} style={{ marginRight: '4px' }} /> AI Coded
+                                    </span>
                                   ) : (
                                     <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Sim: {(sug.similarity * 100).toFixed(1)}%</span>
                                   )}
