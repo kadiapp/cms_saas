@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/api/supabase';
 
+export const revalidate = 3600; // Force sitemap to rebuild every hour
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://cms1500claimbilling.com';
 
