@@ -165,6 +165,7 @@ export default function CodingAssistant() {
       const arrayBuffer = await file.arrayBuffer();
       const text = await extractTextFromPdf(arrayBuffer);
       setAutoNote(text);
+      runAutoCoder(text); // Automatically run the AI after successful upload
     } catch (err) {
       console.error(err);
       alert("Failed to extract text from PDF.");
@@ -456,7 +457,7 @@ export default function CodingAssistant() {
                 />
               </div>
               <button type="submit" className={`btn btn-primary ca-btn ${isDictLoading ? 'loading' : ''}`} disabled={isDictLoading}>
-                {isDictLoading ? 'Searching...' : 'Search'}
+                {isDictLoading ? <><Icon.Loader size={16} className="spinning" style={{marginRight: 8}} /> Searching...</> : 'Search'}
               </button>
             </form>
           </div>
@@ -600,7 +601,7 @@ export default function CodingAssistant() {
                 </div>
               </div>
               <button type="submit" className={`btn btn-primary ${isNcciLoading ? 'loading' : ''}`} disabled={isNcciLoading}>
-                {isNcciLoading ? 'Checking Database...' : 'Check NCCI Edits'}
+                {isNcciLoading ? <><Icon.Loader size={16} className="spinning" style={{marginRight: 8}} /> Checking Database...</> : 'Check NCCI Edits'}
               </button>
             </form>
             {ncciError && <div className="ca-error"><Icon.AlertCircle size={16} /> {ncciError}</div>}
@@ -653,7 +654,7 @@ export default function CodingAssistant() {
                 />
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                   <button type="submit" className={`btn btn-primary ca-btn ${isAutoLoading ? 'loading' : ''}`} disabled={isAutoLoading || !autoNote.trim()}>
-                    {isAutoLoading ? 'Analyzing Note...' : 'Auto-Code Note'}
+                    {isAutoLoading ? <><Icon.Loader size={16} className="spinning" style={{marginRight: 8}} /> Analyzing Note...</> : 'Auto-Code Note'}
                   </button>
                   <input type="file" accept="application/pdf" ref={fileInputRef} style={{ display: 'none' }} onChange={handlePdfUpload} />
                   <button type="button" className="btn btn-secondary ca-btn" onClick={() => fileInputRef.current?.click()} disabled={isPdfLoading}>
@@ -805,8 +806,8 @@ export default function CodingAssistant() {
                   className="ca-input"
                 />
               </div>
-              <button type="submit" className="btn btn-primary ca-btn" disabled={isMedNecLoading || !medNecQuery.trim()}>
-                {isMedNecLoading ? 'Checking...' : 'Check Coverage'}
+              <button type="submit" className={`btn btn-primary ca-btn ${isMedNecLoading ? 'loading' : ''}`} disabled={isMedNecLoading || !medNecQuery.trim()}>
+                {isMedNecLoading ? <><Icon.Loader size={16} className="spinning" style={{marginRight: 8}} /> Checking...</> : 'Check Coverage'}
               </button>
             </form>
 
@@ -877,8 +878,8 @@ export default function CodingAssistant() {
                   onChange={e => setNpiQuery(e.target.value)}
                   style={{ flex: 1, padding: '12px 16px', fontSize: '1.1rem' }}
                 />
-                <button type="submit" className="btn btn-primary ca-btn" disabled={isNpiLoading}>
-                  {isNpiLoading ? 'Searching...' : 'Search NPI'}
+                <button type="submit" className={`btn btn-primary ca-btn ${isNpiLoading ? 'loading' : ''}`} disabled={isNpiLoading}>
+                  {isNpiLoading ? <><Icon.Loader size={16} className="spinning" style={{marginRight: 8}} /> Searching...</> : 'Search NPI'}
                 </button>
               </div>
             </form>

@@ -21,7 +21,8 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-feather": "^2.0.10",
-    "react-select": "^5.10.2"
+    "react-select": "^5.10.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

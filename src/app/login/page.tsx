@@ -104,10 +104,25 @@ export default function LoginPage() {
       {/* Right Panel: Login Form */}
       <div className="login-right-panel">
         <div className="login-box">
-          <div className="login-box-header">
-            <h2>{isSignUp ? 'Create your account' : 'Welcome back'}</h2>
+          <div className="login-box-header" style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px', marginBottom: '16px' }}>
+              <button 
+                type="button" 
+                onClick={() => setIsSignUp(false)}
+                style={{ background: 'none', border: 'none', color: !isSignUp ? '#fff' : '#64748b', fontSize: '1.2rem', fontWeight: !isSignUp ? 700 : 500, cursor: 'pointer', padding: 0 }}
+              >
+                Sign In
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setIsSignUp(true)}
+                style={{ background: 'none', border: 'none', color: isSignUp ? '#fff' : '#64748b', fontSize: '1.2rem', fontWeight: isSignUp ? 700 : 500, cursor: 'pointer', padding: 0 }}
+              >
+                Create Free Account
+              </button>
+            </div>
             <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '8px' }}>
-              {isSignUp ? 'Start automating your medical billing.' : 'Log in to access your claims.'}
+              {isSignUp ? 'Start automating your medical billing for free.' : 'Log in to access your claims.'}
             </p>
           </div>
 
@@ -171,14 +186,7 @@ export default function LoginPage() {
           </form>
 
           <div className="login-footer" style={{ marginTop: '32px', textAlign: 'center', fontSize: '0.9rem', color: '#94a3b8' }}>
-            {isSignUp ? 'Already have an account? ' : 'Need an account? '}
-            <button 
-              type="button" 
-              onClick={() => setIsSignUp(!isSignUp)}
-              style={{ background: 'none', border: 'none', color: '#3b82f6', cursor: 'pointer', fontWeight: 600 }}
-            >
-              {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
+            Secure & HIPAA Compliant.
           </div>
         </div>
       </div>

@@ -5,8 +5,8 @@ const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(url, key);
 
 async function check() {
-  const { data } = await supabase.from('knowledge_base').select('title, slug').ilike('title', '%B12%').limit(5);
-  console.log(data);
+  const { count } = await supabase.from('cms_cpt_codes').select('code', { count: 'exact', head: true }).not('code', 'ilike', '%[0-9][0-9][0-9][0-9][0-9]%');
+  console.log('Non-numeric Codes count in DB:', count);
 }
 check();
 
