@@ -95,6 +95,29 @@ export default function CodingAssistant() {
   const [selectedCodeType, setSelectedCodeType] = useState<'CPT' | 'ICD'>('CPT');
   const [selectedFee, setSelectedFee] = useState<any>(null);
   
+  // Saved Codes (Favorites) State
+  const [savedCodes, setSavedCodes] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ca_saved_codes');
+      if (saved) setSavedCodes(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
+
+  const toggleSaveCode = () => {
+    if (!selectedCodeDetails) return;
+    const exists = savedCodes.find(c => c.code === selectedCodeDetails.code);
+    let newSaved = [...savedCodes];
+    if (exists) {
+      newSaved = newSaved.filter(c => c.code !== selectedCodeDetails.code);
+    } else {
+      newSaved.push({ ...selectedCodeDetails, type: selectedCodeType });
+    }
+    setSavedCodes(newSaved);
+    localStorage.setItem('ca_saved_codes', JSON.stringify(newSaved));
+  };
+
   // Tab 3: Auto-Coder State
   const [autoNote, setAutoNote] = useState('');
   const [isAutoLoading, setIsAutoLoading] = useState(false);
@@ -451,7 +474,13 @@ export default function CodingAssistant() {
                   type="text" 
                   placeholder="Search by code (e.g. 99214, J1756) or keyword (e.g. injection, diabetes)..." 
                   value={dictQuery}
-                  onChange={(e) => setDictQuery(e.target.value)}
+                  onChange={(e) => {
+                    setDictQuery(e.target.value);
+                    if (!e.target.value.trim()) {
+                      setDictResults(null);
+                      setSelectedCodeDetails(null);
+                    }
+                  }}
                   className="ca-input"
                   style={{ width: '100%' }}
                 />
@@ -463,6 +492,22 @@ export default function CodingAssistant() {
           </div>
 
           <div className="ca-dict-layout">
+            {!dictResults && savedCodes.length > 0 && (
+              <div className="ca-dict-results glass-card">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Icon.Star size={18} color="#fbbf24" fill="#fbbf24" /> Saved Codes
+                </h3>
+                <div className="ca-result-list">
+                  {savedCodes.map(c => (
+                    <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, c.type)}>
+                      <span className={`ca-badge ${c.type.toLowerCase()}`}>{c.type}</span>
+                      <div style={{ flex: 1 }}><strong>{c.code}</strong> - {c.short_description}</div>
+                      <Icon.ChevronRight size={16} color="#64748b" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {dictResults && (dictResults.cpt.length === 0 && dictResults.icd.length === 0) ? (
               <div className="ca-dict-results glass-card" style={{ textAlign: 'center', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Icon.Search size={48} color="#475569" style={{ marginBottom: '16px' }} />
@@ -526,9 +571,18 @@ export default function CodingAssistant() {
 
             {selectedCodeDetails ? (
               <div className="ca-dict-details glass-card">
-                <div className="ca-details-header">
-                  <span className={`ca-badge large ${selectedCodeType.toLowerCase()}`}>{selectedCodeType}</span>
-                  <h2>{selectedCodeDetails.code}</h2>
+                <div className="ca-details-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <span className={`ca-badge large ${selectedCodeType.toLowerCase()}`}>{selectedCodeType}</span>
+                    <h2 style={{ marginTop: '8px' }}>{selectedCodeDetails.code}</h2>
+                  </div>
+                  <button 
+                    onClick={toggleSaveCode}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: savedCodes.find(c => c.code === selectedCodeDetails.code) ? '#fbbf24' : '#64748b', transition: 'all 0.2s' }}
+                    title={savedCodes.find(c => c.code === selectedCodeDetails.code) ? "Remove from Favorites" : "Save to Favorites"}
+                  >
+                    <Icon.Star fill={savedCodes.find(c => c.code === selectedCodeDetails.code) ? '#fbbf24' : 'none'} size={20} />
+                  </button>
                 </div>
                 
                 <div className="ca-detail-section">
