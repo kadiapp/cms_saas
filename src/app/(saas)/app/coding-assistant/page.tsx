@@ -5,7 +5,7 @@ import * as Icon from 'react-feather';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EMPTY_FORM } from '@/types';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
-import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity } from '@/api/supabase';
+import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity, logActivity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
@@ -76,6 +76,7 @@ export default function CodingAssistant() {
     try {
       const result = await verifyNpi(queryToUse.trim());
       setNpiResult(result);
+      logActivity('npi_search', { npi: queryToUse.trim() });
     } catch(err: any) {
       if (err.message?.includes('not found')) {
         setNpiError('NPI not found in registry.');
@@ -291,6 +292,7 @@ export default function CodingAssistant() {
       }
       setAutoMedNecWarnings(warnings);
       setAutoResults(results);
+      logActivity('ai_autocoder', { noteLength: noteText.length });
     } catch(err) {
       console.error(err);
       alert("Error processing clinical note.");
@@ -330,6 +332,7 @@ export default function CodingAssistant() {
     try {
       const results = await getMedicalNecessity(queryToUse.trim().toUpperCase());
       setMedNecResults(results);
+      logActivity('mednec_search', { code: queryToUse.trim().toUpperCase(), count: results.length });
     } catch (err) {
       console.error(err);
     } finally {
@@ -352,6 +355,7 @@ export default function CodingAssistant() {
     try {
       const results = await searchCodeDictionary(queryToUse.trim());
       setDictResults(results);
+      logActivity('dictionary_search', { query: queryToUse.trim() });
 
       // UX Improvement: Auto-select if there is exactly 1 result
       const totalCount = (results?.cpt?.length || 0) + (results?.icd?.length || 0);
@@ -413,6 +417,7 @@ export default function CodingAssistant() {
       setNcciResult({
         c1, c2, ...result
       });
+      logActivity('ncci_check', { c1, c2 });
       
     } catch(err: any) {
       setNcciError(err.message || 'Error querying NCCI database');

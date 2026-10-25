@@ -620,8 +620,30 @@ export default function App() {
           console.error(e);
         }
       } else {
-        // Clear form when navigating to /app/editor or /app/editor/new
-        setForm(EMPTY_FORM);
+        try {
+          const saved = localStorage.getItem('cms1500_autosave');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            const restoredForm = { ...EMPTY_FORM, ...parsed };
+            setForm(restoredForm);
+
+            if (localStorage.getItem('cms1500_pending_cloud_save') === 'true') {
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                localStorage.removeItem('cms1500_pending_cloud_save');
+                const patientName = `${restoredForm.patientLastName || 'Unknown'}, ${restoredForm.patientFirstName || 'Patient'}`;
+                const newId = await saveClaim(user.id, patientName, restoredForm, null);
+                logActivity('save_claim', { claimId: newId, autoSavedAfterLogin: true });
+                router.push(`/app/editor/${newId}`);
+                return;
+              }
+            }
+          } else {
+            setForm(EMPTY_FORM);
+          }
+        } catch (e) {
+          setForm(EMPTY_FORM);
+        }
         setLocalValidationResults([]); setDeepValidationResults([]);
       }
     }
@@ -690,12 +712,15 @@ const [isSaving, setIsSaving] = useState(false);
       setIsSaving(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        localStorage.setItem('cms1500_autosave', JSON.stringify(form));
+        localStorage.setItem('cms1500_pending_cloud_save', 'true');
         setShowSignupModal(true);
         return;
       }
       
       const patientName = `${form.patientLastName || 'Unknown'}, ${form.patientFirstName || 'Patient'}`;
       const newId = await saveClaim(user.id, patientName, form, currentClaimId);
+      logActivity('save_claim', { claimId: newId, patientName });
       if (newId !== currentClaimId) router.push(`/app/editor/${newId}`);
       showToast('Claim saved to cloud!', 'success');
       loadSavedClaims();
@@ -877,6 +902,7 @@ const [isSaving, setIsSaving] = useState(false);
       setLocalValidationResults(localResults);
       setDeepValidationResults([...chResults, ...advancedResults]);
       setHasValidated(true);
+      logActivity('validate_claim', { payerId: form.payerId || 'none' });
       showToast('Validation complete', 'success');
     } catch (err) {
       console.error(err);
@@ -921,6 +947,7 @@ const [isSaving, setIsSaving] = useState(false);
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast('EDI 837P exported!', 'success');
+      logActivity('export_edi');
     };
 
     
@@ -1045,6 +1072,7 @@ const [isSaving, setIsSaving] = useState(false);
       });
       setLocalValidationResults([]); setDeepValidationResults([]);
       setShowAiModal(false);
+      logActivity('ai_extract', { hasPdf: !!base64Pdf, textLength: text?.length || 0 });
       showToast('AI extracted data successfully! Review the filled fields.', 'success');
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'AI extraction failed.', 'error');

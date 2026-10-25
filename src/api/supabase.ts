@@ -92,7 +92,7 @@ export async function saveClaim(
   formData: any,
   claimId?: string | null
 ): Promise<string> {
-  if (claimId) {
+  if (claimId && claimId !== 'new') {
     // Update existing claim
     const { error } = await supabase
       .from('claims')
