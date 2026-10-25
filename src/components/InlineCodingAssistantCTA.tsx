@@ -6,9 +6,13 @@ import * as Icon from 'react-feather';
 
 interface InlineCodingAssistantCTAProps {
   defaultCpt?: string;
+  title?: string;
+  subtitle?: string;
+  defaultTab?: string;
+  buttonText?: string;
 }
 
-export default function InlineCodingAssistantCTA({ defaultCpt = '' }: InlineCodingAssistantCTAProps) {
+export default function InlineCodingAssistantCTA({ defaultCpt = '', title, subtitle }: InlineCodingAssistantCTAProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'dictionary' | 'ncci' | 'mednec' | 'auto'>('dictionary');
   
