@@ -17,12 +17,31 @@ export default function LoginPage() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const router = useRouter();
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('mode') === 'signup') {
+        setIsSignUp(true);
+      }
+    }
+  }, []);
+
+  const getRedirectPath = () => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const redir = params.get('redirect');
+      if (redir && redir.startsWith('/')) return redir;
+    }
+    return '/app/editor';
+  };
+
   const handleOAuth = async (provider: 'google' | 'azure') => {
     try {
+      const redirectPath = getRedirectPath();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/app/editor`,
+          redirectTo: `${window.location.origin}${redirectPath}`,
           scopes: provider === 'azure' ? 'email openid profile' : undefined
         }
       });
@@ -52,7 +71,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        router.push('/app/editor'); // Redirect on successful login
+        router.push(getRedirectPath()); // Redirect on successful login
       }
     } catch (e: any) {
       setError(e.message || 'Authentication failed');

@@ -5,7 +5,7 @@ import * as Icon from 'react-feather';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EMPTY_FORM } from '@/types';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
-import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getNcciConflictsForCode, getMedicalNecessity, logActivity } from '@/api/supabase';
+import { supabase, verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getNcciConflictsForCode, getMedicalNecessity, logActivity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
@@ -118,12 +118,35 @@ export default function CodingAssistant() {
   
   // Saved Codes (Favorites) State
   const [savedCodes, setSavedCodes] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    let localCodes: any[] = [];
     try {
       const saved = localStorage.getItem('ca_saved_codes');
-      if (saved) setSavedCodes(JSON.parse(saved));
+      if (saved) {
+        localCodes = JSON.parse(saved);
+        setSavedCodes(localCodes);
+      }
     } catch (e) {}
+
+    supabase.auth.getUser().then(({ data }) => {
+      const u = data?.user || null;
+      setCurrentUser(u);
+      if (u) {
+        const cloudCodes: any[] = Array.isArray(u.user_metadata?.saved_codes) ? u.user_metadata.saved_codes : [];
+        const map = new Map<string, any>();
+        [...cloudCodes, ...localCodes].forEach(item => {
+          if (item && item.code) map.set(item.code, item);
+        });
+        const merged = Array.from(map.values());
+        setSavedCodes(merged);
+        localStorage.setItem('ca_saved_codes', JSON.stringify(merged));
+        if (merged.length !== cloudCodes.length) {
+          supabase.auth.updateUser({ data: { saved_codes: merged } }).catch(() => {});
+        }
+      }
+    });
   }, []);
 
   const toggleSaveCode = () => {
@@ -137,6 +160,9 @@ export default function CodingAssistant() {
     }
     setSavedCodes(newSaved);
     localStorage.setItem('ca_saved_codes', JSON.stringify(newSaved));
+    if (currentUser) {
+      supabase.auth.updateUser({ data: { saved_codes: newSaved } }).catch(() => {});
+    }
   };
 
   // Tab 3: Auto-Coder State
@@ -530,9 +556,24 @@ export default function CodingAssistant() {
           <div className="ca-dict-layout">
             {!dictResults && savedCodes.length > 0 && (
               <div className="ca-dict-results glass-card">
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Icon.Star size={18} color="#fbbf24" fill="#fbbf24" /> Saved Codes
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                    <Icon.Star size={18} color="#fbbf24" fill="#fbbf24" /> Saved Codes
+                  </h3>
+                  {currentUser ? (
+                    <span style={{ fontSize: '0.75rem', color: '#10b981', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', padding: '3px 8px', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Icon.Cloud size={12} /> Synced to Cloud
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/login?mode=signup&redirect=/app/coding-assistant')}
+                      style={{ fontSize: '0.78rem', color: '#60a5fa', background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.35)', padding: '4px 10px', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 600 }}
+                    >
+                      <Icon.Cloud size={13} /> Sync to Free Account →
+                    </button>
+                  )}
+                </div>
                 <div className="ca-result-list">
                   {savedCodes.map(c => (
                     <div key={c.code} className="ca-result-item" onClick={() => handleSelectCode(c.code, c.type)}>
@@ -614,12 +655,26 @@ export default function CodingAssistant() {
                   </div>
                   <button 
                     onClick={toggleSaveCode}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: savedCodes.find(c => c.code === selectedCodeDetails.code) ? '#fbbf24' : '#64748b', transition: 'all 0.2s' }}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', color: savedCodes.find(c => c.code === selectedCodeDetails.code) ? '#fbbf24' : '#94a3b8', transition: 'all 0.2s', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600 }}
                     title={savedCodes.find(c => c.code === selectedCodeDetails.code) ? "Remove from Favorites" : "Save to Favorites"}
                   >
-                    <Icon.Star fill={savedCodes.find(c => c.code === selectedCodeDetails.code) ? '#fbbf24' : 'none'} size={20} />
+                    <Icon.Star fill={savedCodes.find(c => c.code === selectedCodeDetails.code) ? '#fbbf24' : 'none'} size={18} />
+                    {savedCodes.find(c => c.code === selectedCodeDetails.code) ? 'Saved' : 'Save Code'}
                   </button>
                 </div>
+
+                {!currentUser && savedCodes.find(c => c.code === selectedCodeDetails.code) && (
+                  <div style={{ marginTop: '12px', padding: '10px 14px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.3)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', fontSize: '0.85rem', color: '#cbd5e1' }}>
+                    <span>☁️ Saved to this browser! Sync your cheat sheet across work & home for free.</span>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/login?mode=signup&redirect=/app/coding-assistant')}
+                      style={{ background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 12px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
+                      Sync to Free Account →
+                    </button>
+                  </div>
+                )}
                 
                 <div className="ca-detail-section">
                   <h4>Short Description</h4>
