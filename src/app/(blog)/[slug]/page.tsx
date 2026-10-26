@@ -92,12 +92,19 @@ export default async function BlogPost({ params }: Props) {
   }
 
   // --- CLEAN & FOCUSED INJECTION SYSTEM (NO AD OVERLOAD) ---
-  // 1. Strip any legacy hardcoded shortcodes first so we control exact placement
-  cleanContent = cleanContent
-    .replace(/<p>\s*\[(?:inject_tldr|inject_dictionary|inject_ncci|mb_ncci_checker|inject_mednec|inject_box17|inject_ub04|inject_box24)\]\s*<\/p>/gi, '')
-    .replace(/\[(?:inject_tldr|inject_dictionary|inject_ncci|mb_ncci_checker|inject_mednec|inject_box17|inject_ub04|inject_box24)\]/gi, '');
+  // 1. Wrap unwrapped opening paragraph (from legacy wpautop) in <p>...</p> so the main assistant always injects right after Paragraph 1
+  cleanContent = cleanContent.trim();
+  if (cleanContent && !cleanContent.startsWith('<p') && !cleanContent.startsWith('<h') && !cleanContent.startsWith('<div') && !cleanContent.startsWith('<table')) {
+    cleanContent = cleanContent.replace(/^([\s\S]+?)(?=\r?\n\r?\n|\s*<h[1-6]|\s*<p|\s*<table|\s*<div)/i, '<p>$1</p>\n');
+  }
 
-  // 2. Inject the primary multi-tab Coding Assistant right after the first introductory paragraph
+  // 2. Strip legacy WordPress [mb_*] callout wrapper divs, shortcode tags, and draft image placeholders
+  cleanContent = cleanContent
+    .replace(/<div[^>]*>(?:(?!<\/div>)[\s\S])*?\[(?:mb_[a-z0-9_]+|inject_[a-z0-9_]+)\][\s\S]*?<\/div>/gi, '')
+    .replace(/<p[^>]*>\s*\[(?:inject_[a-z0-9_]+|mb_[a-z0-9_]+|placeholder_[^\]]+|Insert Screenshot[^\]]+|INSERT IMAGE[^\]]+)\]\s*<\/p>/gi, '')
+    .replace(/\[(?:inject_[a-z0-9_]+|mb_[a-z0-9_]+|placeholder_[^\]]+|Insert Screenshot[^\]]+|INSERT IMAGE[^\]]+)\]/gi, '');
+
+  // 3. Inject the primary multi-tab Coding Assistant right after the first introductory paragraph
   cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<span data-inject="main_assistant"></span>\n');
 
   // 3. Inject at most ONE contextual mid-article Micro-CTA further down in the article

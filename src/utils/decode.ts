@@ -96,16 +96,6 @@ export function normalizeArticleSchema(
 
 export function cleanHtmlSchemas(html: string): string {
   if (!html) return html;
-  return html.replace(
-    /<script type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi,
-    (match, p1) => {
-      const cleanJson = p1.replace(/<br\s*\/?>/gi, '').replace(/<\/?p>/gi, '').replace(/&quot;/g, '\\"');
-      try {
-        JSON.parse(cleanJson);
-        return `<script type="application/ld+json">${cleanJson}</script>`;
-      } catch {
-        return '';
-      }
-    }
-  );
+  // Remove duplicate/stale inline JSON-LD scripts from article body content since article.schema_markup renders the canonical JSON-LD
+  return html.replace(/<script type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>/gi, '');
 }
