@@ -9,7 +9,7 @@ import RelatedArticles from './RelatedArticles';
 import InlineCodingAssistantCTA from '@/components/InlineCodingAssistantCTA';
 import CopyAttribution from '@/components/CopyAttribution';
 import BlogMicroCTA from '@/components/BlogMicroCTA';
-import parse, { DOMNode, Element, Text } from 'html-react-parser';
+import parse, { DOMNode, Element } from 'html-react-parser';
 
 // This is required for Next.js App Router dynamic params
 type Props = {
@@ -36,7 +36,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const absoluteUrl = `https://cms1500claimbilling.com/${slug}`;
 
-  // Exactly replicates your Yoast SEO meta title and description, and adds OG tags
   return {
     title: decodeWPEntities(data.meta_title),
     description: data.meta_description,
@@ -79,99 +78,74 @@ export default async function BlogPost({ params }: Props) {
   let cleanContent = cleanHtmlSchemas(article.content || '');
 
   const articleTitleStr = decodeWPEntities(article.title || '');
-  const isCptArticle = /CPT|HCPCS/i.test(articleTitleStr) || /\b\d{5}\b/.test(articleTitleStr) || /\b[A-Z]\d{4}\b/i.test(articleTitleStr);
   const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
-  const primaryCode = cptMatch ? cptMatch[0] : '';
+  const primaryCode = cptMatch ? cptMatch[0].toUpperCase() : '';
 
-  // --- DYNAMIC AUTO-INJECTION SYSTEM ---
-  // Since we don't rely on manual Supabase shortcodes (due to RLS limitations), 
-  // we dynamically inject Micro-CTAs into ALL articles based on smart contextual landmarks.
-  
-  // 1. Upgrade old ncci checker to new one globally
-  cleanContent = cleanContent.replace(/\[mb_ncci_checker\]/g, '[inject_ncci]');
-
-  // 1.5 TL;DR AI Quick Answer (Inject after first paragraph)
-  if (!cleanContent.includes('[inject_tldr]')) {
-    cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_tldr]</p>\n');
+  // Determine the smartest default tab for the unified Coding Assistant widget based on article topic
+  let smartDefaultTab: 'dictionary' | 'ncci' | 'mednec' | 'npi' | 'auto' = 'dictionary';
+  if (/Box 17|Referring Provider|Ordering Provider|NPI|Taxonomy|UPIN/i.test(articleTitleStr)) {
+    smartDefaultTab = 'npi';
+  } else if (/NCCI|Modifier 59|Modifier 25|Bundl/i.test(articleTitleStr)) {
+    smartDefaultTab = 'ncci';
+  } else if (/LCD|NCD|Medical Necessity/i.test(articleTitleStr)) {
+    smartDefaultTab = 'mednec';
   }
 
-  // 2. Dictionary CTA: Inject after the first table if it exists
-  if (!cleanContent.includes('[inject_dictionary]')) {
-    let tableParts = cleanContent.split('</table>');
-    if (tableParts.length > 1) {
-      cleanContent = tableParts[0] + '</table>\n<p>[inject_dictionary]</p>\n' + tableParts.slice(1).join('</table>');
-    }
-  }
+  // --- CLEAN & FOCUSED INJECTION SYSTEM (NO AD OVERLOAD) ---
+  // 1. Strip any legacy hardcoded shortcodes first so we control exact placement
+  cleanContent = cleanContent
+    .replace(/<p>\s*\[(?:inject_tldr|inject_dictionary|inject_ncci|mb_ncci_checker|inject_mednec|inject_box17|inject_ub04|inject_box24)\]\s*<\/p>/gi, '')
+    .replace(/\[(?:inject_tldr|inject_dictionary|inject_ncci|mb_ncci_checker|inject_mednec|inject_box17|inject_ub04|inject_box24)\]/gi, '');
 
-  // 3. MedNec CTA: Inject near "Medical Necessity"
-  if (!cleanContent.includes('[inject_mednec]')) {
-    // Try to inject after a "Medical Necessity:" bullet point
-    let splitByMedNec = cleanContent.split('<li><strong>Medical Necessity:</strong>');
-    if (splitByMedNec.length > 1) {
-      let afterMedNec = splitByMedNec[1];
-      let ulParts = afterMedNec.split('</ul>');
-      if (ulParts.length > 1) {
-         cleanContent = splitByMedNec[0] + '<li><strong>Medical Necessity:</strong>' + ulParts[0] + '</ul>\n<p>[inject_mednec]</p>\n' + ulParts.slice(1).join('</ul>');
-      }
-    } else {
-      // Fallback: Inject after an H2/H3/H4 containing "Medical Necessity"
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?Medical Necessity[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_mednec]</p>\n');
+  // 2. Inject the primary multi-tab Coding Assistant right after the first introductory paragraph
+  cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<span data-inject="main_assistant"></span>\n');
+
+  // 3. Inject at most ONE contextual mid-article Micro-CTA further down in the article
+  let midCtaInjected = false;
+
+  if (!midCtaInjected && /Medical Necessity/i.test(cleanContent)) {
+    const replaced = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?Medical Necessity[\s\S]*?<\/h[2-4]>)/i, '$1\n<span data-inject="mednec"></span>\n');
+    if (replaced !== cleanContent) {
+      cleanContent = replaced;
+      midCtaInjected = true;
     }
   }
 
-  // 4. NCCI CTA: Inject near "NCCI" if it isn't already placed by the old mb_ncci_checker
-  if (!cleanContent.includes('[inject_ncci]')) {
-    cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?NCCI[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_ncci]</p>\n');
-  }
-
-  // 5. Box 17 CTA: Inject near "Box 17" or "Referring Provider"
-  if (!cleanContent.includes('[inject_box17]')) {
-    if (/Box 17|Referring Provider/i.test(articleTitleStr)) {
-      // If the article is specifically about this, inject under the first H2/H3/H4
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box17]</p>\n');
-    } else {
-      // Otherwise find a relevant header
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:Box 17|Referring Provider)[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box17]</p>\n');
-    }
-    // Ultimate fallback for Box 17 articles with weird formatting (like just paragraphs)
-    if (!cleanContent.includes('[inject_box17]') && /Box 17|Referring Provider/i.test(articleTitleStr)) {
-      cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_box17]</p>\n');
+  if (!midCtaInjected && /NCCI/i.test(cleanContent)) {
+    const replaced = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?NCCI[\s\S]*?<\/h[2-4]>)/i, '$1\n<span data-inject="ncci"></span>\n');
+    if (replaced !== cleanContent) {
+      cleanContent = replaced;
+      midCtaInjected = true;
     }
   }
 
-  // 6. UB-04 CTA: Inject near "UB-04" or "Discharge Status"
-  if (!cleanContent.includes('[inject_ub04]')) {
-    if (/UB-04|UB04|Discharge Status/i.test(articleTitleStr)) {
-      // If the article is specifically about this, inject under the first H2/H3/H4
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_ub04]</p>\n');
-    } else {
-      // Otherwise find a relevant header
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:UB-04|UB04|Discharge Status|FL 17)[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_ub04]</p>\n');
-    }
-    // Ultimate fallback for UB-04 articles with weird formatting
-    if (!cleanContent.includes('[inject_ub04]') && /UB-04|UB04|Discharge Status/i.test(articleTitleStr)) {
-      cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_ub04]</p>\n');
+  if (!midCtaInjected && /Box 17|Referring Provider/i.test(cleanContent)) {
+    const replaced = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:Box 17|Referring Provider)[\s\S]*?<\/h[2-4]>)/i, '$1\n<span data-inject="box17"></span>\n');
+    if (replaced !== cleanContent) {
+      cleanContent = replaced;
+      midCtaInjected = true;
     }
   }
-  
-  // 7. Box 24 CTA: Inject near Box 24 or Date of Service
-  if (!cleanContent.includes('[inject_box24]')) {
-    if (/Box 24|Date of Service/i.test(articleTitleStr)) {
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box24]</p>\n');
-    } else {
-      cleanContent = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:Box 24|Date of Service)[\s\S]*?<\/h[2-4]>)/i, '$1\n<p>[inject_box24]</p>\n');
+
+  if (!midCtaInjected && /UB-04|UB04|Discharge Status|FL 17/i.test(cleanContent)) {
+    const replaced = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:UB-04|UB04|Discharge Status|FL 17)[\s\S]*?<\/h[2-4]>)/i, '$1\n<span data-inject="ub04"></span>\n');
+    if (replaced !== cleanContent) {
+      cleanContent = replaced;
+      midCtaInjected = true;
     }
-    // Ultimate fallback for Box 24 articles with weird formatting
-    if (!cleanContent.includes('[inject_box24]') && /Box 24|Date of Service/i.test(articleTitleStr)) {
-      cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<p>[inject_box24]</p>\n');
+  }
+
+  if (!midCtaInjected && /Box 24|Date of Service/i.test(cleanContent)) {
+    const replaced = cleanContent.replace(/(<h[2-4][^>]*>[\s\S]*?(?:Box 24|Date of Service)[\s\S]*?<\/h[2-4]>)/i, '$1\n<span data-inject="box24"></span>\n');
+    if (replaced !== cleanContent) {
+      cleanContent = replaced;
+      midCtaInjected = true;
     }
   }
 
   // Strip hardcoded inline styles and bgcolors from ALL legacy WordPress elements
   cleanContent = cleanContent.replace(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/gi, (match, tag, attrs) => {
-    // Remove bgcolor attribute entirely
     let newAttrs = attrs.replace(/\s*bgcolor=["'][^"']*["']/gi, '');
-    // Remove background-color and background from style attribute but keep other styles
     newAttrs = newAttrs.replace(/\bstyle=(["'])([^"']*)\1/gi, (styleMatch: string, quote: string, styleVal: string) => {
       const cleaned = styleVal
         .split(';')
@@ -186,29 +160,20 @@ export default async function BlogPost({ params }: Props) {
     return `<${tag}${newAttrs}>`;
   });
 
-  // Pre-process shortcodes into predictable HTML tags so the parser always finds them
-  let processedContent = cleanContent
-    .replace(/\[inject_ncci\]/g, '<span data-inject="ncci"></span>')
-    .replace(/\[mb_ncci_checker\]/g, '<span data-inject="ncci"></span>')
-    .replace(/\[inject_mednec\]/g, '<span data-inject="mednec"></span>')
-    .replace(/\[inject_dictionary\]/g, '<span data-inject="dictionary"></span>')
-    .replace(/\[inject_box17\]/g, '<span data-inject="box17"></span>')
-    .replace(/\[inject_ub04\]/g, '<span data-inject="ub04"></span>')
-    .replace(/\[inject_box24\]/g, '<span data-inject="box24"></span>')
-    .replace(/\[inject_tldr\]/g, '<span data-inject="tldr_ai"></span>');
-
-  // Parse HTML and replace our custom spans with React Micro-CTAs
-  const parsedContent = parse(processedContent, {
+  // Parse HTML and replace our custom spans with React components
+  const parsedContent = parse(cleanContent, {
     replace: (domNode: DOMNode) => {
       if (domNode.type === 'tag' && (domNode as Element).attribs && (domNode as Element).attribs['data-inject']) {
         const type = (domNode as Element).attribs['data-inject'];
+        if (type === 'main_assistant') {
+          return <InlineCodingAssistantCTA defaultCpt={primaryCode} defaultTab={smartDefaultTab} />;
+        }
         if (type === 'ncci') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
         if (type === 'mednec') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
         if (type === 'dictionary') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
         if (type === 'box17') return <BlogMicroCTA type="box17" />;
         if (type === 'ub04') return <BlogMicroCTA type="ub04" />;
         if (type === 'box24') return <BlogMicroCTA type="box24" />;
-        if (type === 'tldr_ai') return <BlogMicroCTA type="tldr_ai" />;
       }
     }
   });
@@ -224,49 +189,45 @@ export default async function BlogPost({ params }: Props) {
         />
       )}
 
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '48px 40px 80px' }}>
-        <main style={{ width: '100%', maxWidth: '1100px' }}>
-          <nav style={{ marginBottom: '24px', fontSize: '0.9rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '40px 24px 80px' }}>
+        <main style={{ width: '100%', maxWidth: '1040px' }}>
+          <nav style={{ marginBottom: '20px', fontSize: '0.9rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <a href="/" style={{ color: '#3b82f6', textDecoration: 'none' }}>Home</a>
             <span>›</span>
             <a href="/blog" style={{ color: '#3b82f6', textDecoration: 'none' }}>Knowledge Base</a>
             <span>›</span>
-            <span style={{ color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+            <span style={{ color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '340px' }}>
               {decodeWPEntities(article.title)}
             </span>
           </nav>
-          <article style={{ background: 'transparent', border: 'none', padding: '0 48px 48px' }}>
-            <h1 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.4rem)', fontWeight: '800', color: '#f0f4ff', lineHeight: '1.25', marginBottom: '16px' }}>{decodeWPEntities(article.title)}</h1>
-            <div style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '40px', paddingBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <article style={{ background: 'transparent', border: 'none', padding: '0 24px 48px' }}>
+            <h1 style={{ fontSize: 'clamp(1.6rem, 4vw, 2.35rem)', fontWeight: '800', color: '#f0f4ff', lineHeight: '1.25', marginBottom: '12px' }}>
+              {decodeWPEntities(article.title)}
+            </h1>
+            <div style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               Last Updated: {new Date(article.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
-            
-            
-            {/* DYNAMIC INLINE SOFTWARE AD - TOP */}
-            {isCptArticle ? (
-              <InlineCodingAssistantCTA defaultCpt={primaryCode} />
-            ) : (
-              <div style={{ background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '12px', padding: '24px', marginBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <h3 style={{ color: '#fff', fontSize: '1.2rem', margin: '0 0 8px 0' }}>Stop filling the CMS-1500 form by hand.</h3>
-                  <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.95rem' }}>Upload your superbill and let our AI auto-fill the CMS-1500 claim for you in 5 seconds. Catch coding errors and prevent denials before you submit.</p>
-                </div>
-                <div>
-                  <a href="/app/editor" style={{ background: '#3b82f6', color: '#fff', padding: '10px 20px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>Try AI Auto-Fill for Free &rarr;</a>
-                </div>
-              </div>
-            )}
 
             <TableOfContents />
-              <div className="blog-article-content" suppressHydrationWarning>
-                {parsedContent}
-              </div>
+
+            <div className="blog-article-content" suppressHydrationWarning>
+              {parsedContent}
+            </div>
             
             {/* INLINE SOFTWARE AD - BOTTOM */}
             <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '16px', padding: '32px', marginTop: '48px', marginBottom: '48px', textAlign: 'center' }}>
-              <h2 style={{ color: '#fff', fontSize: '1.5rem', margin: '0 0 12px 0' }}>Tired of dealing with rejected claims?</h2>
-              <p style={{ color: '#cbd5e1', margin: '0 0 24px 0', fontSize: '1rem', lineHeight: '1.6' }}>Use our modern CMS-1500 software to instantly validate NPIs, CPT codes, and ICD-10 formatting. It's completely free to start.</p>
-              <a href="/app/editor" style={{ background: '#fff', color: '#0f172a', padding: '12px 28px', borderRadius: '10px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '1rem', boxShadow: '0 4px 14px rgba(255,255,255,0.1)' }}>Create Your Free Account</a>
+              <h2 style={{ color: '#fff', fontSize: '1.45rem', margin: '0 0 10px 0' }}>Check Codes, NCCI Edits & Medical Necessity in Seconds</h2>
+              <p style={{ color: '#cbd5e1', margin: '0 0 24px 0', fontSize: '0.98rem', lineHeight: '1.6', maxWidth: '640px', marginLeft: 'auto', marginRight: 'auto' }}>
+                Use our free Medical Coding Assistant to lookup CPT/ICD-10 descriptions, check Medicare LCD rules, verify NPIs, or auto-fill CMS-1500 claims with AI.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <a href="/app/coding-assistant" style={{ background: '#3b82f6', color: '#fff', padding: '12px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 'bold', display: 'inline-block', fontSize: '0.95rem' }}>
+                  Launch Coding Assistant &rarr;
+                </a>
+                <a href="/app/editor" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)', color: '#f8fafc', padding: '12px 24px', borderRadius: '10px', textDecoration: 'none', fontWeight: 600, display: 'inline-block', fontSize: '0.95rem' }}>
+                  Open CMS-1500 AI Editor
+                </a>
+              </div>
             </div>
 
             <RelatedArticles currentArticleId={article.id} />

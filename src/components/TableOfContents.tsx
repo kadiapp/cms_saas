@@ -1,126 +1,122 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import * as Icon from 'react-feather';
 
 type Heading = {
   id: string;
   text: string;
-  level: number;
+  el: HTMLElement;
 };
 
 export default function TableOfContents() {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [activeId, setActiveId] = useState<string>('');
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const elementsRef = useRef<HTMLElement[]>([]);
 
   useEffect(() => {
-    // Wait for the server component HTML to fully paint
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const articleContent = document.querySelector('.blog-article-content');
       if (!articleContent) return;
 
-      const elements = Array.from(articleContent.querySelectorAll('h2, h3'));
+      // Only grab top-level H2 sections (ignore H3 sub-items and injected CTA headers)
+      const elements = Array.from(articleContent.querySelectorAll('h2')) as HTMLElement[];
       const newHeadings: Heading[] = [];
 
       elements.forEach((el, index) => {
-        // WordPress usually generates IDs, but if it doesn't, we make one
+        if (el.closest('.micro-cta-widget')) return;
+        const text = (el.textContent || '').trim();
+        if (!text) return;
         if (!el.id) {
-          el.id = el.textContent?.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `heading-${index}`;
+          el.id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `section-${index}`;
         }
+        el.style.scrollMarginTop = '96px';
         newHeadings.push({
           id: el.id,
-          text: el.textContent || '',
-          level: el.tagName === 'H2' ? 2 : 3
+          text,
+          el
         });
       });
 
+      elementsRef.current = newHeadings.map(h => h.el);
       setHeadings(newHeadings);
     }, 100);
 
-    // Track which heading is currently active while scrolling
-    const callback = (entries: IntersectionObserverEntry[]) => {
-      const visibleEntries = entries.filter(e => e.isIntersecting);
-      if (visibleEntries.length > 0) {
-        // Find the topmost visible heading
-        visibleEntries.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        setActiveId(visibleEntries[0].target.id);
-      }
-    };
-
-    const observer = new IntersectionObserver(callback, {
-      rootMargin: '-80px 0px -60% 0px' // Adjust offsets for the TopNav
-    });
-
-    setTimeout(() => {
-      document.querySelectorAll('.blog-article-content h2, .blog-article-content h3').forEach((h) => observer.observe(h));
-    }, 200);
-
-    return () => observer.disconnect();
+    return () => clearTimeout(timer);
   }, []);
 
   if (headings.length === 0) return null;
 
   return (
     <div style={{
-      background: 'rgba(30, 41, 59, 0.5)',
-      border: '1px solid rgba(255,255,255,0.05)',
-      borderRadius: '12px',
-      padding: '24px',
-      marginBottom: '40px',
-      maxWidth: '600px'
+      background: 'rgba(30, 41, 59, 0.45)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      borderRadius: '10px',
+      padding: '14px 20px',
+      marginBottom: '28px'
     }}>
-      <div 
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+      <button
+        type="button"
         onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          width: '100%',
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          color: '#f8fafc'
+        }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f8fafc', fontWeight: '600' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '0.95rem' }}>
           <Icon.List size={18} color="#3b82f6" />
-          Table of Contents
+          <span>Table of Contents</span>
+          <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 400 }}>
+            ({headings.length} sections)
+          </span>
         </div>
-        <div style={{ color: '#64748b', display: 'flex', alignItems: 'center' }}>
-          {isExpanded ? <Icon.ChevronUp size={20} /> : <Icon.ChevronDown size={20} />}
+        <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}>
+          <span>{isExpanded ? 'Hide' : 'Show'}</span>
+          {isExpanded ? <Icon.ChevronUp size={18} /> : <Icon.ChevronDown size={18} />}
         </div>
-      </div>
-      
+      </button>
+
       {isExpanded && (
-        <ul style={{ 
-          listStyle: 'none', 
-          padding: 0, 
-          margin: '20px 0 0 0', 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: '12px' 
+        <ul style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: '16px 0 4px 0',
+          paddingTop: '14px',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '10px 24px'
         }}>
           {headings.map((h, i) => (
-            <li key={i} style={{ paddingLeft: h.level === 3 ? '24px' : '0' }}>
-              <a 
+            <li key={i}>
+              <a
                 href={`#${h.id}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  const target = document.getElementById(h.id);
-                  if (target) {
-                    // Smooth scroll accounting for sticky topnav offset
-                    const y = target.getBoundingClientRect().top + window.scrollY - 100;
-                    window.scrollTo({ top: y, behavior: 'smooth' });
-                  }
+                  h.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   setActiveId(h.id);
                 }}
                 style={{
-                  color: activeId === h.id ? '#3b82f6' : '#94a3b8',
+                  color: activeId === h.id ? '#3b82f6' : '#cbd5e1',
                   textDecoration: 'none',
-                  fontSize: h.level === 2 ? '0.95rem' : '0.85rem',
-                  fontWeight: activeId === h.id ? '600' : '400',
-                  transition: 'color 0.2s',
-                  display: 'block',
-                  lineHeight: '1.4'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
-                onMouseOut={(e) => {
-                  if (activeId !== h.id) e.currentTarget.style.color = '#94a3b8';
+                  fontSize: '0.9rem',
+                  fontWeight: activeId === h.id ? 600 : 400,
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '8px',
+                  lineHeight: 1.4
                 }}
               >
-                {h.text}
+                <span style={{ color: '#3b82f6', fontSize: '0.78rem', fontFamily: 'monospace' }}>{i + 1}.</span>
+                <span>{h.text}</span>
               </a>
             </li>
           ))}
