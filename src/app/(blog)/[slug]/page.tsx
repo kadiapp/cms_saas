@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { supabase } from '@/api/supabase';
 import { notFound } from 'next/navigation';
-import { decodeWPEntities, cleanHtmlSchemas } from '@/utils/decode';
+import { decodeWPEntities, cleanHtmlSchemas, normalizeInternalLinks, normalizeArticleSchema } from '@/utils/decode';
 import '@/app/globals.css';
 import TopNav from '@/components/TopNav';
 import TableOfContents from '@/components/TableOfContents';
@@ -75,7 +75,7 @@ export default async function BlogPost({ params }: Props) {
     notFound();
   }
 
-  let cleanContent = cleanHtmlSchemas(article.content || '');
+  let cleanContent = normalizeInternalLinks(cleanHtmlSchemas(article.content || ''));
 
   const articleTitleStr = decodeWPEntities(article.title || '');
   const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
@@ -182,10 +182,10 @@ export default async function BlogPost({ params }: Props) {
     <>
       <TopNav />
       <CopyAttribution />
-      {/* 3. Injecting the EXACT Yoast JSON-LD Schema markup */}
+      {/* 3. Injecting the normalized JSON-LD Schema markup */}
       {article.schema_markup && (
         <script type="application/ld+json" suppressHydrationWarning
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(article.schema_markup) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(normalizeArticleSchema(article.schema_markup, article)) }}
         />
       )}
 
