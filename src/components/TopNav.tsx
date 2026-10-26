@@ -33,7 +33,7 @@ export default function TopNav() {
     <header className={`topnav ${isMobileMenuOpen ? 'mobile-expanded' : ''}`}>
       <div className="topnav-inner">
         {/* Brand / Logo */}
-        <div className="topnav-brand" onClick={() => { closeMenu(); router.push('/app'); }} role="button" tabIndex={0}>
+        <div className="topnav-brand" onClick={() => { closeMenu(); router.push(user ? '/app' : '/'); }} role="button" tabIndex={0}>
           <div className="topnav-logo-icon">🩺</div>
           <div className="topnav-brand-text">
             <div className="topnav-logo-name" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -59,10 +59,12 @@ export default function TopNav() {
 
         {/* Navigation Links */}
         <nav className={`topnav-links ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-          <Link href="/app" className={`topnav-link ${pathname === '/app' ? 'active' : ''}`} onClick={closeMenu}>
-            <Icon.Grid size={16} />
-            <span>Dashboard</span>
-          </Link>
+          {user && (
+            <Link href="/app" className={`topnav-link ${pathname === '/app' ? 'active' : ''}`} onClick={closeMenu}>
+              <Icon.Grid size={16} />
+              <span>Dashboard</span>
+            </Link>
+          )}
           <Link 
             href="/app/editor" 
             className={`topnav-link ${pathname === '/app/editor' ? 'active' : ''}`} 
@@ -85,10 +87,12 @@ export default function TopNav() {
             <span>Guides</span>
           </Link>
           
-          <Link href="/app/settings" className={`topnav-link ${pathname === '/app/settings' ? 'active' : ''}`} onClick={closeMenu}>
-            <Icon.Settings size={16} />
-            <span>Settings</span>
-          </Link>
+          {user && (
+            <Link href="/app/settings" className={`topnav-link ${pathname === '/app/settings' ? 'active' : ''}`} onClick={closeMenu}>
+              <Icon.Settings size={16} />
+              <span>Settings</span>
+            </Link>
+          )}
         </nav>
 
         {/* User / Actions */}

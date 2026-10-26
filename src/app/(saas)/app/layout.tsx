@@ -17,7 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       const isPublicPath = pathname.startsWith('/app/editor') || pathname.startsWith('/app/coding-assistant');
 
       if (!session && !isPublicPath) {
-        router.push('/login');
+        router.replace('/login');
       } else {
         setLoading(false);
       }
@@ -28,7 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       const isPublicPath = pathname.startsWith('/app/editor') || pathname.startsWith('/app/coding-assistant');
       if ((event === 'SIGNED_OUT' || !session) && !isPublicPath) {
-        router.push('/login');
+        router.replace('/login');
       }
     });
 

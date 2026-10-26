@@ -385,7 +385,7 @@ export async function getMedicalNecessity(cptCode: string): Promise<string[]> {
     const { data, error } = await supabaseMedicalNecessity
       .from('cms_medical_necessity')
       .select('icd10_codes')
-      .eq('cpt_code', cptCode)
+      .eq('cpt_code', (cptCode.replace(/^CPT\s*/i, '').trim().toUpperCase().match(/\b[A-Z0-9]{5}\b/) || [cptCode.trim().toUpperCase()])[0])
       .maybeSingle();
 
     if (error || !data || !data.icd10_codes) return [];

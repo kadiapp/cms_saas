@@ -5,7 +5,7 @@ import * as Icon from 'react-feather';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EMPTY_FORM } from '@/types';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
-import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getMedicalNecessity, logActivity } from '@/api/supabase';
+import { verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getNcciConflictsForCode, getMedicalNecessity, logActivity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
@@ -57,6 +57,26 @@ export default function CodingAssistant() {
   const changeTab = (tab: 'dictionary' | 'ncci' | 'auto' | 'mednec' | 'npi') => {
     setActiveTab(tab);
     window.history.pushState(null, '', `?tab=${tab}`);
+
+    const candidateCpt = (selectedCodeType === 'CPT' && selectedCodeDetails?.code)
+      || (dictQuery.trim().match(/^[A-Z0-9]{5}$/i)?.[0])
+      || code1.trim()
+      || medNecSearchedCode.trim()
+      || '';
+
+    if (tab === 'ncci' && candidateCpt && !code1) {
+      const upper = candidateCpt.toUpperCase();
+      setCode1(upper);
+      setTimeout(() => handleNcciCheck(undefined, upper, code2), 30);
+    } else if (tab === 'mednec' && candidateCpt && !medNecQuery) {
+      const upper = candidateCpt.toUpperCase();
+      setMedNecQuery(upper);
+      setTimeout(() => handleMedNecSearch(undefined, upper), 30);
+    } else if (tab === 'dictionary' && candidateCpt && !dictQuery) {
+      const upper = candidateCpt.toUpperCase();
+      setDictQuery(upper);
+      setTimeout(() => handleDictSearch(undefined, upper), 30);
+    }
   };
 
   // NPI Tab State
@@ -131,6 +151,7 @@ export default function CodingAssistant() {
   const [isMedNecLoading, setIsMedNecLoading] = useState(false);
   const [medNecResults, setMedNecResults] = useState<string[] | null>(null);
   const [medNecSearchedCode, setMedNecSearchedCode] = useState('');
+  const [medNecVisibleCount, setMedNecVisibleCount] = useState(120);
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -154,7 +175,7 @@ export default function CodingAssistant() {
           if (c1 || c2) {
             setCode1(c1);
             setCode2(c2);
-            if (c1 && c2) {
+            if (c1) {
               setTimeout(() => handleNcciCheck(undefined, c1, c2), 50);
             }
           }
@@ -212,6 +233,7 @@ export default function CodingAssistant() {
   const [code2, setCode2] = useState('');
   const [isNcciLoading, setIsNcciLoading] = useState(false);
   const [ncciResult, setNcciResult] = useState<any>(null);
+  const [ncciConflicts, setNcciConflicts] = useState<any[] | null>(null);
   const [ncciError, setNcciError] = useState('');
 
   // -----------------------------------------------------
@@ -323,16 +345,18 @@ export default function CodingAssistant() {
   const handleMedNecSearch = async (e?: React.FormEvent, directCode?: string) => {
     trackEvent('mednec_search_clicked');
     if (e) e.preventDefault();
-    const queryToUse = directCode || medNecQuery;
-    if (!queryToUse.trim()) return;
+    const rawQuery = (directCode ?? medNecQuery).replace(/^CPT\s*/i, '').trim().toUpperCase();
+    const queryToUse = (rawQuery.match(/\b[A-Z0-9]{5}\b/) || [rawQuery])[0];
+    if (!queryToUse) return;
 
     setIsMedNecLoading(true);
     setMedNecResults(null);
-    setMedNecSearchedCode(queryToUse.trim().toUpperCase());
+    setMedNecVisibleCount(120);
+    setMedNecSearchedCode(queryToUse);
     try {
-      const results = await getMedicalNecessity(queryToUse.trim().toUpperCase());
+      const results = await getMedicalNecessity(queryToUse);
       setMedNecResults(results);
-      logActivity('mednec_search', { code: queryToUse.trim().toUpperCase(), count: results.length });
+      logActivity('mednec_search', { code: queryToUse, count: results.length });
     } catch (err) {
       console.error(err);
     } finally {
@@ -404,21 +428,28 @@ export default function CodingAssistant() {
   const handleNcciCheck = async (e?: React.FormEvent, directCode1?: string, directCode2?: string) => {
     trackEvent('ncci_search_clicked');
     if (e) e.preventDefault();
-    const c1 = (directCode1 || code1).trim().toUpperCase();
-    const c2 = (directCode2 || code2).trim().toUpperCase();
-    if (!c1 || !c2) return;
+    const raw1 = (directCode1 !== undefined ? directCode1 : code1).replace(/^CPT\s*/i, '').trim().toUpperCase();
+    const raw2 = (directCode2 !== undefined ? directCode2 : code2).replace(/^CPT\s*/i, '').trim().toUpperCase();
+    const c1 = (raw1.match(/\b[A-Z0-9]{5}\b/) || [raw1])[0];
+    const c2 = (raw2.match(/\b[A-Z0-9]{5}\b/) || [raw2])[0];
+    if (!c1) return;
 
     setIsNcciLoading(true);
     setNcciResult(null);
+    setNcciConflicts(null);
     setNcciError('');
 
     try {
-      const result = await checkCodePair(c1, c2);
-      setNcciResult({
-        c1, c2, ...result
-      });
-      logActivity('ncci_check', { c1, c2 });
-      
+      const conflicts = await getNcciConflictsForCode(c1);
+      setNcciConflicts(conflicts || []);
+
+      if (c2) {
+        const result = await checkCodePair(c1, c2);
+        setNcciResult({
+          c1, c2, ...result
+        });
+      }
+      logActivity('ncci_check', { c1, c2: c2 || 'all_conflicts', conflictsCount: conflicts?.length || 0 });
     } catch(err: any) {
       setNcciError(err.message || 'Error querying NCCI database');
     } finally {
@@ -619,6 +650,39 @@ export default function CodingAssistant() {
                   </div>
                 )}
                 
+                {selectedCodeType === 'CPT' && (
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary ca-btn"
+                      onClick={() => {
+                        const c = selectedCodeDetails.code;
+                        setCode1(c);
+                        setActiveTab('ncci');
+                        window.history.pushState(null, '', `?tab=ncci&code1=${c}`);
+                        setTimeout(() => handleNcciCheck(undefined, c, code2), 30);
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
+                    >
+                      <Icon.Shield size={16} color="#3b82f6" /> Check NCCI Edits for {selectedCodeDetails.code}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary ca-btn"
+                      onClick={() => {
+                        const c = selectedCodeDetails.code;
+                        setMedNecQuery(c);
+                        setActiveTab('mednec');
+                        window.history.pushState(null, '', `?tab=mednec&code=${c}`);
+                        setTimeout(() => handleMedNecSearch(undefined, c), 30);
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
+                    >
+                      <Icon.CheckCircle size={16} color="#10b981" /> Check Medical Necessity for {selectedCodeDetails.code}
+                    </button>
+                  </div>
+                )}
+
                 {selectedCodeType === 'ICD' && selectedCodeDetails && (
                   <div className="ca-detail-section fee-section" style={{ background: selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)', border: `1px solid ${selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
                      <h4>Billable Status</h4>
@@ -652,18 +716,18 @@ export default function CodingAssistant() {
         <div className="ca-tab-content">
           <div className="ca-ncci-box glass-card">
             <h2>Check Code Compatibility</h2>
-            <p className="ca-ncci-subtitle">Enter two CPT/HCPCS codes to check for National Correct Coding Initiative (NCCI) Procedure-to-Procedure (PTP) edits.</p>
+            <p className="ca-ncci-subtitle">Enter a primary CPT/HCPCS code to view all NCCI bundled edits, or enter two codes to compare a specific pair.</p>
             
             <form onSubmit={handleNcciCheck} className="ca-ncci-form">
               <div className="ca-ncci-inputs">
                 <div className="ca-ncci-field">
                   <label>Code 1 (Primary)</label>
-                  <input type="text" placeholder="e.g. 99214" value={code1} onChange={e=>setCode1(e.target.value)} required maxLength={5} />
+                  <input type="text" placeholder="e.g. 74178" value={code1} onChange={e=>setCode1(e.target.value.toUpperCase())} required maxLength={10} />
                 </div>
                 <div className="ca-ncci-vs">VS</div>
                 <div className="ca-ncci-field">
-                  <label>Code 2 (Secondary)</label>
-                  <input type="text" placeholder="e.g. 20610" value={code2} onChange={e=>setCode2(e.target.value)} required maxLength={5} />
+                  <label>Code 2 (Optional Pair)</label>
+                  <input type="text" placeholder="Optional (e.g. 74176)" value={code2} onChange={e=>setCode2(e.target.value.toUpperCase())} maxLength={10} />
                 </div>
               </div>
               <button type="submit" className={`btn btn-primary ${isNcciLoading ? 'loading' : ''}`} disabled={isNcciLoading}>
@@ -700,6 +764,66 @@ export default function CodingAssistant() {
                   <p><strong>Modifier Indicator 0:</strong> These codes cannot be billed together under any circumstances. They are considered mutually exclusive or inherently part of the same procedure. Do not append a modifier.</p>
                 )}
               </div>
+            </div>
+          )}
+
+          {ncciConflicts && (
+            <div className="ca-ncci-box glass-card" style={{ marginTop: '24px' }}>
+              <h3 style={{ margin: '0 0 8px 0', fontSize: '1.15rem', color: '#f8fafc' }}>
+                {ncciConflicts.length > 0
+                  ? `${ncciConflicts.length} NCCI Edit Conflicts Found for ${code1.trim().toUpperCase()}`
+                  : `0 NCCI Bundling Conflicts Found for ${code1.trim().toUpperCase()}`}
+              </h3>
+              <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#94a3b8' }}>
+                {ncciConflicts.length > 0
+                  ? 'Click any conflicting code below to inspect the exact bundling rule and modifier indicator:'
+                  : 'This code has no active Procedure-to-Procedure (PTP) bundling conflicts in our NCCI database.'}
+              </p>
+              {ncciConflicts.length > 0 && (
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', maxHeight: '340px', overflowY: 'auto' }}>
+                  {ncciConflicts.map((conf: any, idx: number) => {
+                    const cleanC1 = (code1.replace(/^CPT\s*/i, '').trim().toUpperCase().match(/\b[A-Z0-9]{5}\b/) || [code1.trim().toUpperCase()])[0];
+                    const otherCode = conf.code_1 === cleanC1 ? conf.code_2 : conf.code_1;
+                    const ind = String(conf.modifier_indicator);
+                    const isModAllowed = ind === '1';
+                    return (
+                      <button
+                        key={`${conf.code_1}-${conf.code_2}-${idx}`}
+                        type="button"
+                        onClick={() => {
+                          setCode2(otherCode);
+                          handleNcciCheck(undefined, cleanC1, otherCode);
+                        }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          background: isModAllowed ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                          border: `1px solid ${isModAllowed ? 'rgba(245, 158, 11, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`,
+                          color: '#f8fafc',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontFamily: 'monospace',
+                          fontSize: '0.9rem'
+                        }}
+                      >
+                        <strong>{otherCode}</strong>
+                        <span style={{
+                          fontSize: '0.72rem',
+                          fontFamily: 'sans-serif',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: isModAllowed ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                          color: isModAllowed ? '#fbbf24' : '#f87171'
+                        }}>
+                          {isModAllowed ? 'Mod 59/X Allowed (1)' : 'Never Bill Together (0)'}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -895,26 +1019,61 @@ export default function CodingAssistant() {
                   <Icon.Search size={16} style={{ position: 'absolute', left: '12px', top: '10px', color: '#94a3b8' }} />
                   <input
                     type="text"
-                    placeholder="Filter ICD-10 codes..."
+                    placeholder="Filter ICD-10 codes (e.g. E11, R10, M54)..."
                     value={medNecFilter}
-                    onChange={(e) => setMedNecFilter(e.target.value)}
+                    onChange={(e) => {
+                      setMedNecFilter(e.target.value);
+                      setMedNecVisibleCount(120);
+                    }}
                     className="ca-input"
                     style={{ paddingLeft: '36px', width: '100%' }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
-                  {medNecResults.filter(icd => icd.toLowerCase().includes(medNecFilter.toLowerCase())).map(icd => (
-                    <span key={icd} style={{ background: 'rgba(15,23,42,0.8)', padding: '6px 12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', fontSize: '0.9rem', fontFamily: 'monospace' }}>
-                      {icd}
-                    </span>
-                  ))}
-                  {medNecResults.filter(icd => icd.toLowerCase().includes(medNecFilter.toLowerCase())).length === 0 && (
-                    <div style={{ color: '#94a3b8', padding: '12px 0', fontStyle: 'italic' }}>
-                      No diagnosis codes match "{medNecFilter}"
-                    </div>
-                  )}
-                </div>
+                {(() => {
+                  const filtered = medNecResults.filter(icd => icd.toLowerCase().includes(medNecFilter.toLowerCase()));
+                  const visible = filtered.slice(0, medNecVisibleCount);
+                  return (
+                    <>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '400px', overflowY: 'auto', paddingRight: '8px' }}>
+                        {visible.map(icd => (
+                          <button
+                            key={icd}
+                            type="button"
+                            title="Click to view ICD-10 description in Dictionary"
+                            onClick={() => {
+                              setDictQuery(icd);
+                              setActiveTab('dictionary');
+                              window.history.pushState(null, '', `?tab=dictionary&q=${icd}`);
+                              setTimeout(() => handleDictSearch(undefined, icd), 30);
+                            }}
+                            style={{ background: 'rgba(15,23,42,0.8)', padding: '6px 12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', color: '#f8fafc', fontSize: '0.9rem', fontFamily: 'monospace', cursor: 'pointer' }}
+                          >
+                            {icd}
+                          </button>
+                        ))}
+                        {filtered.length === 0 && (
+                          <div style={{ color: '#94a3b8', padding: '12px 0', fontStyle: 'italic' }}>
+                            No diagnosis codes match "{medNecFilter}"
+                          </div>
+                        )}
+                      </div>
+                      {filtered.length > medNecVisibleCount && (
+                        <div style={{ marginTop: '14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#94a3b8', fontSize: '0.85rem' }}>
+                          <span>Showing {visible.length} of {filtered.length} approved ICD-10 codes (click any code for description)</span>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={() => setMedNecVisibleCount(c => c + 200)}
+                            style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                          >
+                            Show More (+200)
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
             {medNecResults && medNecResults.length === 0 && (
