@@ -321,34 +321,41 @@ export async function logActivity(action: string, details: any = {}) {
 
 
 export async function searchCodeDictionary(query: string): Promise<{ cpt: any[], icd: any[] }> {
-  const cleanQuery = query.trim().toUpperCase();
-  const words = cleanQuery.split(/\s+/).filter(Boolean);
+  const cleanQuery = query.trim().toUpperCase().replace(/^CPT\s+|^HCPCS\s+|^ICD(?:-?10)?\s+/i, '').trim();
+  const dotlessQuery = cleanQuery.replace(/\./g, '');
+  const words = cleanQuery.split(/[\s,-]+/).filter(Boolean);
   
   if (words.length === 0) return { cpt: [], icd: [] };
 
   const exactTerm = `%${cleanQuery}%`;
+  const dotlessTerm = `%${dotlessQuery}%`;
   
-  let orCondition = `code.ilike.${exactTerm},short_description.ilike.${exactTerm},long_description.ilike.${exactTerm}`;
+  const codeToken = words.find(w => /^[A-Z0-9]{5}$/.test(w.replace(/\./g, '')) || /^[A-Z]\d{2}(?:\.\d{1,4}|\d{1,4})$/.test(w));
+  const cleanCodeToken = codeToken ? codeToken.replace(/\./g, '') : null;
+
+  let cptOrCondition = `code.ilike.${exactTerm},code.ilike.${dotlessTerm},short_description.ilike.${exactTerm},long_description.ilike.${exactTerm}`;
+  let icdOrCondition = `code.ilike.${dotlessTerm},code.ilike.${exactTerm},short_description.ilike.${exactTerm},long_description.ilike.${exactTerm}`;
   
   if (words.length > 1) {
     const shortDescAnds = words.map(w => `short_description.ilike.%${w}%`).join(',');
     const longDescAnds = words.map(w => `long_description.ilike.%${w}%`).join(',');
-    // Search exact code OR all words in short_description OR all words in long_description
-    orCondition = `code.ilike.${exactTerm},and(${shortDescAnds}),and(${longDescAnds})`;
+    const tokenCodeClause = cleanCodeToken ? `code.eq.${cleanCodeToken},code.ilike.%${cleanCodeToken}%,` : '';
+    cptOrCondition = `${tokenCodeClause}code.ilike.${exactTerm},and(${shortDescAnds}),and(${longDescAnds})`;
+    icdOrCondition = `${tokenCodeClause}code.ilike.${dotlessTerm},and(${shortDescAnds}),and(${longDescAnds})`;
   }
 
   // Search CPT
-  const { data: cptData, error: cptError } = await supabase
+  const { data: cptData } = await supabase
     .from('cms_cpt_codes')
     .select('code, short_description')
-    .or(orCondition)
+    .or(cptOrCondition)
     .limit(20);
 
   // Search ICD-10
-  const { data: icdData, error: icdError } = await supabase
+  const { data: icdData } = await supabase
     .from('cms_icd10_codes')
     .select('code, short_description')
-    .or(orCondition)
+    .or(icdOrCondition)
     .limit(20);
 
   return {
