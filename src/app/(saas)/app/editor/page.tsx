@@ -9,8 +9,6 @@ import type { ClaimForm, ServiceLine } from '@/types';
 import { EMPTY_FORM, SAMPLE_CLAIM } from '@/types';
 import { validateClaim, computeReadiness, runAdvancedClinicalValidation } from '@/validation';
 import type { ValidationResult } from '@/validation';
-import { importFromPdf } from '@/pdfImport';
-import { exportToPdf } from '@/pdfExport';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import { generate837P } from '@/ediExport';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
@@ -918,6 +916,7 @@ const [isSaving, setIsSaving] = useState(false);
         const response = await fetch('/cms1500_template.pdf');
         if (!response.ok) throw new Error('Template not found');
         const arrayBuffer = await response.arrayBuffer();
+        const { exportToPdf } = await import('@/pdfExport');
         const pdfBytes = await exportToPdf(form, arrayBuffer);
         const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
@@ -1085,6 +1084,7 @@ const [isSaving, setIsSaving] = useState(false);
     try {
       showToast('Importing PDF...', 'info');
       // Attempt standard CMS-1500 fillable form import
+      const { importFromPdf } = await import('@/pdfImport');
       const importedForm = await importFromPdf(file);
       setForm(importedForm);
       setLocalValidationResults([]); setDeepValidationResults([]);

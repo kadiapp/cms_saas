@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import * as Icon from 'react-feather';
+import { Search } from 'react-feather';
 
 export default function BlogSearch({ initialQuery }: { initialQuery: string }) {
   const [query, setQuery] = useState(initialQuery);
@@ -9,16 +9,18 @@ export default function BlogSearch({ initialQuery }: { initialQuery: string }) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      router.push(`/blog?q=${encodeURIComponent(query.trim())}`);
-    } else {
-      router.push('/blog');
-    }
+    startTransition(() => {
+      if (query.trim()) {
+        router.push(`/blog?q=${encodeURIComponent(query.trim())}`);
+      } else {
+        router.push('/blog');
+      }
+    });
   };
 
   return (
     <form onSubmit={handleSearch} style={{ position: 'relative', maxWidth: '600px', margin: '0 auto 40px auto', width: '100%' }}>
-      <Icon.Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+      <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
       <input
         type="text"
         placeholder="Search articles, guides, and payer rules..."
@@ -36,21 +38,21 @@ export default function BlogSearch({ initialQuery }: { initialQuery: string }) {
           boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
           transition: 'all 0.2s ease'
         }}
-        onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
+        onFocus={(e) => (e.target.style.borderColor = '#3b82f6')}
+        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
       />
-      <button 
-        type="submit" 
-        style={{ 
-          position: 'absolute', 
-          right: '8px', 
-          top: '8px', 
-          bottom: '8px', 
-          background: '#3b82f6', 
-          color: '#fff', 
-          border: 'none', 
-          borderRadius: '999px', 
-          padding: '0 20px', 
+      <button
+        type="submit"
+        style={{
+          position: 'absolute',
+          right: '8px',
+          top: '8px',
+          bottom: '8px',
+          background: '#3b82f6',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '999px',
+          padding: '0 20px',
           fontWeight: 600,
           cursor: 'pointer'
         }}

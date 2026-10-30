@@ -129,8 +129,11 @@ export default async function BlogPost({ params }: Props) {
     cleanContent = cleanContent.replace(/^([\s\S]+?)(?=\r?\n\r?\n|\s*<h[1-6]|\s*<p|\s*<table|\s*<div)/i, '<p>$1</p>\n');
   }
 
-  // 2. Strip legacy WordPress [mb_*] callout wrapper divs, shortcode tags, and draft image placeholders
+  // 2. Strip legacy WordPress [mb_*] callout wrapper divs, shortcode tags, and broken/placeholder images
   cleanContent = cleanContent
+    .replace(/<figure[^>]*>[\s\S]*?<img[^>]*>[\s\S]*?<\/figure>/gi, '')
+    .replace(/<p[^>]*>\s*<img[^>]*>\s*<\/p>/gi, '')
+    .replace(/<img[^>]*>/gi, '')
     .replace(/<div[^>]*>(?:(?!<\/div>)[\s\S])*?\[(?:mb_[a-z0-9_]+|inject_[a-z0-9_]+)\][\s\S]*?<\/div>/gi, '')
     .replace(/<p[^>]*>\s*\[(?:inject_[a-z0-9_]+|mb_[a-z0-9_]+|placeholder_[^\]]+|Insert Screenshot[^\]]+|INSERT IMAGE[^\]]+)\]\s*<\/p>/gi, '')
     .replace(/\[(?:inject_[a-z0-9_]+|mb_[a-z0-9_]+|placeholder_[^\]]+|Insert Screenshot[^\]]+|INSERT IMAGE[^\]]+)\]/gi, '');

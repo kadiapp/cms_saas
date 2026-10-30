@@ -1,5 +1,13 @@
 import { supabase } from '@/api/supabase';
 import { Metadata } from 'next';
+import { decodeWPEntities } from '@/utils/decode';
+import Link from 'next/link';
+import { FileText, Calendar, ArrowLeft, ArrowRight } from 'react-feather';
+import TopNav from '@/components/TopNav';
+import BlogSearch from './BlogSearch';
+import '@/app/blog-index.css';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Medical Billing Knowledge Base | 1500 Claim Billing',
@@ -18,14 +26,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Medical Billing Knowledge Base | 1500 Claim Billing',
     description: 'Explore our comprehensive library of medical billing guides, CPT/ICD-10 coding tutorials, and revenue cycle management strategies.',
-  }
+  },
 };
-import { decodeWPEntities } from '@/utils/decode';
-import Link from 'next/link';
-import * as Icon from 'react-feather';
-import TopNav from '@/components/TopNav';
-import BlogSearch from './BlogSearch';
-import '@/app/blog-index.css';
 
 type Props = {
   searchParams: Promise<{ page?: string; q?: string }>;
@@ -90,7 +92,7 @@ export default async function BlogIndex({ searchParams }: Props) {
   const pageNumbers = getPageNumbers();
 
   return (
-        <>
+    <>
       <TopNav />
       <div className="blog-index-page">
         <div className="blog-index-header">
@@ -101,7 +103,7 @@ export default async function BlogIndex({ searchParams }: Props) {
           <BlogSearch initialQuery={q} />
         </div>
 
-        <div className="blog-index-grid">
+        <div className="blog-index-grid" style={{ minHeight: '640px' }}>
           {articles?.map(article => {
             const theme = iconColors[article.slug.length % iconColors.length];
             return (
@@ -110,14 +112,13 @@ export default async function BlogIndex({ searchParams }: Props) {
                   className="blog-card-icon"
                   style={{ color: theme.color, background: theme.bg, border: `1px solid ${theme.border}` }}
                 >
-                  <Icon.FileText size={20} strokeWidth={2.5} />
+                  <FileText size={20} strokeWidth={2.5} />
                 </div>
-                <h2
-                  className="blog-card-title"
-                  dangerouslySetInnerHTML={{ __html: article.title }}
-                />
+                <h2 className="blog-card-title">
+                  {decodeWPEntities(article.title)}
+                </h2>
                 <div className="blog-card-date">
-                  <Icon.Calendar size={13} />
+                  <Calendar size={13} />
                   {new Date(article.published_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
               </Link>
@@ -129,31 +130,31 @@ export default async function BlogIndex({ searchParams }: Props) {
           <div className="blog-pagination">
             {currentPage > 1 && (
               <Link href={`/blog?page=${currentPage - 1}${q ? '&q=' + encodeURIComponent(q) : ''}`} className="blog-page-btn blog-page-nav">
-                <Icon.ArrowLeft size={16} /> Prev
+                <ArrowLeft size={16} /> Prev
               </Link>
             )}
 
             {pageNumbers.map((p, i) =>
-                p === '...' ? (
-                  <span key={`dots-${i}`} className="blog-page-dots mobile-hidden">...</span>
-                ) : (
-                  <Link
-                    key={p}
-                    href={`/blog?page=${p}${q ? '&q=' + encodeURIComponent(q) : ''}`}
-                    className={`blog-page-btn mobile-hidden ${p === currentPage ? 'blog-page-active' : ''}`}
-                  >
-                    {p}
-                  </Link>
-                )
-              )}
-              
-              <div className="mobile-only-page-info" style={{ color: '#94a3b8', fontSize: '0.9rem', padding: '0 12px' }}>
-                Page {currentPage} of {totalPages}
-              </div>
+              p === '...' ? (
+                <span key={`dots-${i}`} className="blog-page-dots mobile-hidden">...</span>
+              ) : (
+                <Link
+                  key={p}
+                  href={`/blog?page=${p}${q ? '&q=' + encodeURIComponent(q) : ''}`}
+                  className={`blog-page-btn mobile-hidden ${p === currentPage ? 'blog-page-active' : ''}`}
+                >
+                  {p}
+                </Link>
+              )
+            )}
+
+            <div className="mobile-only-page-info" style={{ color: '#94a3b8', fontSize: '0.9rem', padding: '0 12px' }}>
+              Page {currentPage} of {totalPages}
+            </div>
 
             {currentPage < totalPages && (
               <Link href={`/blog?page=${currentPage + 1}${q ? '&q=' + encodeURIComponent(q) : ''}`} className="blog-page-btn blog-page-nav">
-                Next <Icon.ArrowRight size={16} />
+                Next <ArrowRight size={16} />
               </Link>
             )}
           </div>
