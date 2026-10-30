@@ -1,50 +1,41 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import * as Icon from 'react-feather';
+import { useState, useEffect } from 'react';
+import { List, ChevronUp, ChevronDown } from 'react-feather';
 
-type Heading = {
+export type TocHeading = {
   id: string;
   text: string;
-  el: HTMLElement;
 };
 
-export default function TableOfContents() {
-  const [headings, setHeadings] = useState<Heading[]>([]);
-  const [activeId, setActiveId] = useState<string>('');
+export default function TableOfContents({ initialHeadings = [] }: { initialHeadings?: TocHeading[] }) {
+  const [headings, setHeadings] = useState<TocHeading[]>(initialHeadings);
   const [isExpanded, setIsExpanded] = useState(false);
-  const elementsRef = useRef<HTMLElement[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const articleContent = document.querySelector('.blog-article-content');
-      if (!articleContent) return;
+    if (initialHeadings.length > 0) {
+      setHeadings(initialHeadings);
+      return;
+    }
+    const articleContent = document.querySelector('.blog-article-content');
+    if (!articleContent) return;
 
-      // Only grab top-level H2 sections (ignore H3 sub-items and injected CTA headers)
-      const elements = Array.from(articleContent.querySelectorAll('h2')) as HTMLElement[];
-      const newHeadings: Heading[] = [];
+    const elements = Array.from(articleContent.querySelectorAll('h2')) as HTMLElement[];
+    const newHeadings: TocHeading[] = [];
 
-      elements.forEach((el, index) => {
-        if (el.closest('.micro-cta-widget')) return;
-        const text = (el.textContent || '').trim();
-        if (!text) return;
-        if (!el.id) {
-          el.id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `section-${index}`;
-        }
-        el.style.scrollMarginTop = '96px';
-        newHeadings.push({
-          id: el.id,
-          text,
-          el
-        });
-      });
+    elements.forEach((el, index) => {
+      if (el.closest('.micro-cta-widget')) return;
+      const text = (el.textContent || '').trim();
+      if (!text) return;
+      if (!el.id) {
+        el.id = text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `section-${index}`;
+      }
+      el.style.scrollMarginTop = '96px';
+      newHeadings.push({ id: el.id, text });
+    });
 
-      elementsRef.current = newHeadings.map(h => h.el);
-      setHeadings(newHeadings);
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, []);
+    setHeadings(newHeadings);
+  }, [initialHeadings]);
 
   if (headings.length === 0) return null;
 
@@ -54,7 +45,8 @@ export default function TableOfContents() {
       border: '1px solid rgba(255,255,255,0.08)',
       borderRadius: '10px',
       padding: '14px 20px',
-      marginBottom: '28px'
+      marginBottom: '28px',
+      minHeight: '50px'
     }}>
       <button
         type="button"
@@ -72,7 +64,7 @@ export default function TableOfContents() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '0.95rem' }}>
-          <Icon.List size={18} color="#3b82f6" />
+          <List size={18} color="#3b82f6" />
           <span>Table of Contents</span>
           <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 400 }}>
             ({headings.length} sections)
@@ -80,7 +72,7 @@ export default function TableOfContents() {
         </div>
         <div style={{ color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}>
           <span>{isExpanded ? 'Hide' : 'Show'}</span>
-          {isExpanded ? <Icon.ChevronUp size={18} /> : <Icon.ChevronDown size={18} />}
+          {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
         </div>
       </button>
 
@@ -101,21 +93,27 @@ export default function TableOfContents() {
                 href={`#${h.id}`}
                 onClick={(e) => {
                   e.preventDefault();
-                  h.el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  setActiveId(h.id);
+                  const target = document.getElementById(h.id);
+                  if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
                 }}
                 style={{
-                  color: activeId === h.id ? '#3b82f6' : '#cbd5e1',
+                  color: '#cbd5e1',
                   textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  fontWeight: activeId === h.id ? 600 : 400,
+                  fontSize: '0.88rem',
+                  lineHeight: '1.4',
                   display: 'flex',
                   alignItems: 'baseline',
                   gap: '8px',
-                  lineHeight: 1.4
+                  transition: 'color 0.15s'
                 }}
+                onMouseOver={(e) => (e.currentTarget.style.color = '#60a5fa')}
+                onMouseOut={(e) => (e.currentTarget.style.color = '#cbd5e1')}
               >
-                <span style={{ color: '#3b82f6', fontSize: '0.78rem', fontFamily: 'monospace' }}>{i + 1}.</span>
+                <span style={{ color: '#3b82f6', fontSize: '0.78rem', fontWeight: 700, flexShrink: 0 }}>
+                  {i + 1}.
+                </span>
                 <span>{h.text}</span>
               </a>
             </li>

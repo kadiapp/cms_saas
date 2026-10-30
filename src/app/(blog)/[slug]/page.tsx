@@ -1,33 +1,70 @@
 import { Metadata } from 'next';
+import { cache, Suspense } from 'react';
 import { supabase } from '@/api/supabase';
 import { notFound } from 'next/navigation';
 import { decodeWPEntities, cleanHtmlSchemas, normalizeInternalLinks, normalizeArticleSchema } from '@/utils/decode';
 import '@/app/globals.css';
 import TopNav from '@/components/TopNav';
-import TableOfContents from '@/components/TableOfContents';
+import TableOfContents, { TocHeading } from '@/components/TableOfContents';
 import RelatedArticles from './RelatedArticles';
 import InlineCodingAssistantCTA from '@/components/InlineCodingAssistantCTA';
 import CopyAttribution from '@/components/CopyAttribution';
 import BlogMicroCTA from '@/components/BlogMicroCTA';
 import parse, { DOMNode, Element } from 'html-react-parser';
 
-// This is required for Next.js App Router dynamic params
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+// Deduplicate the Supabase fetch between generateMetadata() and BlogPost() within the same render pass
+const getArticleBySlug = cache(async (slug: string) => {
+  const { data, error } = await supabase
+    .from('knowledge_base')
+    .select('id, slug, title, meta_title, meta_description, published_at, content, schema_markup')
+    .eq('slug', slug)
+    .single();
+  if (error || !data) return null;
+  return data;
+});
+
+// Pre-render the top cited & highest-traffic articles at build time and keep edge cache warm for 1 hour
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from('knowledge_base')
+    .select('slug')
+    .order('published_at', { ascending: false })
+    .limit(50);
+
+  const prioritySlugs = [
+    'ct-abd-cpt-codes-74176-7417',
+    'cpt-code-82306-82652-vitamin-d-hydroxy',
+    'cpt-code-botox-j0585-billing-guidelines',
+    'ub-04-medicare-discharge-status-code',
+    'cpt-code-venofer-j1756-j2916',
+    'cpt-code-prolia-j0897-billing-guidelines',
+    'cpt-code-for-vitamin-b12',
+    'legacy-number-and-upin-number-no-need-to-print-individual-and-organization-npi-is-enough',
+  ];
+
+  const all = new Set<string>(prioritySlugs);
+  if (data) {
+    for (const row of data) {
+      if (row.slug) all.add(row.slug);
+    }
+  }
+  return Array.from(all).map((slug) => ({ slug }));
+}
 
 // 1. Dynamic SEO Metadata Generation
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
-  
-  const { data, error } = await supabase
-    .from('knowledge_base')
-    .select('meta_title, meta_description, published_at')
-    .eq('slug', slug)
-    .single();
 
-  if (error || !data) {
+  const data = await getArticleBySlug(slug);
+
+  if (!data) {
     return {
       title: 'Article Not Found | 1500 Claim Billing',
       description: 'The requested article could not be found.',
@@ -54,24 +91,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: decodeWPEntities(data.meta_title),
       description: data.meta_description,
-    }
+    },
   };
 }
 
 // 2. The Page Component
-export const revalidate = 60; // Revalidate every 60 seconds so DB edits show up live
-
 export default async function BlogPost({ params }: Props) {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
 
-  const { data: article, error } = await supabase
-    .from('knowledge_base')
-    .select('*')
-    .eq('slug', slug)
-    .single();
+  const article = await getArticleBySlug(slug);
 
-  if (error || !article) {
+  if (!article) {
     notFound();
   }
 
@@ -107,7 +138,7 @@ export default async function BlogPost({ params }: Props) {
   // 3. Inject the primary multi-tab Coding Assistant right after the first introductory paragraph
   cleanContent = cleanContent.replace(/(<p[^>]*>[\s\S]*?<\/p>)/i, '$1\n<span data-inject="main_assistant"></span>\n');
 
-  // 3. Inject at most ONE contextual mid-article Micro-CTA further down in the article
+  // 4. Inject at most ONE contextual mid-article Micro-CTA further down in the article
   let midCtaInjected = false;
 
   if (!midCtaInjected && /Medical Necessity/i.test(cleanContent)) {
@@ -167,6 +198,22 @@ export default async function BlogPost({ params }: Props) {
     return `<${tag}${newAttrs}>`;
   });
 
+  // Pre-extract H2 headings on the server & ensure deterministic IDs so TableOfContents renders at t=0ms with zero CLS
+  const tocHeadings: TocHeading[] = [];
+  let h2Index = 0;
+  cleanContent = cleanContent.replace(/<h2(\b[^>]*)>([\s\S]*?)<\/h2>/gi, (fullMatch, attrs, innerHtml) => {
+    const rawText = decodeWPEntities(innerHtml.replace(/<[^>]+>/g, '').trim());
+    if (!rawText) return fullMatch;
+    const idMatch = attrs.match(/\bid=(["'])([^"']+)\1/i);
+    const id = idMatch ? idMatch[2] : rawText.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || `section-${h2Index}`;
+    h2Index++;
+    tocHeadings.push({ id, text: rawText });
+    if (idMatch) {
+      return `<h2${attrs} style="scroll-margin-top:96px">${innerHtml}</h2>`;
+    }
+    return `<h2 id="${id}"${attrs} style="scroll-margin-top:96px">${innerHtml}</h2>`;
+  });
+
   // Parse HTML and replace our custom spans with React components
   const parsedContent = parse(cleanContent, {
     replace: (domNode: DOMNode) => {
@@ -182,7 +229,7 @@ export default async function BlogPost({ params }: Props) {
         if (type === 'ub04') return <BlogMicroCTA type="ub04" />;
         if (type === 'box24') return <BlogMicroCTA type="box24" />;
       }
-    }
+    },
   });
 
   return (
@@ -191,7 +238,9 @@ export default async function BlogPost({ params }: Props) {
       <CopyAttribution />
       {/* 3. Injecting the normalized JSON-LD Schema markup */}
       {article.schema_markup && (
-        <script type="application/ld+json" suppressHydrationWarning
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: JSON.stringify(normalizeArticleSchema(article.schema_markup, article)) }}
         />
       )}
@@ -215,12 +264,12 @@ export default async function BlogPost({ params }: Props) {
               Last Updated: {new Date(article.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
             </div>
 
-            <TableOfContents />
+            <TableOfContents initialHeadings={tocHeadings} />
 
             <div className="blog-article-content" suppressHydrationWarning>
               {parsedContent}
             </div>
-            
+
             {/* INLINE SOFTWARE AD - BOTTOM */}
             <div style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1))', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '16px', padding: '32px', marginTop: '48px', marginBottom: '48px', textAlign: 'center' }}>
               <h2 style={{ color: '#fff', fontSize: '1.45rem', margin: '0 0 10px 0' }}>Check Codes, NCCI Edits & Medical Necessity in Seconds</h2>
@@ -237,7 +286,9 @@ export default async function BlogPost({ params }: Props) {
               </div>
             </div>
 
-            <RelatedArticles currentArticleId={article.id} />
+            <Suspense fallback={null}>
+              <RelatedArticles currentArticleId={article.id} />
+            </Suspense>
           </article>
         </main>
       </div>

@@ -6,14 +6,14 @@ export default function Analytics() {
 
   return (
     <>
-      {/* Google Analytics */}
+      {/* Google Analytics - deferred via lazyOnload so it never delays LCP or initial hydration */}
       {gaId && (
         <>
           <Script
             src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-            strategy="afterInteractive"
+            strategy="lazyOnload"
           />
-          <Script id="google-analytics" strategy="afterInteractive">
+          <Script id="google-analytics" strategy="lazyOnload">
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){window.dataLayer.push(arguments);}
@@ -26,9 +26,9 @@ export default function Analytics() {
         </>
       )}
 
-      {/* Microsoft Clarity */}
+      {/* Microsoft Clarity - deferred via lazyOnload so it never competes with LCP/INP */}
       {clarityId && (
-        <Script id="microsoft-clarity" strategy="afterInteractive">
+        <Script id="microsoft-clarity" strategy="lazyOnload">
           {`
             (function(c,l,a,r,i,t,y){
                 c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

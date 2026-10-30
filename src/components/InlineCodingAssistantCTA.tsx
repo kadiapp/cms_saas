@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import * as Icon from 'react-feather';
+import { Book, Shield, CheckCircle, UserCheck, Zap, Command, ArrowRight } from 'react-feather';
 
 interface InlineCodingAssistantCTAProps {
   defaultCpt?: string;
@@ -36,6 +36,10 @@ export default function InlineCodingAssistantCTA({
     setNcciCode(defaultCpt);
   }, [defaultCpt]);
 
+  const prefetchAssistant = () => {
+    router.prefetch('/app/coding-assistant');
+  };
+
   const handleRoute = (tab: string, queryParam: string, queryValue: string) => {
     if (!queryValue.trim() && tab !== 'auto') return;
 
@@ -54,26 +58,34 @@ export default function InlineCodingAssistantCTA({
       if (autoNote.trim()) {
         sessionStorage.setItem('pending_auto_note', autoNote);
       }
-      router.push(`/app/coding-assistant?tab=auto`);
+      startTransition(() => {
+        router.push(`/app/coding-assistant?tab=auto`);
+      });
       return;
     }
 
-    router.push(`/app/coding-assistant?tab=${tab}&${queryParam}=${encodeURIComponent(queryValue.trim())}`);
+    startTransition(() => {
+      router.push(`/app/coding-assistant?tab=${tab}&${queryParam}=${encodeURIComponent(queryValue.trim())}`);
+    });
   };
 
   const tabs = [
-    { id: 'dictionary', label: 'Code Dictionary', icon: <Icon.Book size={15} /> },
-    { id: 'ncci', label: 'NCCI Edits', icon: <Icon.Shield size={15} /> },
-    { id: 'mednec', label: 'Medical Necessity', icon: <Icon.CheckCircle size={15} /> },
-    { id: 'npi', label: 'Provider NPI', icon: <Icon.UserCheck size={15} /> },
-    { id: 'auto', label: 'AI Auto-Coder', icon: <Icon.Zap size={15} /> }
+    { id: 'dictionary', label: 'Code Dictionary', icon: <Book size={15} /> },
+    { id: 'ncci', label: 'NCCI Edits', icon: <Shield size={15} /> },
+    { id: 'mednec', label: 'Medical Necessity', icon: <CheckCircle size={15} /> },
+    { id: 'npi', label: 'Provider NPI', icon: <UserCheck size={15} /> },
+    { id: 'auto', label: 'AI Auto-Coder', icon: <Zap size={15} /> }
   ];
 
   return (
-    <div className="micro-cta-widget" style={{ background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '14px', padding: '22px', margin: '32px 0', boxShadow: '0 8px 28px rgba(0,0,0,0.25)' }}>
+    <div
+      className="micro-cta-widget"
+      onMouseEnter={prefetchAssistant}
+      style={{ background: 'rgba(15, 23, 42, 0.65)', border: '1px solid rgba(59, 130, 246, 0.3)', borderRadius: '14px', padding: '22px', margin: '32px 0', boxShadow: '0 8px 28px rgba(0,0,0,0.25)' }}
+    >
       <div style={{ marginBottom: '16px' }}>
         <div style={{ color: '#fff', fontSize: '1.15rem', fontWeight: 700, margin: '0 0 6px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Icon.Command size={19} color="#3b82f6" />
+          <Command size={19} color="#3b82f6" />
           <span>{title}</span>
         </div>
         <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.9rem' }}>
@@ -87,7 +99,7 @@ export default function InlineCodingAssistantCTA({
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => startTransition(() => setActiveTab(tab.id as any))}
             style={{
               background: activeTab === tab.id ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
               color: activeTab === tab.id ? '#60a5fa' : '#94a3b8',
@@ -116,6 +128,7 @@ export default function InlineCodingAssistantCTA({
               type="text"
               placeholder="Enter CPT, HCPCS, or ICD-10 code (e.g. 74178, J1756)..."
               value={dictQuery}
+              onFocus={prefetchAssistant}
               onChange={(e) => setDictQuery(e.target.value.toUpperCase())}
               style={{ flex: 1, minWidth: '200px', background: 'rgba(2,6,23,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '11px 14px', borderRadius: '8px', color: '#fff', fontSize: '0.95rem' }}
               onKeyDown={(e) => e.key === 'Enter' && handleRoute('dictionary', 'code', dictQuery)}
@@ -137,6 +150,7 @@ export default function InlineCodingAssistantCTA({
               type="text"
               placeholder="Enter CPT Code to view all NCCI bundling edits..."
               value={ncciCode}
+              onFocus={prefetchAssistant}
               onChange={(e) => setNcciCode(e.target.value.toUpperCase())}
               style={{ flex: 1, minWidth: '200px', background: 'rgba(2,6,23,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '11px 14px', borderRadius: '8px', color: '#fff', fontSize: '0.95rem' }}
               onKeyDown={(e) => e.key === 'Enter' && handleRoute('ncci', 'code1', ncciCode)}
@@ -158,6 +172,7 @@ export default function InlineCodingAssistantCTA({
               type="text"
               placeholder="Enter CPT Code (e.g. 82306, 74178)..."
               value={medNecQuery}
+              onFocus={prefetchAssistant}
               onChange={(e) => setMedNecQuery(e.target.value.toUpperCase())}
               style={{ flex: 1, minWidth: '200px', background: 'rgba(2,6,23,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '11px 14px', borderRadius: '8px', color: '#fff', fontSize: '0.95rem' }}
               onKeyDown={(e) => e.key === 'Enter' && handleRoute('mednec', 'code', medNecQuery)}
@@ -179,6 +194,7 @@ export default function InlineCodingAssistantCTA({
               type="text"
               placeholder="Enter 10-digit Provider NPI..."
               value={npiQuery}
+              onFocus={prefetchAssistant}
               onChange={(e) => setNpiQuery(e.target.value)}
               style={{ flex: 1, minWidth: '200px', background: 'rgba(2,6,23,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '11px 14px', borderRadius: '8px', color: '#fff', fontSize: '0.95rem' }}
               onKeyDown={(e) => e.key === 'Enter' && handleRoute('npi', 'npi', npiQuery)}
@@ -199,6 +215,7 @@ export default function InlineCodingAssistantCTA({
             <textarea
               placeholder="Paste clinical note, operative report, or billing scenario here..."
               value={autoNote}
+              onFocus={prefetchAssistant}
               onChange={(e) => setAutoNote(e.target.value)}
               style={{ width: '100%', minHeight: '84px', background: 'rgba(2,6,23,0.7)', border: '1px solid rgba(255,255,255,0.15)', padding: '12px 14px', borderRadius: '8px', color: '#fff', fontFamily: 'inherit', resize: 'vertical' }}
             />
@@ -209,7 +226,7 @@ export default function InlineCodingAssistantCTA({
                 disabled={!autoNote.trim()}
                 style={{ background: '#10b981', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', cursor: autoNote.trim() ? 'pointer' : 'not-allowed', opacity: autoNote.trim() ? 1 : 0.5 }}
               >
-                Auto-Code Note <Icon.ArrowRight size={16} />
+                Auto-Code Note <ArrowRight size={16} />
               </button>
             </div>
           </div>
