@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { cache, Suspense } from 'react';
-import { supabase } from '@/api/supabase';
+import { supabase, getFeeSchedule, getMedicalNecessity } from '@/api/supabase';
 import { notFound } from 'next/navigation';
 import { decodeWPEntities, cleanHtmlSchemas, normalizeInternalLinks, normalizeArticleSchema } from '@/utils/decode';
 import '@/app/globals.css';
@@ -111,6 +111,32 @@ export default async function BlogPost({ params }: Props) {
   const articleTitleStr = decodeWPEntities(article.title || '');
   const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
   const primaryCode = cptMatch ? cptMatch[0].toUpperCase() : '';
+
+  // Fetch live 2026 Fee Schedule + Medicare LCD Coverage snapshot on the server when primaryCode exists
+  let feePreview: { non_facility_fee: number; facility_fee: number } | null = null;
+  let medNecPreview: { totalCount: number; sampleCodes: string[] } | null = null;
+  if (primaryCode) {
+    try {
+      const [fees, icds] = await Promise.all([
+        getFeeSchedule([primaryCode]),
+        getMedicalNecessity(primaryCode),
+      ]);
+      if (fees && fees.length > 0) {
+        feePreview = {
+          non_facility_fee: Number(fees[0].non_facility_fee),
+          facility_fee: Number(fees[0].facility_fee),
+        };
+      }
+      if (icds && icds.length > 0) {
+        medNecPreview = {
+          totalCount: icds.length,
+          sampleCodes: icds.slice(0, 8),
+        };
+      }
+    } catch {
+      // Non-fatal fallback
+    }
+  }
 
   // Determine the smartest default tab for the unified Coding Assistant widget based on article topic
   let smartDefaultTab: 'dictionary' | 'ncci' | 'mednec' | 'npi' | 'auto' = 'dictionary';
@@ -223,7 +249,14 @@ export default async function BlogPost({ params }: Props) {
       if (domNode.type === 'tag' && (domNode as Element).attribs && (domNode as Element).attribs['data-inject']) {
         const type = (domNode as Element).attribs['data-inject'];
         if (type === 'main_assistant') {
-          return <InlineCodingAssistantCTA defaultCpt={primaryCode} defaultTab={smartDefaultTab} />;
+          return (
+            <InlineCodingAssistantCTA
+              defaultCpt={primaryCode}
+              defaultTab={smartDefaultTab}
+              feePreview={feePreview}
+              medNecPreview={medNecPreview}
+            />
+          );
         }
         if (type === 'ncci') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
         if (type === 'mednec') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;

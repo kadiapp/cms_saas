@@ -10,13 +10,17 @@ interface InlineCodingAssistantCTAProps {
   subtitle?: string;
   defaultTab?: 'dictionary' | 'ncci' | 'mednec' | 'npi' | 'auto' | string;
   buttonText?: string;
+  feePreview?: { non_facility_fee: number; facility_fee: number } | null;
+  medNecPreview?: { totalCount: number; sampleCodes: string[] } | null;
 }
 
 export default function InlineCodingAssistantCTA({
   defaultCpt = '',
   title = 'Interactive Medical Coding Assistant',
-  subtitle = 'Look up CPT/ICD-10 rules, check NCCI bundling edits, verify Medicare LCD coverage, or check provider NPIs instantly.',
-  defaultTab = 'dictionary'
+  subtitle = 'Look up CPT/HCPCS/ICD-10 rules, check NCCI bundling edits, verify Medicare LCD coverage, or check provider NPIs instantly.',
+  defaultTab = 'dictionary',
+  feePreview = null,
+  medNecPreview = null
 }: InlineCodingAssistantCTAProps) {
   const router = useRouter();
   const validTabs = ['dictionary', 'ncci', 'mednec', 'npi', 'auto'];
@@ -232,6 +236,68 @@ export default function InlineCodingAssistantCTA({
           </div>
         )}
       </div>
+
+      {/* Live 2026 Database Snapshot Preview (Server-Fetched Fee + Medicare LCD Coverage) */}
+      {defaultCpt && (feePreview || (medNecPreview && medNecPreview.totalCount > 0)) && (
+        <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {feePreview && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.84rem', color: '#cbd5e1' }}>
+              <span>
+                <strong style={{ color: '#60a5fa' }}>2026 Medicare National Fee ({defaultCpt}):</strong>{' '}
+                Non-Facility (Office): <strong style={{ color: '#4ade80' }}>${Number(feePreview.non_facility_fee).toFixed(2)}</strong>
+                {' · '}
+                Facility (Hospital): <strong style={{ color: '#a78bfa' }}>${Number(feePreview.facility_fee).toFixed(2)}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => handleRoute('ncci', 'code1', defaultCpt)}
+                style={{ background: 'transparent', border: 'none', color: '#60a5fa', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+              >
+                Check {defaultCpt} NCCI Bundling Edits →
+              </button>
+            </div>
+          )}
+
+          {medNecPreview && medNecPreview.totalCount > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', fontSize: '0.83rem', color: '#94a3b8' }}>
+                <span>
+                  <strong style={{ color: '#10b981' }}>✓ {medNecPreview.totalCount.toLocaleString()} Medicare-Approved ICD-10 Diagnoses</strong> on file for {defaultCpt}:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRoute('mednec', 'code', defaultCpt)}
+                  style={{ background: 'rgba(16, 185, 129, 0.14)', border: '1px solid rgba(16, 185, 129, 0.35)', color: '#34d399', borderRadius: '6px', padding: '4px 10px', fontSize: '0.79rem', fontWeight: 600, cursor: 'pointer' }}
+                >
+                  View all {medNecPreview.totalCount.toLocaleString()} covered ICD-10s →
+                </button>
+              </div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {medNecPreview.sampleCodes.map(icd => (
+                  <button
+                    key={icd}
+                    type="button"
+                    onClick={() => handleRoute('dictionary', 'code', icd)}
+                    title={`Look up ICD-10 ${icd} in Code Dictionary`}
+                    style={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.12)', color: '#e2e8f0', borderRadius: '5px', padding: '3px 8px', fontSize: '0.78rem', fontFamily: 'monospace', cursor: 'pointer' }}
+                  >
+                    {icd}
+                  </button>
+                ))}
+                {medNecPreview.totalCount > medNecPreview.sampleCodes.length && (
+                  <button
+                    type="button"
+                    onClick={() => handleRoute('mednec', 'code', defaultCpt)}
+                    style={{ background: 'transparent', border: '1px dashed rgba(148, 163, 184, 0.35)', color: '#94a3b8', borderRadius: '5px', padding: '3px 8px', fontSize: '0.76rem', cursor: 'pointer' }}
+                  >
+                    +{(medNecPreview.totalCount - medNecPreview.sampleCodes.length).toLocaleString()} more
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -32,9 +32,26 @@ function ProgressiveAutoCoderText() {
 export default function CodingAssistant() {
   const searchParams = useSearchParams();
 
+  const [anonSearchCount, setAnonSearchCount] = useState(0);
+  const [dismissedSignupBanner, setDismissedSignupBanner] = useState(false);
+
+  useEffect(() => {
+    try {
+      const c = parseInt(localStorage.getItem('ca_anon_searches') || '0', 10);
+      if (!isNaN(c)) setAnonSearchCount(c);
+    } catch {}
+  }, []);
+
   const trackEvent = (eventName: string) => {
     if (typeof window !== 'undefined' && (window as any).clarity) {
       (window as any).clarity('event', eventName);
+    }
+    if (eventName.endsWith('_search_clicked') || eventName === 'ai_autocoder_clicked') {
+      try {
+        const nextCount = (parseInt(localStorage.getItem('ca_anon_searches') || '0', 10) || 0) + 1;
+        localStorage.setItem('ca_anon_searches', String(nextCount));
+        setAnonSearchCount(nextCount);
+      } catch {}
     }
   };
 
@@ -612,6 +629,67 @@ export default function CodingAssistant() {
           <Icon.UserCheck size={18} /> Provider NPI
         </button>
       </div>
+
+      {!currentUser && anonSearchCount >= 3 && !dismissedSignupBanner && (
+        <div
+          style={{
+            marginBottom: '22px',
+            padding: '14px 18px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(16, 185, 129, 0.12))',
+            border: '1px solid rgba(59, 130, 246, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '240px' }}>
+            <Icon.Award size={22} color="#60a5fa" style={{ flexShrink: 0 }} />
+            <div style={{ fontSize: '0.9rem', color: '#e2e8f0' }}>
+              <strong style={{ color: '#fff' }}>You&apos;ve run {anonSearchCount} coding lookups today!</strong>{' '}
+              Create a free account in 10 seconds to save your favorite CPT/ICD-10 codes, sync CMS-1500 claims across devices, and unlock unlimited scrubbing.
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                trackEvent('power_user_signup_clicked');
+                router.push('/login?mode=signup&redirect=/app/coding-assistant');
+              }}
+              style={{
+                background: '#3b82f6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Create Free Account →
+            </button>
+            <button
+              type="button"
+              onClick={() => setDismissedSignupBanner(true)}
+              title="Dismiss"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                padding: '4px'
+              }}
+            >
+              <Icon.X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeTab === 'dictionary' && (
         <div className="ca-tab-content">
