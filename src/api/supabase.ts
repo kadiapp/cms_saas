@@ -42,41 +42,32 @@ export async function verifyIcdCode(code: string): Promise<CodeResult> {
 }
 
 
-const UB04_DISCHARGE_CODES: Record<string, { code: string; short_description: string; long_description: string }> = {
-  '01': { code: 'FL17-01', short_description: 'UB-04 Status 01: Discharged to Home or Self Care (Routine Discharge)', long_description: 'Official CMS UB-04 FL 17 / EDI 837I CL103 Status 01: Discharged to home or self care (routine discharge). Includes discharge to home with outpatient physical therapy or home IV drugs without home health agency admission. Does NOT trigger the Medicare Post-Acute Care Transfer (PACT) payment reduction.' },
-  '02': { code: 'FL17-02', short_description: 'UB-04 Status 02: Discharged/Transferred to Short-Term General Hospital for Inpatient Care', long_description: 'Official CMS UB-04 FL 17 Status 02: Discharged or transferred to another short-term general hospital for inpatient care. Subject to Medicare Acute-to-Acute Inpatient Transfer per-diem payment policy.' },
-  '03': { code: 'FL17-03', short_description: 'UB-04 Status 03: Discharged/Transferred to Skilled Nursing Facility (SNF) with Medicare Certification', long_description: 'Official CMS UB-04 FL 17 Status 03: Discharged or transferred to a Skilled Nursing Facility (SNF) with Medicare certification in anticipation of skilled care. Triggers the Medicare Post-Acute Care Transfer (PACT) policy for qualifying MS-DRGs if length of stay is less than the geometric mean LOS.' },
-  '04': { code: 'FL17-04', short_description: 'UB-04 Status 04: Discharged/Transferred to Intermediate Care Facility (ICF / Nursing Home)', long_description: 'Official CMS UB-04 FL 17 Status 04: Discharged or transferred to a facility that provides custodial or supportive care (Intermediate Care Facility / non-skilled nursing home). Does not trigger SNF skilled transfer edits.' },
-  '05': { code: 'FL17-05', short_description: 'UB-04 Status 05: Discharged/Transferred to Designated Cancer Center or Children\'s Hospital', long_description: 'Official CMS UB-04 FL 17 Status 05: Discharged or transferred to a designated cancer center or children\'s hospital. Subject to Medicare PACT policy for qualifying MS-DRGs.' },
-  '06': { code: 'FL17-06', short_description: 'UB-04 Status 06: Discharged/Transferred to Home Under Care of Organized Home Health Service (HHA)', long_description: 'Official CMS UB-04 FL 17 Status 06: Discharged or transferred to home under care of an organized Home Health Agency (HHA) when HHA services begin within 3 days of discharge. Subject to Medicare Post-Acute Care Transfer (PACT) policy for qualifying MS-DRGs.' },
-  '07': { code: 'FL17-07', short_description: 'UB-04 Status 07: Left Against Medical Advice (AMA) or Discontinued Care', long_description: 'Official CMS UB-04 FL 17 Status 07: Patient left against medical advice (AMA) or discontinued care without physician discharge order.' },
-  '09': { code: 'FL17-09', short_description: 'UB-04 Status 09: Admitted as an Inpatient to This Hospital (Outpatient-to-Inpatient)', long_description: 'Official CMS UB-04 FL 17 Status 09: Admitted as an inpatient to this hospital (used on outpatient/ED UB-04 claims when the patient is subsequently admitted as an inpatient; subject to the Medicare 3-Day Payment Window rule).' },
-  '20': { code: 'FL17-20', short_description: 'UB-04 Status 20: Expired (Patient Died in Facility)', long_description: 'Official CMS UB-04 FL 17 Status 20: Expired (patient died while in the hospital or facility). Requires corresponding Occurrence Code 55 (Date of Death) if applicable.' },
-  '21': { code: 'FL17-21', short_description: 'UB-04 Status 21: Discharged/Transferred to Court or Law Enforcement', long_description: 'Official CMS UB-04 FL 17 Status 21: Discharged or transferred to court/law enforcement custody (jail, prison, or detention facility).' },
-  '30': { code: 'FL17-30', short_description: 'UB-04 Status 30: Still a Patient (Interim Continuing Claim)', long_description: 'Official CMS UB-04 FL 17 Status 30: Still a patient. Used on interim continuing claims (Type of Bill XX2 or XX3) when the patient remains admitted at the end of the billing cycle.' },
-  '43': { code: 'FL17-43', short_description: 'UB-04 Status 43: Discharged/Transferred to a Federal Health Care Facility (VA / DoD)', long_description: 'Official CMS UB-04 FL 17 Status 43: Discharged or transferred to a federal health care facility (such as a Veterans Affairs or Department of Defense hospital).' },
-  '50': { code: 'FL17-50', short_description: 'UB-04 Status 50: Discharged to Hospice — Home (Routine or Continuous Home Hospice)', long_description: 'Official CMS UB-04 FL 17 Status 50: Discharged or transferred to Hospice — Home.' },
-  '51': { code: 'FL17-51', short_description: 'UB-04 Status 51: Discharged/Transferred to Hospice — Medical Facility (Inpatient Hospice)', long_description: 'Official CMS UB-04 FL 17 Status 51: Discharged or transferred to Hospice — Medical Facility (certified Medicare inpatient hospice).' },
-  '61': { code: 'FL17-61', short_description: 'UB-04 Status 61: Discharged/Transferred to Hospital-Based Medicare Approved Swing Bed', long_description: 'Official CMS UB-04 FL 17 Status 61: Discharged or transferred within this institution to a hospital-based Medicare approved swing bed. Subject to Medicare PACT policy.' },
-  '62': { code: 'FL17-62', short_description: 'UB-04 Status 62: Discharged/Transferred to an Inpatient Rehabilitation Facility (IRF)', long_description: 'Official CMS UB-04 FL 17 Status 62: Discharged or transferred to an Inpatient Rehabilitation Facility (IRF) including rehabilitation distinct part units of a hospital. Triggers the Medicare Post-Acute Care Transfer (PACT) policy for qualifying MS-DRGs.' },
-  '63': { code: 'FL17-63', short_description: 'UB-04 Status 63: Discharged/Transferred to a Medicare Certified Long Term Care Hospital (LTCH)', long_description: 'Official CMS UB-04 FL 17 Status 63: Discharged or transferred to a Medicare certified Long Term Care Hospital (LTCH). Triggers the Medicare Post-Acute Care Transfer (PACT) policy for qualifying MS-DRGs.' },
-  '64': { code: 'FL17-64', short_description: 'UB-04 Status 64: Discharged/Transferred to a Medicaid Certified Nursing Facility (Non-Medicare SNF)', long_description: 'Official CMS UB-04 FL 17 Status 64: Discharged or transferred to a nursing facility certified under Medicaid but NOT certified under Medicare.' },
-  '65': { code: 'FL17-65', short_description: 'UB-04 Status 65: Discharged/Transferred to a Psychiatric Hospital or Distinct Part Unit', long_description: 'Official CMS UB-04 FL 17 Status 65: Discharged or transferred to a psychiatric hospital or psychiatric distinct part unit of a hospital. Subject to Medicare PACT policy.' },
-  '66': { code: 'FL17-66', short_description: 'UB-04 Status 66: Discharged/Transferred to a Critical Access Hospital (CAH)', long_description: 'Official CMS UB-04 FL 17 Status 66: Discharged or transferred to a Critical Access Hospital (CAH).' },
-  '70': { code: 'FL17-70', short_description: 'UB-04 Status 70: Discharged/Transferred to Another Type of Health Care Institution Not Defined Elsewhere', long_description: 'Official CMS UB-04 FL 17 Status 70: Discharged or transferred to another type of health care institution not defined elsewhere in the UB-04 code list.' }
-};
+export interface CodeEnrichment {
+  mue?: { mue_value: number; mai: string; rationale: string } | null;
+  cliaWaived?: boolean;
+  hcpcsUnit?: { unit_definition: string; unit_count: number; unit_measure: string } | null;
+}
 
-function parseSpecialBillingCode(rawQuery: string): CodeResult[] {
-  const q = rawQuery.trim().toUpperCase();
-  const results: CodeResult[] = [];
-
-  // 1. Direct FL17-XX lookup
-  if (q.startsWith('FL17-')) {
-    const num = q.replace('FL17-', '').padStart(2, '0');
-    if (UB04_DISCHARGE_CODES[num]) return [UB04_DISCHARGE_CODES[num]];
+export async function getCodeEnrichment(code: string): Promise<CodeEnrichment> {
+  const upper = code.trim().toUpperCase();
+  try {
+    const [mueRes, cliaRes, hcpcsRes] = await Promise.all([
+      supabase.from('cms_mue_limits').select('mue_value, mai, rationale').eq('code', upper).maybeSingle(),
+      supabase.from('cms_clia_waived_codes').select('is_waived').eq('cpt_code', upper).maybeSingle(),
+      supabase.from('cms_hcpcs_codes').select('unit_definition, unit_count, unit_measure').eq('hcpcs_code', upper).maybeSingle(),
+    ]);
+    return {
+      mue: mueRes.data || null,
+      cliaWaived: Boolean(cliaRes.data?.is_waived),
+      hcpcsUnit: hcpcsRes.data || null,
+    };
+  } catch {
+    return {};
   }
+}
 
-  // 2. Direct NDC-XXXXXXXXXXX or N4XXXXXXXXXXX or 10/11-digit NDC lookup
+function parseNdcCode(rawQuery: string): CodeResult[] {
+  const q = rawQuery.trim().toUpperCase();
   const ndcClean = q.replace(/^NDC-|^N4/i, '').replace(/\s+(?:UN|ML|GR|F2|ME)[\d.]*$/i, '').trim();
   const hyphenMatch = ndcClean.match(/^(\d{4,5})-(\d{3,4})-(\d{1,2})$/);
   if (hyphenMatch) {
@@ -85,55 +76,87 @@ function parseSpecialBillingCode(rawQuery: string): CodeResult[] {
     const p3 = hyphenMatch[3].padStart(2, '0');
     const eleven = p1 + p2 + p3;
     const formatted542 = `${p1}-${p2}-${p3}`;
-    results.push({
+    return [{
       code: `NDC-${eleven}`,
       short_description: `11-Digit HIPAA NDC: ${formatted542} | Box 24D Shaded Line: N4${eleven} UN1`,
       long_description: `Official CMS-1500 Box 24D Shaded Line & EDI 837P Loop 2410 Format: Enter "N4${eleven}" in the red shaded area of Box 24D followed by the unit of measure qualifier (UN = Unit, ML = Milliliter, GR = Gram, F2 = International Unit) and quantity (e.g., "N4${eleven} UN1"). Converted from ${ndcClean} into HIPAA 5-4-2 format (${formatted542}).`
-    });
+    }];
   } else if (/^\d{10,12}$/.test(ndcClean)) {
     const eleven = ndcClean.length === 11 ? ndcClean : ndcClean.slice(-11).padStart(11, '0');
     const formatted542 = `${eleven.slice(0, 5)}-${eleven.slice(5, 9)}-${eleven.slice(9, 11)}`;
-    results.push({
+    return [{
       code: `NDC-${eleven}`,
       short_description: `11-Digit HIPAA NDC: ${formatted542} | Box 24D Shaded Line: N4${eleven} UN1`,
       long_description: `Official CMS-1500 Box 24D Shaded Line & EDI 837P Loop 2410 Format: Enter "N4${eleven}" in the red shaded area of Box 24D followed by the unit of measure qualifier (UN = Unit, ML = Milliliter, GR = Gram, F2 = International Unit) and quantity (e.g., "N4${eleven} UN1"). Standard 5-4-2 hyphenated format: ${formatted542}.`
-    });
+    }];
   }
-
-  // 3. UB-04 Discharge Status Code lookup (e.g. "01", "09", "70", "DISCHARGE 01", "DISCHARGE NURSING HOME", "IRF", "SNF")
-  const twoDigitMatch = q.match(/^(?:DISCHARGE(?:\s+STATUS)?(?:\s+CODE)?\s*)?(\d{1,2})$/);
-  if (twoDigitMatch) {
-    const padded = twoDigitMatch[1].padStart(2, '0');
-    if (UB04_DISCHARGE_CODES[padded]) {
-      results.push(UB04_DISCHARGE_CODES[padded]);
-    }
-  } else if (/DISCHARGE|FL\s*17|\bIRF\b|\bSNF\b|\bLTCH\b|NURSING HOME|SWING BED|AGAINST MEDICAL ADVICE|\bAMA\b/i.test(q)) {
-    const kw = q.replace(/DISCHARGE|STATUS|CODE|UB-?04|FL\s*17/gi, '').trim();
-    Object.values(UB04_DISCHARGE_CODES).forEach(entry => {
-      if (!kw || entry.short_description.toUpperCase().includes(kw) || entry.long_description.toUpperCase().includes(kw) || (kw.includes('NURSING') && (entry.code === 'FL17-03' || entry.code === 'FL17-04' || entry.code === 'FL17-64'))) {
-        results.push(entry);
-      }
-    });
-  }
-
-  return results;
+  return [];
 }
 
 export async function verifyCptCode(code: string): Promise<CodeResult> {
-  const special = parseSpecialBillingCode(code);
-  if (special.length > 0) return special[0];
+  const upper = code.trim().toUpperCase();
+  const ndc = parseNdcCode(upper);
+  if (ndc.length > 0) return ndc[0];
 
-  const { data, error } = await supabase
-    .from('cms_cpt_codes')
-    .select('code, short_description, long_description')
-    .eq('code', code.toUpperCase())
-    .single();
-
-  if (error || !data) {
-    throw new Error('CPT code not found in database');
+  if (upper.startsWith('FL17-')) {
+    const dischCode = upper.replace('FL17-', '').padStart(2, '0');
+    const { data: d } = await supabase
+      .from('cms_discharge_scenarios')
+      .select('code, title, desc, patp, note')
+      .eq('code', dischCode)
+      .maybeSingle();
+    if (d) {
+      return {
+        code: `FL17-${d.code}`,
+        short_description: `UB-04 Status ${d.code}: ${d.title} — ${d.desc}`,
+        long_description: `${d.note || ''} ${d.patp ? '(Triggers Medicare Post-Acute Care Transfer / PATP Policy)' : '(Does not trigger Medicare PATP reduction)'}`.trim(),
+      };
+    }
   }
 
-  return data;
+  // Check cms_denial_codes if it's a CARC/RARC code (e.g. CO-4, CO-16, MA130, N257)
+  if (/^(?:CO|PR|OA|PI)-?\d+$|^MA\d+$|^N\d+$/i.test(upper)) {
+    const normalizedDenial = upper.replace(/^(CO|PR|OA|PI)(\d+)$/, '$1-$2');
+    const { data: den } = await supabase
+      .from('cms_denial_codes')
+      .select('code, description, group_name, resolution_steps, prevention_tips')
+      .eq('code', normalizedDenial)
+      .maybeSingle();
+    if (den) {
+      const steps = Array.isArray(den.resolution_steps) ? `Resolution Steps: ${den.resolution_steps.join(' · ')}` : '';
+      const tips = Array.isArray(den.prevention_tips) ? `Prevention: ${den.prevention_tips.join(' · ')}` : '';
+      return {
+        code: den.code,
+        short_description: `${den.group_name || 'Denial/Remark Code'}: ${den.description}`,
+        long_description: [steps, tips].filter(Boolean).join('\n\n') || den.description,
+      };
+    }
+  }
+
+  const { data } = await supabase
+    .from('cms_cpt_codes')
+    .select('code, short_description, long_description')
+    .eq('code', upper)
+    .maybeSingle();
+
+  if (data) return data;
+
+  // Fallback to real cms_hcpcs_codes table (modifiers & HCPCS Level II)
+  const { data: hcpcs } = await supabase
+    .from('cms_hcpcs_codes')
+    .select('hcpcs_code, short_description, long_description, unit_definition')
+    .eq('hcpcs_code', upper)
+    .maybeSingle();
+
+  if (hcpcs) {
+    return {
+      code: hcpcs.hcpcs_code,
+      short_description: hcpcs.short_description,
+      long_description: hcpcs.long_description || (hcpcs.unit_definition ? `Official Unit Definition: ${hcpcs.unit_definition}` : hcpcs.short_description),
+    };
+  }
+
+  throw new Error('CPT/HCPCS code not found in database');
 }
 
 export async function extractClaimFromText(text: string, base64Pdf?: string): Promise<Record<string, unknown>> {
@@ -425,24 +448,52 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
     icdOrCondition = `${tokenCodeClause}code.ilike.${dotlessTerm},code.ilike.${exactTerm},and(${shortDescAnds}),and(${longDescAnds})`;
   }
 
-  // Search CPT
-  const { data: cptData } = await supabase
-    .from('cms_cpt_codes')
-    .select('code, short_description')
-    .or(cptOrCondition)
-    .limit(20);
+  // Search CPT, ICD-10, real UB-04 Discharge Scenarios, real Denial Codes, and real HCPCS Modifiers in parallel
+  const dischMatch = cleanQuery.match(/^(?:FL17-|DISCHARGE(?:\s+STATUS)?(?:\s+CODE)?\s*)?(\d{1,2})$/);
+  const isDischargeQuery = Boolean(dischMatch) || /DISCHARGE|FL\s*17|\bIRF\b|\bSNF\b|\bLTCH\b|NURSING HOME|SWING BED|HOSPICE|\bAMA\b/i.test(cleanQuery);
 
-  // Search ICD-10
-  const { data: icdData } = await supabase
-    .from('cms_icd10_codes')
-    .select('code, short_description')
-    .or(icdOrCondition)
-    .limit(20);
+  const [cptRes, icdRes, hcpcsRes, dischRes, denialRes] = await Promise.all([
+    supabase.from('cms_cpt_codes').select('code, short_description').or(cptOrCondition).limit(20),
+    supabase.from('cms_icd10_codes').select('code, short_description').or(icdOrCondition).limit(20),
+    cleanQuery.length === 2
+      ? supabase.from('cms_hcpcs_codes').select('hcpcs_code, short_description').eq('hcpcs_code', cleanQuery).limit(5)
+      : Promise.resolve({ data: [] as any[] }),
+    isDischargeQuery
+      ? (dischMatch
+          ? supabase.from('cms_discharge_scenarios').select('code, title, desc').eq('code', dischMatch[1].padStart(2, '0')).limit(5)
+          : supabase.from('cms_discharge_scenarios').select('code, title, desc').or(`title.ilike.${exactTerm},desc.ilike.${exactTerm}`).limit(10))
+      : Promise.resolve({ data: [] as any[] }),
+    /^(?:CO|PR|OA|PI)-?\d+$|^MA\d+$|^N\d+$/i.test(cleanQuery)
+      ? supabase.from('cms_denial_codes').select('code, description, group_name').ilike('code', `%${cleanQuery.replace(/^(CO|PR|OA|PI)(\d+)$/, '$1-$2')}%`).limit(10)
+      : Promise.resolve({ data: [] as any[] }),
+  ]);
 
-  const specialResults = parseSpecialBillingCode(query);
+  const ndcResults = parseNdcCode(query);
+  const dischMapped: CodeResult[] = (dischRes.data || []).map((d: any) => ({
+    code: `FL17-${d.code}`,
+    short_description: `UB-04 Status ${d.code}: ${d.title} — ${d.desc}`,
+  }));
+  const denialMapped: CodeResult[] = (denialRes.data || []).map((d: any) => ({
+    code: d.code,
+    short_description: `${d.group_name || 'Denial Code'}: ${d.description}`,
+  }));
+  const hcpcsMapped: CodeResult[] = (hcpcsRes.data || []).map((h: any) => ({
+    code: h.hcpcs_code,
+    short_description: `HCPCS Modifier ${h.hcpcs_code}: ${h.short_description}`,
+  }));
+
+  const seenCpt = new Set<string>();
+  const mergedCpt: CodeResult[] = [];
+  for (const item of [...ndcResults, ...dischMapped, ...denialMapped, ...hcpcsMapped, ...(cptRes.data || [])]) {
+    if (!seenCpt.has(item.code)) {
+      seenCpt.add(item.code);
+      mergedCpt.push(item);
+    }
+  }
+
   return {
-    cpt: [...specialResults, ...(cptData || [])],
-    icd: icdData || []
+    cpt: mergedCpt,
+    icd: icdRes.data || []
   };
 }
 

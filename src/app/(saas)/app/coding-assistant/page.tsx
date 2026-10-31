@@ -5,7 +5,7 @@ import * as Icon from 'react-feather';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { EMPTY_FORM } from '@/types';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
-import { supabase, verifyCptCode, verifyIcdCode, getFeeSchedule, searchCodeDictionary, checkCodePair, getNcciConflictsForCode, getMedicalNecessity, logActivity } from '@/api/supabase';
+import { supabase, verifyCptCode, verifyIcdCode, getFeeSchedule, getCodeEnrichment, type CodeEnrichment, searchCodeDictionary, checkCodePair, getNcciConflictsForCode, getMedicalNecessity, logActivity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
 import './CodingAssistant.css';
 
@@ -132,6 +132,7 @@ export default function CodingAssistant() {
   const [selectedCodeDetails, setSelectedCodeDetails] = useState<any>(null);
   const [selectedCodeType, setSelectedCodeType] = useState<'CPT' | 'ICD'>('CPT');
   const [selectedFee, setSelectedFee] = useState<any>(null);
+  const [selectedEnrichment, setSelectedEnrichment] = useState<CodeEnrichment | null>(null);
   
   // Saved Codes (Favorites) State
   const [savedCodes, setSavedCodes] = useState<any[]>([]);
@@ -531,15 +532,18 @@ export default function CodingAssistant() {
     setIsDictLoading(true);
     setSelectedCodeDetails(null);
     setSelectedFee(null);
+    setSelectedEnrichment(null);
     try {
       if (type === 'CPT') {
-        const details = await verifyCptCode(code);
+        const [details, fees, enrichment] = await Promise.all([
+          verifyCptCode(code),
+          getFeeSchedule([code]),
+          getCodeEnrichment(code),
+        ]);
         setSelectedCodeDetails(details);
         setSelectedCodeType('CPT');
-        
-        const fees = await getFeeSchedule([code]);
         if (fees && fees.length > 0) setSelectedFee(fees[0]);
-        
+        setSelectedEnrichment(enrichment);
       } else {
         const details = await verifyIcdCode(code);
         setSelectedCodeDetails(details);
@@ -867,6 +871,33 @@ export default function CodingAssistant() {
                       </div>
                     </div>
                     <p className="fee-disclaimer" style={{ marginTop: '16px' }}>Rates vary by MAC and locality.</p>
+                  </div>
+                )}
+
+                {selectedCodeType === 'CPT' && selectedEnrichment && (selectedEnrichment.mue || selectedEnrichment.cliaWaived || selectedEnrichment.hcpcsUnit) && (
+                  <div className="ca-detail-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '14px', padding: '14px 16px', background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(59, 130, 246, 0.25)', borderRadius: '10px' }}>
+                    <h4 style={{ margin: 0, color: '#60a5fa' }}>Official CMS Billing &amp; Unit Edits</h4>
+                    {selectedEnrichment.mue && (
+                      <div style={{ fontSize: '0.88rem', color: '#e2e8f0' }}>
+                        <strong>Max Daily Units (CMS MUE):</strong>{' '}
+                        <span style={{ color: '#4ade80', fontWeight: 700 }}>{selectedEnrichment.mue.mue_value} unit(s)/day</span>
+                        {' · '}
+                        <span style={{ color: '#94a3b8' }}>MAI: {selectedEnrichment.mue.mai}</span>
+                        {' · '}
+                        <span style={{ color: '#94a3b8' }}>Rationale: {selectedEnrichment.mue.rationale}</span>
+                      </div>
+                    )}
+                    {selectedEnrichment.hcpcsUnit?.unit_definition && (
+                      <div style={{ fontSize: '0.88rem', color: '#e2e8f0' }}>
+                        <strong>Official HCPCS Unit Definition:</strong>{' '}
+                        <span style={{ color: '#fbbf24', fontWeight: 600 }}>{selectedEnrichment.hcpcsUnit.unit_definition}</span>
+                      </div>
+                    )}
+                    {selectedEnrichment.cliaWaived && (
+                      <div style={{ fontSize: '0.88rem', color: '#10b981', fontWeight: 600 }}>
+                        ✓ CLIA-Waived Laboratory Test — Append Modifier QW in CMS-1500 Box 24D
+                      </div>
+                    )}
                   </div>
                 )}
                 

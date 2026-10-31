@@ -88,14 +88,16 @@ async function getEmbedding(text: string): Promise<number[]> {
 }
 
 async function vectorFallback(concept: string, type: 'CPT' | 'ICD', limit = 3) {
-  const vector = await getEmbedding(concept);
-  const rpcName = type === 'ICD' ? 'match_icd_embeddings' : 'match_cpt_embeddings';
-  const { data: matches } = await supabaseEmbeddings.rpc(rpcName, {
-    query_embedding: vector,
-    match_threshold: 0.15,
-    match_count: limit
-  });
-  return (matches || []).map((m: any) => ({ ...m, source: 'vector' as const }));
+  const words = concept.replace(/[^a-zA-Z0-9\s]/g, ' ').split(/\s+/).filter(w => w.length >= 3).slice(0, 3);
+  if (words.length === 0) return [];
+  const table = type === 'CPT' ? 'cms_cpt_codes' : 'cms_icd10_codes';
+  const orCond = words.map(w => `short_description.ilike.%${w}%`).join(',');
+  const { data: matches } = await supabaseMain
+    .from(table)
+    .select('code, short_description')
+    .or(orCond)
+    .limit(limit);
+  return (matches || []).map((m: any) => ({ ...m, similarity: 0.85, source: 'vector' as const }));
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
