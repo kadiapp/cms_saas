@@ -305,6 +305,93 @@ export default function CodingAssistant() {
     router.push('/app/editor');
   };
 
+  const handleQuickAddToClaim = (opts: {
+    cpt?: string;
+    cpt2?: string;
+    modifier2?: string;
+    icd?: string;
+    fee?: number;
+  }) => {
+    trackEvent('send_to_claim_clicked');
+    let savedForm;
+    try {
+      const saved = localStorage.getItem('cms1500_autosave');
+      savedForm = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(EMPTY_FORM));
+    } catch (e) {
+      savedForm = JSON.parse(JSON.stringify(EMPTY_FORM));
+    }
+    if (!savedForm.diagnosisCodes) savedForm.diagnosisCodes = Array(12).fill('');
+    if (!savedForm.serviceLines) savedForm.serviceLines = JSON.parse(JSON.stringify(EMPTY_FORM.serviceLines));
+
+    if (opts.icd) {
+      const cleanIcd = opts.icd.replace(/\./g, '').toUpperCase();
+      if (!savedForm.diagnosisCodes.includes(cleanIcd)) {
+        const emptyIdx = savedForm.diagnosisCodes.findIndex((d: string) => !d);
+        const targetIdx = emptyIdx !== -1 ? emptyIdx : 0;
+        savedForm.diagnosisCodes[targetIdx] = cleanIcd;
+      }
+    }
+
+    if (opts.cpt) {
+      const cleanCpt = opts.cpt.toUpperCase();
+      if (cleanCpt.startsWith('NDC-')) {
+        const ndc11 = cleanCpt.replace('NDC-', '');
+        savedForm.additionalClaimInfo = `N4${ndc11} UN1`;
+      } else if (cleanCpt.startsWith('FL17-')) {
+        savedForm.dischargeStatus = cleanCpt.replace('FL17-', '');
+      } else {
+        const emptyLineIdx = savedForm.serviceLines.findIndex((l: any) => !l.cptCode);
+        const line1Idx = emptyLineIdx !== -1 ? emptyLineIdx : 0;
+        savedForm.serviceLines[line1Idx].cptCode = cleanCpt;
+        if (opts.fee && !savedForm.serviceLines[line1Idx].charges) {
+          savedForm.serviceLines[line1Idx].charges = Number(opts.fee).toFixed(2);
+        }
+        if (!savedForm.serviceLines[line1Idx].daysUnits) savedForm.serviceLines[line1Idx].daysUnits = '1';
+        if (!savedForm.serviceLines[line1Idx].placeOfService) savedForm.serviceLines[line1Idx].placeOfService = '11';
+        if (!savedForm.serviceLines[line1Idx].diagnosisPointer) savedForm.serviceLines[line1Idx].diagnosisPointer = 'A';
+
+        if (opts.cpt2 && savedForm.serviceLines[line1Idx + 1]) {
+          savedForm.serviceLines[line1Idx + 1].cptCode = opts.cpt2.toUpperCase();
+          if (opts.modifier2) savedForm.serviceLines[line1Idx + 1].modifier1 = opts.modifier2;
+          if (!savedForm.serviceLines[line1Idx + 1].daysUnits) savedForm.serviceLines[line1Idx + 1].daysUnits = '1';
+          if (!savedForm.serviceLines[line1Idx + 1].placeOfService) savedForm.serviceLines[line1Idx + 1].placeOfService = '11';
+          if (!savedForm.serviceLines[line1Idx + 1].diagnosisPointer) savedForm.serviceLines[line1Idx + 1].diagnosisPointer = 'A';
+        }
+      }
+    }
+
+    logActivity('send_to_claim', opts);
+    localStorage.setItem('cms1500_autosave', JSON.stringify(savedForm));
+    router.push('/app/editor');
+  };
+
+  const handleSendNpiToClaim = (role: 'referring' | 'billing') => {
+    if (!npiResult) return;
+    trackEvent('send_npi_to_claim_clicked');
+    let savedForm;
+    try {
+      const saved = localStorage.getItem('cms1500_autosave');
+      savedForm = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(EMPTY_FORM));
+    } catch (e) {
+      savedForm = JSON.parse(JSON.stringify(EMPTY_FORM));
+    }
+    const fullName = npiResult.type === 'individual'
+      ? `${npiResult.firstName || ''} ${npiResult.lastName || ''}`.trim()
+      : (npiResult.organizationName || '');
+
+    if (role === 'referring') {
+      savedForm.referringProviderQual = 'DN';
+      savedForm.referringProviderName = fullName;
+      savedForm.referringProviderNpi = npiResult.number;
+    } else {
+      savedForm.billingProviderName = fullName;
+      savedForm.billingNpi = npiResult.number;
+    }
+    logActivity('send_to_claim', { role, npi: npiResult.number });
+    localStorage.setItem('cms1500_autosave', JSON.stringify(savedForm));
+    router.push('/app/editor');
+  };
+
   const runAutoCoder = async (noteText: string) => {
     if (!noteText.trim()) return;
     trackEvent('ai_autocoder_clicked');
@@ -709,51 +796,77 @@ export default function CodingAssistant() {
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                     <button
                       type="button"
-                      className="btn btn-secondary ca-btn"
-                      onClick={() => {
-                        const c = selectedCodeDetails.code;
-                        setCode1(c);
-                        setActiveTab('ncci');
-                        window.history.pushState(null, '', `?tab=ncci&code1=${c}`);
-                        setTimeout(() => handleNcciCheck(undefined, c, code2), 30);
-                      }}
+                      className="btn btn-primary ca-btn"
+                      onClick={() => handleQuickAddToClaim({ cpt: selectedCodeDetails.code, fee: selectedFee?.non_facility_fee })}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
                     >
-                      <Icon.Shield size={16} color="#3b82f6" /> Check NCCI Edits for {selectedCodeDetails.code}
+                      <Icon.Send size={16} /> Add {selectedCodeDetails.code} to CMS-1500 Claim →
                     </button>
-                    <button
-                      type="button"
-                      className="btn btn-secondary ca-btn"
-                      onClick={() => {
-                        const c = selectedCodeDetails.code;
-                        setMedNecQuery(c);
-                        setActiveTab('mednec');
-                        window.history.pushState(null, '', `?tab=mednec&code=${c}`);
-                        setTimeout(() => handleMedNecSearch(undefined, c), 30);
-                      }}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
-                    >
-                      <Icon.CheckCircle size={16} color="#10b981" /> Check Medical Necessity for {selectedCodeDetails.code}
-                    </button>
+                    {!selectedCodeDetails.code.startsWith('FL17-') && !selectedCodeDetails.code.startsWith('NDC-') && (
+                      <>
+                        <button
+                          type="button"
+                          className="btn btn-secondary ca-btn"
+                          onClick={() => {
+                            const c = selectedCodeDetails.code;
+                            setCode1(c);
+                            setActiveTab('ncci');
+                            window.history.pushState(null, '', `?tab=ncci&code1=${c}`);
+                            setTimeout(() => handleNcciCheck(undefined, c, code2), 30);
+                          }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
+                        >
+                          <Icon.Shield size={16} color="#3b82f6" /> Check NCCI Edits
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-secondary ca-btn"
+                          onClick={() => {
+                            const c = selectedCodeDetails.code;
+                            setMedNecQuery(c);
+                            setActiveTab('mednec');
+                            window.history.pushState(null, '', `?tab=mednec&code=${c}`);
+                            setTimeout(() => handleMedNecSearch(undefined, c), 30);
+                          }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
+                        >
+                          <Icon.CheckCircle size={16} color="#10b981" /> Check Medical Necessity
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
 
                 {selectedCodeType === 'ICD' && selectedCodeDetails && (
-                  <div className="ca-detail-section fee-section" style={{ background: selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)', border: `1px solid ${selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
-                     <h4>Billable Status</h4>
-                     {selectedCodeDetails.billable ? (
-                       <div style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                         <Icon.CheckCircle size={18} /> Valid for Submission
-                       </div>
-                     ) : (
-                       <div style={{ color: '#ef4444', fontWeight: 'bold', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                           <Icon.XCircle size={18} /> Not Billable (Requires greater specificity)
+                  <>
+                    <div className="ca-detail-section fee-section" style={{ background: selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.05)' : 'rgba(239, 68, 68, 0.05)', border: `1px solid ${selectedCodeDetails.billable ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
+                       <h4>Billable Status</h4>
+                       {selectedCodeDetails.billable ? (
+                         <div style={{ color: '#10b981', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                           <Icon.CheckCircle size={18} /> Valid for Submission
                          </div>
-                         <span style={{ fontSize: '0.85rem', color: '#fca5a5', fontWeight: 'normal' }}>You cannot bill this code. You must select a more specific child code.</span>
-                       </div>
-                     )}
-                  </div>
+                       ) : (
+                         <div style={{ color: '#ef4444', fontWeight: 'bold', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                             <Icon.XCircle size={18} /> Not Billable (Requires greater specificity)
+                           </div>
+                           <span style={{ fontSize: '0.85rem', color: '#fca5a5', fontWeight: 'normal' }}>You cannot bill this code. You must select a more specific child code.</span>
+                         </div>
+                       )}
+                    </div>
+                    {selectedCodeDetails.billable && (
+                      <div style={{ marginTop: '16px' }}>
+                        <button
+                          type="button"
+                          className="btn btn-primary ca-btn"
+                          onClick={() => handleQuickAddToClaim({ icd: selectedCodeDetails.code })}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
+                        >
+                          <Icon.Send size={16} /> Add {selectedCodeDetails.code} to CMS-1500 Box 21 →
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ) : dictResults && (dictResults.cpt.length > 0 || dictResults.icd.length > 0) ? (
@@ -817,6 +930,22 @@ export default function CodingAssistant() {
                 )}
                 {ncciResult.status === 'Mutually Exclusive' && (
                   <p><strong>Modifier Indicator 0:</strong> These codes cannot be billed together under any circumstances. They are considered mutually exclusive or inherently part of the same procedure. Do not append a modifier.</p>
+                )}
+                {ncciResult.status !== 'Mutually Exclusive' && (
+                  <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary ca-btn"
+                      onClick={() => handleQuickAddToClaim({
+                        cpt: ncciResult.c1,
+                        cpt2: ncciResult.c2,
+                        modifier2: ncciResult.status === 'Modifier Required' ? '59' : undefined
+                      })}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem' }}
+                    >
+                      <Icon.Send size={16} /> Send {ncciResult.c1} + {ncciResult.c2}{ncciResult.status === 'Modifier Required' ? ' (Mod 59)' : ''} to CMS-1500 Claim →
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -1062,12 +1191,20 @@ export default function CodingAssistant() {
 
             {medNecResults && medNecResults.length > 0 && (
               <div className="ca-ncci-result" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16,185,129,0.3)', marginTop: '24px' }}>
-                <div className="ca-ncci-result-header" style={{ color: '#10b981', marginBottom: '16px' }}>
+                <div className="ca-ncci-result-header" style={{ color: '#10b981', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
                   <Icon.CheckCircle size={24} />
                   <div style={{ flex: 1 }}>
                     <h3 style={{ margin: '0 0 4px 0', fontSize: '1.1rem' }}>{medNecResults.length} Approved Diagnoses Found for CPT {medNecSearchedCode}</h3>
                     <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8' }}>These ICD-10 codes satisfy Medicare NCD/LCD medical necessity requirements for this procedure.</p>
                   </div>
+                  <button
+                    type="button"
+                    className="btn btn-primary ca-btn"
+                    onClick={() => handleQuickAddToClaim({ cpt: medNecSearchedCode })}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', padding: '8px 14px' }}
+                  >
+                    <Icon.Send size={15} /> Add {medNecSearchedCode} to Claim →
+                  </button>
                 </div>
 
                 <div style={{ marginBottom: '16px', position: 'relative' }}>
@@ -1186,6 +1323,24 @@ export default function CodingAssistant() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: '#cbd5e1' }}>
                   <div><strong>Taxonomy:</strong> {npiResult.primaryTaxonomy || 'Not available'}</div>
                   <div><strong>Type:</strong> {npiResult.type === 'individual' ? 'Individual / Sole Proprietor' : 'Organization'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '16px', paddingTop: '16px', borderTop: '1px solid rgba(139, 92, 246, 0.25)' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary ca-btn"
+                    onClick={() => handleSendNpiToClaim('referring')}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.86rem' }}
+                  >
+                    <Icon.Send size={15} /> Populate Box 17 / 17b (Referring Provider) →
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary ca-btn"
+                    onClick={() => handleSendNpiToClaim('billing')}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontSize: '0.86rem' }}
+                  >
+                    <Icon.Send size={15} /> Populate Box 33 / 33a (Billing Provider) →
+                  </button>
                 </div>
               </div>
             )}

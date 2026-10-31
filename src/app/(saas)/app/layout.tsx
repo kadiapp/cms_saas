@@ -53,7 +53,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <TopNav />
-      {children}
+      <React.Suspense fallback={<div style={{ minHeight: 'calc(100vh - 64px)' }} />}>
+        {children}
+      </React.Suspense>
     </>
   );
 }
