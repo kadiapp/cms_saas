@@ -114,6 +114,23 @@ export async function verifyCptCode(code: string): Promise<CodeResult> {
     }
   }
 
+  // Check cms_taxonomies if it's a 10-char NUCC Taxonomy code ending in X (e.g. 207Q00000X, 193200000X)
+  if (/^[0-9A-Z]{9}X$/i.test(upper)) {
+    const { data: tax } = await supabase
+      .from('cms_taxonomies')
+      .select('code, provider_type, classification, specialization')
+      .eq('code', upper)
+      .maybeSingle();
+    if (tax) {
+      const spec = tax.specialization ? ` — ${tax.specialization}` : '';
+      return {
+        code: tax.code,
+        short_description: `NUCC Taxonomy (${tax.provider_type}): ${tax.classification}${spec}`,
+        long_description: `Official 10-Character NUCC Healthcare Provider Taxonomy Code: ${tax.code}. Classification: ${tax.classification}${spec} (${tax.provider_type}). On the CMS-1500 form, report with qualifier "ZZ" in Box 24I (shaded) + "${tax.code}" in Box 24J (shaded), or "ZZ${tax.code}" in Box 33b.`,
+      };
+    }
+  }
+
   // Check cms_denial_codes if it's a CARC/RARC code (e.g. CO-4, CO-16, MA130, N257)
   if (/^(?:CO|PR|OA|PI)-?\d+$|^MA\d+$|^N\d+$/i.test(upper)) {
     const normalizedDenial = upper.replace(/^(CO|PR|OA|PI)(\d+)$/, '$1-$2');
@@ -452,7 +469,7 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
   const dischMatch = cleanQuery.match(/^(?:FL17-|DISCHARGE(?:\s+STATUS)?(?:\s+CODE)?\s*)?(\d{1,2})$/);
   const isDischargeQuery = Boolean(dischMatch) || /DISCHARGE|FL\s*17|\bIRF\b|\bSNF\b|\bLTCH\b|NURSING HOME|SWING BED|HOSPICE|\bAMA\b/i.test(cleanQuery);
 
-  const [cptRes, icdRes, hcpcsRes, dischRes, denialRes] = await Promise.all([
+  const [cptRes, icdRes, hcpcsRes, dischRes, denialRes, taxRes] = await Promise.all([
     supabase.from('cms_cpt_codes').select('code, short_description').or(cptOrCondition).limit(20),
     supabase.from('cms_icd10_codes').select('code, short_description').or(icdOrCondition).limit(20),
     cleanQuery.length === 2
@@ -465,6 +482,9 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
       : Promise.resolve({ data: [] as any[] }),
     /^(?:CO|PR|OA|PI)-?\d+$|^MA\d+$|^N\d+$/i.test(cleanQuery)
       ? supabase.from('cms_denial_codes').select('code, description, group_name').ilike('code', `%${cleanQuery.replace(/^(CO|PR|OA|PI)(\d+)$/, '$1-$2')}%`).limit(10)
+      : Promise.resolve({ data: [] as any[] }),
+    /^[0-9A-Z]{9}X$/i.test(dotlessQuery) || /TAXONOMY/i.test(cleanQuery)
+      ? supabase.from('cms_taxonomies').select('code, provider_type, classification, specialization').or(`code.ilike.${dotlessTerm},classification.ilike.${exactTerm},specialization.ilike.${exactTerm}`).limit(10)
       : Promise.resolve({ data: [] as any[] }),
   ]);
 
@@ -481,10 +501,14 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
     code: h.hcpcs_code,
     short_description: `HCPCS Modifier ${h.hcpcs_code}: ${h.short_description}`,
   }));
+  const taxMapped: CodeResult[] = (taxRes.data || []).map((t: any) => ({
+    code: t.code,
+    short_description: `NUCC Taxonomy (${t.provider_type}): ${t.classification}${t.specialization ? ' — ' + t.specialization : ''}`,
+  }));
 
   const seenCpt = new Set<string>();
   const mergedCpt: CodeResult[] = [];
-  for (const item of [...ndcResults, ...dischMapped, ...denialMapped, ...hcpcsMapped, ...(cptRes.data || [])]) {
+  for (const item of [...ndcResults, ...dischMapped, ...denialMapped, ...taxMapped, ...hcpcsMapped, ...(cptRes.data || [])]) {
     if (!seenCpt.has(item.code)) {
       seenCpt.add(item.code);
       mergedCpt.push(item);

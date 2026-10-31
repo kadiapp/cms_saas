@@ -357,6 +357,10 @@ export default function CodingAssistant() {
         savedForm.additionalClaimInfo = `N4${ndc11} UN1`;
       } else if (cleanCpt.startsWith('FL17-')) {
         savedForm.dischargeStatus = cleanCpt.replace('FL17-', '');
+      } else if (/^[0-9A-Z]{9}X$/i.test(cleanCpt)) {
+        savedForm.taxonomyCode = cleanCpt;
+        savedForm.billingProviderOtherIdQual = 'ZZ';
+        savedForm.billingProviderOtherId = cleanCpt;
       } else {
         const emptyLineIdx = savedForm.serviceLines.findIndex((l: any) => !l.cptCode);
         const line1Idx = emptyLineIdx !== -1 ? emptyLineIdx : 0;
