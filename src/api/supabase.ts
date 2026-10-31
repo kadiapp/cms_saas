@@ -322,7 +322,7 @@ export async function logActivity(action: string, details: any = {}) {
 
 export async function searchCodeDictionary(query: string): Promise<{ cpt: any[], icd: any[] }> {
   const cleanQuery = query.trim().toUpperCase().replace(/^CPT\s+|^HCPCS\s+|^ICD(?:-?10)?\s+/i, '').trim();
-  const dotlessQuery = cleanQuery.replace(/\./g, '');
+  const dotlessQuery = cleanQuery.replace(/[\.\s]/g, '');
   const words = cleanQuery.split(/[\s,-]+/).filter(Boolean);
   
   if (words.length === 0) return { cpt: [], icd: [] };
@@ -330,7 +330,7 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
   const exactTerm = `%${cleanQuery}%`;
   const dotlessTerm = `%${dotlessQuery}%`;
   
-  const codeToken = words.find(w => /^[A-Z0-9]{5}$/.test(w.replace(/\./g, '')) || /^[A-Z]\d{2}(?:\.\d{1,4}|\d{1,4})$/.test(w));
+  const codeToken = words.find(w => /^[A-Z0-9]{5}$/.test(w.replace(/\./g, '')) || /^[A-Z]\d[A-Z0-9](?:\.[A-Z0-9]{1,4}|[A-Z0-9]{1,4})$/.test(w));
   const cleanCodeToken = codeToken ? codeToken.replace(/\./g, '') : null;
 
   let cptOrCondition = `code.ilike.${exactTerm},code.ilike.${dotlessTerm},short_description.ilike.${exactTerm},long_description.ilike.${exactTerm}`;
@@ -340,8 +340,8 @@ export async function searchCodeDictionary(query: string): Promise<{ cpt: any[],
     const shortDescAnds = words.map(w => `short_description.ilike.%${w}%`).join(',');
     const longDescAnds = words.map(w => `long_description.ilike.%${w}%`).join(',');
     const tokenCodeClause = cleanCodeToken ? `code.eq.${cleanCodeToken},code.ilike.%${cleanCodeToken}%,` : '';
-    cptOrCondition = `${tokenCodeClause}code.ilike.${exactTerm},and(${shortDescAnds}),and(${longDescAnds})`;
-    icdOrCondition = `${tokenCodeClause}code.ilike.${dotlessTerm},and(${shortDescAnds}),and(${longDescAnds})`;
+    cptOrCondition = `${tokenCodeClause}code.ilike.${exactTerm},code.ilike.${dotlessTerm},and(${shortDescAnds}),and(${longDescAnds})`;
+    icdOrCondition = `${tokenCodeClause}code.ilike.${dotlessTerm},code.ilike.${exactTerm},and(${shortDescAnds}),and(${longDescAnds})`;
   }
 
   // Search CPT
