@@ -109,8 +109,19 @@ export default async function BlogPost({ params }: Props) {
   let cleanContent = normalizeInternalLinks(cleanHtmlSchemas(article.content || ''));
 
   const articleTitleStr = decodeWPEntities(article.title || '');
-  const cptMatch = articleTitleStr.match(/\b\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
-  const primaryCode = cptMatch ? cptMatch[0].toUpperCase() : '';
+  const titleCptMatch = articleTitleStr.match(/\b(?!202\d\b)\d{5}\b/) || articleTitleStr.match(/\b[A-Z]\d{4}\b/i);
+  const slugCptMatch = !titleCptMatch
+    ? (slug.match(/(?:^|-)((?!202\d)\d{5}|[a-z]\d{4})(?:-|$)/i))
+    : null;
+  const bodyCptMatch = (!titleCptMatch && !slugCptMatch)
+    ? cleanContent.slice(0, 1500).match(/\b(?:CPT|HCPCS)\s*(?:code(?:s)?)?\s*[:#-]?\s*((?!12345|202\d\d)\d{5}|[A-Z]\d{4})\b/i)
+    : null;
+  const primaryCode = (
+    titleCptMatch?.[0] ||
+    slugCptMatch?.[1] ||
+    bodyCptMatch?.[1] ||
+    ''
+  ).toUpperCase();
 
   // Fetch live 2026 Fee Schedule + Medicare LCD Coverage snapshot on the server when primaryCode exists
   let feePreview: { non_facility_fee: number; facility_fee: number } | null = null;
