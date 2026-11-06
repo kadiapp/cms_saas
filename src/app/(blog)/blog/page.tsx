@@ -55,7 +55,25 @@ export default async function BlogIndex({ searchParams }: Props) {
     .select('slug, title, published_at', { count: 'exact' });
 
   if (q) {
-    query = query.ilike('title', `%${q}%`);
+    const cleanQ = q.trim();
+    // Normalize common medical billing search typos
+    const normalizedQ = cleanQ
+      .replace(/specility/gi, 'specialty')
+      .replace(/singnature/gi, 'signature')
+      .replace(/facilily/gi, 'facility');
+
+    const terms = normalizedQ
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => !['and', 'or', 'the', 'in', 'on', 'of', 'to', 'for', 'a', 'an', 'with'].includes(w) && w.length >= 2);
+
+    if (terms.length > 1) {
+      const orFilter = terms.map(t => `title.ilike.%${t}%`).join(',');
+      query = query.or(orFilter);
+    } else {
+      query = query.ilike('title', `%${normalizedQ}%`);
+    }
   }
 
   const { data: articles, count, error } = await query
