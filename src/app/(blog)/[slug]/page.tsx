@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { cache, Suspense } from 'react';
 import { supabase, getFeeSchedule, getMedicalNecessity } from '@/api/supabase';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { decodeWPEntities, cleanHtmlSchemas, normalizeInternalLinks, normalizeArticleSchema } from '@/utils/decode';
 import '@/app/globals.css';
 import TopNav from '@/components/TopNav';
@@ -257,24 +258,86 @@ export default async function BlogPost({ params }: Props) {
   // Parse HTML and replace our custom spans with React components
   const parsedContent = parse(cleanContent, {
     replace: (domNode: DOMNode) => {
-      if (domNode.type === 'tag' && (domNode as Element).attribs && (domNode as Element).attribs['data-inject']) {
-        const type = (domNode as Element).attribs['data-inject'];
-        if (type === 'main_assistant') {
-          return (
-            <InlineCodingAssistantCTA
-              defaultCpt={primaryCode}
-              defaultTab={smartDefaultTab}
-              feePreview={feePreview}
-              medNecPreview={medNecPreview}
-            />
-          );
+      if (domNode.type === 'tag') {
+        const el = domNode as Element;
+        // 1. Injected interactive widgets
+        if (el.attribs && el.attribs['data-inject']) {
+          const type = el.attribs['data-inject'];
+          if (type === 'main_assistant') {
+            return (
+              <InlineCodingAssistantCTA
+                defaultCpt={primaryCode}
+                defaultTab={smartDefaultTab}
+                feePreview={feePreview}
+                medNecPreview={medNecPreview}
+              />
+            );
+          }
+          if (type === 'ncci') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
+          if (type === 'mednec') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
+          if (type === 'dictionary') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
+          if (type === 'box17') return <BlogMicroCTA type="box17" />;
+          if (type === 'ub04') return <BlogMicroCTA type="ub04" />;
+          if (type === 'box24') return <BlogMicroCTA type="box24" />;
         }
-        if (type === 'ncci') return <BlogMicroCTA type="ncci" defaultCode={primaryCode} />;
-        if (type === 'mednec') return <BlogMicroCTA type="mednec" defaultCode={primaryCode} />;
-        if (type === 'dictionary') return <BlogMicroCTA type="dictionary" defaultCode={primaryCode} />;
-        if (type === 'box17') return <BlogMicroCTA type="box17" />;
-        if (type === 'ub04') return <BlogMicroCTA type="ub04" />;
-        if (type === 'box24') return <BlogMicroCTA type="box24" />;
+
+        // 2. Prevent Dead Clicks: Turn standalone CPT/HCPCS/ICD-10 codes and Box qualifiers in <strong>/<b>/<code> into interactive chips
+        if (['strong', 'b', 'code'].includes(el.name) && el.children && el.children.length === 1 && (el.children[0] as any).data) {
+          // Check that this is not already nested inside an <a> link
+          let p: any = el.parent;
+          let isNestedInAnchor = false;
+          while (p) {
+            if (p.type === 'tag' && p.name === 'a') {
+              isNestedInAnchor = true;
+              break;
+            }
+            p = p.parent;
+          }
+
+          if (!isNestedInAnchor) {
+            const rawText = ((el.children[0] as any).data || '').trim();
+            const upper = rawText.toUpperCase();
+
+            // A. CPT / HCPCS codes (e.g. G0180, G0179, 74176, J0897, 99214)
+            if (/^(?:[A-Z]\d{4}|(?!202\d|12345|99999)\d{5})$/.test(upper)) {
+              return (
+                <Link
+                  href={`/app/coding-assistant?tab=dictionary&code=${encodeURIComponent(upper)}`}
+                  className="inline-code-chip"
+                  title={`View 2026 Medicare fees, MUE limits & rules for ${upper}`}
+                >
+                  {rawText} <span className="chip-arrow">↗</span>
+                </Link>
+              );
+            }
+
+            // B. ICD-10 diagnosis codes (e.g. M46.1, I21.3, M81.0, S61.212A)
+            if (/^[A-TV-Z][0-9][0-9A-Z](?:\.[0-9A-Z]{1,4})?$/i.test(rawText)) {
+              return (
+                <Link
+                  href={`/app/coding-assistant?tab=dictionary&code=${encodeURIComponent(rawText)}`}
+                  className="inline-code-chip icd-chip"
+                  title={`Look up Medicare LCD coverage for ${rawText}`}
+                >
+                  {rawText} <span className="chip-arrow">↗</span>
+                </Link>
+              );
+            }
+
+            // C. CMS-1500 Box Qualifiers (e.g. ZZ, DN, DK, DQ, 0B, 1B, 1C, 1D, 1G, G2)
+            if (['ZZ', 'DN', 'DK', 'DQ', '0B', '1B', '1C', '1D', '1G', 'G2', 'LU'].includes(upper)) {
+              return (
+                <Link
+                  href={`/app/editor`}
+                  className="inline-code-chip qualifier-chip"
+                  title={`Open CMS-1500 Form Editor for Qualifier ${upper}`}
+                >
+                  {rawText} <span className="chip-arrow">↗</span>
+                </Link>
+              );
+            }
+          }
+        }
       }
     },
   });

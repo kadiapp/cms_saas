@@ -1006,3 +1006,71 @@ h3 { font-size: 1.125rem; font-weight: 600; }
   background-color: transparent !important;
 }
 
+/* ============================================================
+   Interactive Code Chips for Dead-Click Prevention & PLG Funnel
+   ============================================================ */
+.inline-code-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #60a5fa !important;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 6px;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+.inline-code-chip:hover {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: #3b82f6;
+  color: #93c5fd !important;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.inline-code-chip .chip-arrow {
+  font-size: 0.75em;
+  opacity: 0.75;
+  transition: transform 0.15s ease;
+}
+
+.inline-code-chip:hover .chip-arrow {
+  transform: translate(1px, -1px);
+  opacity: 1;
+}
+
+.inline-code-chip.icd-chip {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #34d399 !important;
+}
+
+.inline-code-chip.icd-chip:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+  color: #6ee7b7 !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.inline-code-chip.qualifier-chip {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #c084fc !important;
+}
+
+.inline-code-chip.qualifier-chip:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: #a855f7;
+  color: #d8b4fe !important;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+}
+
+
