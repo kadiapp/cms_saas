@@ -3,6 +3,7 @@
 import React, { useState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Shield, FileText, Book, UserCheck, Activity, Calendar, Zap, ArrowRight } from 'react-feather';
+import { trackCtaClick, trackEvent } from '@/utils/analytics';
 
 interface BlogMicroCTAProps {
   type: 'ncci' | 'mednec' | 'dictionary' | 'box17' | 'ub04' | 'box24' | 'tldr_ai';
@@ -85,9 +86,8 @@ export default function BlogMicroCTA({ type, defaultCode = '' }: BlogMicroCTAPro
 
   const handleRoute = (e: React.FormEvent) => {
     e.preventDefault();
-    if (typeof window !== 'undefined' && (window as any).clarity) {
-      (window as any).clarity('event', `${type}_cta_clicked`);
-    }
+    trackEvent(`${type}_cta_clicked`, { type, query });
+    trackCtaClick(`${type}_cta_clicked`, `/app/coding-assistant`, { type, query });
 
     const tab = (config as any).targetTab || type;
 

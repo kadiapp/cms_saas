@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Menu, X, Grid, Edit3, Activity, FileText, Settings, LogOut, LogIn } from 'react-feather';
 import { supabase } from '@/api/supabase';
+import { trackEvent } from '@/utils/analytics';
 import './TopNav.css';
 
 export default function TopNav() {
@@ -79,9 +80,7 @@ export default function TopNav() {
             href="/app/editor"
             className={`topnav-link ${pathname === '/app/editor' ? 'active' : ''}`}
             onClick={() => {
-              if (typeof window !== 'undefined' && (window as any).clarity) {
-                (window as any).clarity('event', 'ai_autofill_nav_clicked');
-              }
+              trackEvent('ai_autofill_nav_clicked', { source: 'top_nav' });
               closeMenu();
             }}
           >

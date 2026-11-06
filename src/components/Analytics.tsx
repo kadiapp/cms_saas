@@ -17,6 +17,7 @@ export default function Analytics() {
             {`
               window.dataLayer = window.dataLayer || [];
               function gtag(){window.dataLayer.push(arguments);}
+              window.gtag = gtag;
               gtag('js', new Date());
               gtag('config', '${gaId}', {
                 page_path: window.location.pathname,

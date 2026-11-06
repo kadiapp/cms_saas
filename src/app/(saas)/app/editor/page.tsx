@@ -14,6 +14,7 @@ import { generate837P } from '@/ediExport';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
 import { verifyIcdCode, verifyCptCode, extractClaimFromText, supabase, saveClaim, getUserClaims, deleteClaim, getClaimById, getPayerRules, getProviders, getPatients, logActivity, type CodeResult, type SavedClaim, type ProviderRecord, type PatientRecord } from '@/api/supabase';
 import { preScrubClaim } from '@/api/clearinghouse';
+import { trackEvent as sendAnalyticsEvent, trackClaimScrubbed, trackClaimExported, trackAiAutofillTriggered } from '@/utils/analytics';
 
 // ============================================================
 // Tiny icon components (inline SVG)
@@ -443,10 +444,8 @@ Prior Auth: PA-2026-88421`;
 // Main App
 // ============================================================
 export default function App() {
-  const trackEvent = (eventName: string) => {
-    if (typeof window !== 'undefined' && (window as any).clarity) {
-      (window as any).clarity('event', eventName);
-    }
+  const trackEvent = (eventName: string, params: Record<string, any> = {}) => {
+    sendAnalyticsEvent(eventName, params);
   };
 
   const [form, setForm] = useState<ClaimForm>(() => {
@@ -900,6 +899,19 @@ const [isSaving, setIsSaving] = useState(false);
       setLocalValidationResults(localResults);
       setDeepValidationResults([...chResults, ...advancedResults]);
       setHasValidated(true);
+
+      // Track Scrub Event in GA4 & Clarity
+      const allResults = [...localResults, ...chResults, ...advancedResults];
+      const errCount = allResults.filter(r => r.status === 'error' || r.status === 'critical').length;
+      const warnCount = allResults.filter(r => r.status === 'warning').length;
+      trackClaimScrubbed({
+        status: errCount > 0 ? 'errors' : warnCount > 0 ? 'warnings' : 'valid',
+        errorCount: errCount,
+        warningCount: warnCount,
+        hasNpiErrors: Object.keys(newNpiErrors).length > 0,
+        hasCptErrors: Object.keys(newCptErrors).length > 0
+      });
+
       logActivity('validate_claim', { payerId: form.payerId || 'none' });
       showToast('Validation complete', 'success');
     } catch (err) {
@@ -967,7 +979,8 @@ const [isSaving, setIsSaving] = useState(false);
     setIsSubmittingWaitlist(false);
   };
   const handleExportClick = async (type: 'PDF' | 'EDI') => {
-    trackEvent(`export_${type.toLowerCase()}_clicked`);
+    trackEvent(`export_${type.toLowerCase()}_clicked`, { format: type });
+    trackClaimExported(type);
     const errors = validationResults.filter(r => r.status === 'error' || r.status === 'critical');
     if (errors.length > 0) {
       setExportWarning({ show: true, type, errorCount: errors.length });
@@ -989,7 +1002,8 @@ const [isSaving, setIsSaving] = useState(false);
   }, []);
 
   const handleAiExtract = useCallback(async (text: string, base64Pdf?: string) => {
-    trackEvent('ai_autofill_file_dropped');
+    trackEvent('ai_autofill_file_dropped', { isPdf: !!base64Pdf });
+    trackAiAutofillTriggered(base64Pdf ? 'file' : 'text');
     setIsAutofilling(true);
     try {
       const extracted = await extractClaimFromText(text, base64Pdf);

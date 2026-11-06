@@ -6,6 +6,7 @@ import Link from 'next/link';
 import * as Icon from 'react-feather';
 import './login.css';
 import TopNav from '@/components/TopNav';
+import { trackUserAuth } from '@/utils/analytics';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,6 +38,7 @@ export default function LoginPage() {
 
   const handleOAuth = async (provider: 'google' | 'azure') => {
     try {
+      trackUserAuth('login', provider);
       const redirectPath = getRedirectPath();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -64,6 +66,7 @@ export default function LoginPage() {
         }
         const { error, data } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+        trackUserAuth('sign_up', 'email');
         
         // Show success message for email verification
         setSuccess("Account created! You can now log in.");
@@ -71,6 +74,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        trackUserAuth('login', 'email');
         router.push(getRedirectPath()); // Redirect on successful login
       }
     } catch (e: any) {

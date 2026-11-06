@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.112.3",
+    "@supabase/supabase-js": "^2.116.0",
     "dotenv": "^17.4.2",
     "html-react-parser": "^6.1.7",
     "jspdf": "^4.2.1",

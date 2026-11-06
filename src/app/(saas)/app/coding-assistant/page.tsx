@@ -7,6 +7,7 @@ import { EMPTY_FORM } from '@/types';
 import { verifyNpi, type NpiResult } from '@/api/nppes';
 import { supabase, verifyCptCode, verifyIcdCode, getFeeSchedule, getCodeEnrichment, type CodeEnrichment, searchCodeDictionary, checkCodePair, getNcciConflictsForCode, getMedicalNecessity, logActivity } from '@/api/supabase';
 import { extractTextFromPdf } from '@/pdfTextExtractor';
+import { trackEvent as sendAnalyticsEvent, trackCodingSearch, trackSendToClaimEditor } from '@/utils/analytics';
 import './CodingAssistant.css';
 
 function ProgressiveAutoCoderText() {
@@ -42,10 +43,8 @@ export default function CodingAssistant() {
     } catch {}
   }, []);
 
-  const trackEvent = (eventName: string) => {
-    if (typeof window !== 'undefined' && (window as any).clarity) {
-      (window as any).clarity('event', eventName);
-    }
+  const trackEvent = (eventName: string, params: Record<string, any> = {}) => {
+    sendAnalyticsEvent(eventName, params);
     if (eventName.endsWith('_search_clicked') || eventName === 'ai_autocoder_clicked') {
       try {
         const nextCount = (parseInt(localStorage.getItem('ca_anon_searches') || '0', 10) || 0) + 1;
@@ -103,10 +102,11 @@ export default function CodingAssistant() {
   const [npiError, setNpiError] = useState('');
   
   const handleNpiSearch = async (e?: React.FormEvent, directNpi?: string) => {
-    trackEvent('npi_search_clicked');
     if (e) e.preventDefault();
     const queryToUse = directNpi || npiQuery;
+    trackEvent('npi_search_clicked', { query: queryToUse });
     if (!queryToUse.trim()) return;
+    trackCodingSearch('npi', queryToUse.trim());
     setIsNpiLoading(true);
     setNpiError('');
     setNpiResult(null);
@@ -287,6 +287,8 @@ export default function CodingAssistant() {
 
   const handleSendToClaim = () => {
     if (!autoResults) return;
+    trackEvent('send_to_claim_clicked', { source: 'ai_autocoder' });
+    trackSendToClaimEditor('ai_autocoder');
     
     // Parse existing or start fresh
     let savedForm;
@@ -330,7 +332,8 @@ export default function CodingAssistant() {
     icd?: string;
     fee?: number;
   }) => {
-    trackEvent('send_to_claim_clicked');
+    trackEvent('send_to_claim_clicked', opts);
+    trackSendToClaimEditor('coding_assistant_tab', opts.cpt || opts.icd, opts.cpt ? 'CPT' : 'ICD');
     let savedForm;
     try {
       const saved = localStorage.getItem('cms1500_autosave');
@@ -389,7 +392,8 @@ export default function CodingAssistant() {
 
   const handleSendNpiToClaim = (role: 'referring' | 'billing') => {
     if (!npiResult) return;
-    trackEvent('send_npi_to_claim_clicked');
+    trackEvent('send_npi_to_claim_clicked', { role, npi: npiResult.number });
+    trackSendToClaimEditor('coding_assistant_npi', npiResult.number, role);
     let savedForm;
     try {
       const saved = localStorage.getItem('cms1500_autosave');
@@ -416,7 +420,8 @@ export default function CodingAssistant() {
 
   const runAutoCoder = async (noteText: string) => {
     if (!noteText.trim()) return;
-    trackEvent('ai_autocoder_clicked');
+    trackEvent('ai_autocoder_clicked', { noteLength: noteText.length });
+    trackCodingSearch('auto', noteText.slice(0, 80));
     setIsAutoLoading(true);
     setAutoResults(null);
     try {
@@ -478,11 +483,12 @@ export default function CodingAssistant() {
   // Medical Necessity Logic
   // -----------------------------------------------------
   const handleMedNecSearch = async (e?: React.FormEvent, directCode?: string) => {
-    trackEvent('mednec_search_clicked');
     if (e) e.preventDefault();
     const rawQuery = (directCode ?? medNecQuery).replace(/^CPT\s*/i, '').trim().toUpperCase();
     const queryToUse = (rawQuery.match(/\b[A-Z0-9]{5}\b/) || [rawQuery])[0];
+    trackEvent('mednec_search_clicked', { code: queryToUse });
     if (!queryToUse) return;
+    trackCodingSearch('mednec', queryToUse);
 
     setIsMedNecLoading(true);
     setMedNecResults(null);
@@ -504,10 +510,11 @@ export default function CodingAssistant() {
   // Dictionary Logic
   // -----------------------------------------------------
   const handleDictSearch = async (e?: React.FormEvent, directQuery?: string) => {
-    trackEvent('dictionary_search_clicked');
     if (e) e.preventDefault();
     const queryToUse = directQuery || dictQuery;
+    trackEvent('dictionary_search_clicked', { query: queryToUse });
     if (!queryToUse.trim()) return;
+    trackCodingSearch('dictionary', queryToUse.trim());
 
     setIsDictLoading(true);
     setSelectedCodeDetails(null);
@@ -564,13 +571,14 @@ export default function CodingAssistant() {
   // NCCI Logic
   // -----------------------------------------------------
   const handleNcciCheck = async (e?: React.FormEvent, directCode1?: string, directCode2?: string) => {
-    trackEvent('ncci_search_clicked');
     if (e) e.preventDefault();
     const raw1 = (directCode1 !== undefined ? directCode1 : code1).replace(/^CPT\s*/i, '').trim().toUpperCase();
     const raw2 = (directCode2 !== undefined ? directCode2 : code2).replace(/^CPT\s*/i, '').trim().toUpperCase();
     const c1 = (raw1.match(/\b[A-Z0-9]{5}\b/) || [raw1])[0];
     const c2 = (raw2.match(/\b[A-Z0-9]{5}\b/) || [raw2])[0];
+    trackEvent('ncci_search_clicked', { code1: c1, code2: c2 });
     if (!c1) return;
+    trackCodingSearch('ncci', c2 ? `${c1}+${c2}` : c1);
 
     setIsNcciLoading(true);
     setNcciResult(null);

@@ -3,6 +3,7 @@
 import React, { useState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Book, Shield, CheckCircle, UserCheck, Zap, Command, ArrowRight } from 'react-feather';
+import { trackCtaClick, trackEvent } from '@/utils/analytics';
 
 interface InlineCodingAssistantCTAProps {
   defaultCpt?: string;
@@ -47,16 +48,16 @@ export default function InlineCodingAssistantCTA({
   const handleRoute = (tab: string, queryParam: string, queryValue: string) => {
     if (!queryValue.trim() && tab !== 'auto') return;
 
-    if (typeof window !== 'undefined' && (window as any).clarity) {
-      const eventMap: Record<string, string> = {
-        dictionary: 'dictionary_cta_clicked',
-        ncci: 'ncci_cta_clicked',
-        mednec: 'mednec_cta_clicked',
-        npi: 'box17_cta_clicked',
-        auto: 'tldr_ai_cta_clicked'
-      };
-      (window as any).clarity('event', eventMap[tab] || 'dictionary_cta_clicked');
-    }
+    const eventMap: Record<string, string> = {
+      dictionary: 'dictionary_cta_clicked',
+      ncci: 'ncci_cta_clicked',
+      mednec: 'mednec_cta_clicked',
+      npi: 'box17_cta_clicked',
+      auto: 'tldr_ai_cta_clicked'
+    };
+    const eventName = eventMap[tab] || 'dictionary_cta_clicked';
+    trackEvent(eventName, { tab, query: queryValue });
+    trackCtaClick(eventName, `/app/coding-assistant?tab=${tab}`, { tab, query: queryValue });
 
     if (tab === 'auto') {
       if (autoNote.trim()) {
