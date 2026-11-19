@@ -7,7 +7,8 @@ import TopNav from '@/components/TopNav';
 import BlogSearch from './BlogSearch';
 import '@/app/blog-index.css';
 
-export const revalidate = 3600;
+// Cache knowledge base index for 7 days to eliminate Vercel ISR write quota consumption
+export const revalidate = 604800;
 
 export const metadata: Metadata = {
   title: 'Medical Billing Knowledge Base | 1500 Claim Billing',

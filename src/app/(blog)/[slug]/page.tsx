@@ -28,8 +28,8 @@ const getArticleBySlug = cache(async (slug: string) => {
   return data;
 });
 
-// Pre-render the top cited & highest-traffic articles at build time and keep edge cache warm for 1 hour
-export const revalidate = 3600;
+// Cache articles on the edge for 7 days (604,800s) to maximize page speed and eliminate Vercel ISR write quota limits
+export const revalidate = 604800;
 
 export async function generateStaticParams() {
   const { data } = await supabase

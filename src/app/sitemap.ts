@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/api/supabase';
 
-export const revalidate = 3600; // Force sitemap to rebuild every hour
+export const revalidate = 86400; // Rebuild sitemap once per day (86,400s) to conserve Vercel data cache writes
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://cms1500claimbilling.com';

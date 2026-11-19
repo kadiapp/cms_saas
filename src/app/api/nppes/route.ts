@@ -18,8 +18,8 @@ export async function GET(request: Request) {
       headers: {
         'Accept': 'application/json',
       },
-      // Ensure we don't cache stale registry data for too long
-      next: { revalidate: 3600 } 
+      // Cache NPPES registry data for 7 days to eliminate unnecessary Vercel ISR writes
+      next: { revalidate: 604800 } 
     });
 
     if (!response.ok) {
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     return NextResponse.json(data, {
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'public, s-maxage=604800, stale-while-revalidate=86400',
       }
     });
 
